@@ -21,11 +21,7 @@ void main() {
       credentialHasher: hasher,
     );
     codes = QueueCodeGenerator(<String>['FIRST1', 'SECOND2', 'THIRD3']);
-    auth = AuthService(
-      database,
-      credentialHasher: hasher,
-      codeGenerator: codes,
-    );
+    auth = AuthService(database, hasher, codes);
     await database.customSelect('SELECT 1').getSingle();
   });
 

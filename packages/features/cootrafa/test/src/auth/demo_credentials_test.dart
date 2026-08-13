@@ -6,7 +6,7 @@ import 'package:features/src/auth/auth_module.dart';
 import 'package:features/src/auth/domain/entities/demo_credentials.dart';
 import 'package:features/src/database/cootrafa_database.dart'
     hide CredentialHasher, DemoAdmin;
-import 'package:features/src/security/credential_hasher.dart';
+import 'package:core/security/credential_hasher.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

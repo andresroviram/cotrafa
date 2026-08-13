@@ -1,9 +1,9 @@
+import 'package:core/security/activation_code_generator.dart';
+import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
 import 'package:features/src/auth/domain/entities/auth_identity.dart';
 import 'package:features/src/database/cootrafa_database.dart'
     show CootrafaDatabase;
-import 'package:features/src/security/activation_code_generator.dart';
-import 'package:features/src/security/credential_hasher.dart';
 import 'package:injectable/injectable.dart';
 
 // dart format off
@@ -26,15 +26,14 @@ abstract interface class IAuthLocalDatasource {
 @LazySingleton(as: IAuthLocalDatasource)
 final class AuthLocalDatasource implements IAuthLocalDatasource {
   AuthLocalDatasource(
-    this._database, {
-    CredentialHasher? credentialHasher,
-    ActivationCodeGenerator? codeGenerator,
-  }) : _hasher = credentialHasher ?? CredentialHasher(),
-       _codes = codeGenerator ?? SecureActivationCodeGenerator();
+    this._database,
+    this._credentialHasher,
+    this._activationCodeGenerator,
+  );
 
   final CootrafaDatabase _database;
-  final CredentialHasher _hasher;
-  final ActivationCodeGenerator _codes;
+  final CredentialHasher _credentialHasher;
+  final ActivationCodeGenerator _activationCodeGenerator;
 
   @override
   Future<AuthResult<String>> issueActivationCode(
@@ -57,8 +56,8 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
           client.read<String>('status') != 'pendingActivation') {
         return const AuthResult.failure(AuthError.clientNotPending);
       }
-      final code = _codes.generate();
-      final hash = await _hasher.hash(code);
+      final code = _activationCodeGenerator.generate();
+      final hash = await _credentialHasher.hash(code);
       await _database.customStatement(
         'UPDATE users SET activation_code_hash=?,updated_at=? WHERE id=?',
         <Object?>[
@@ -85,7 +84,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
           client.read<String>('role') != 'client' ||
           client.read<String>('status') != 'pendingActivation' ||
           codeHash == null ||
-          !await _hasher.verify(code, codeHash)) {
+          !await _credentialHasher.verify(code, codeHash)) {
         return const AuthResult.failure(AuthError.invalidCredentials);
       }
       final normalizedUsername = _normalize(username);
@@ -93,7 +92,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
         return const AuthResult.failure(AuthError.identifierTaken);
       }
       final userId = client.read<int>('id');
-      final passwordHash = await _hasher.hash(password);
+      final passwordHash = await _credentialHasher.hash(password);
       await _database.customStatement(
         "INSERT INTO login_identifiers VALUES (?,?,'username')",
         <Object?>[normalizedUsername, userId],
@@ -115,7 +114,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
           if (user == null ||
               user.read<String>('status') != 'active' ||
               passwordHash == null ||
-              !await _hasher.verify(password, passwordHash)) {
+              !await _credentialHasher.verify(password, passwordHash)) {
             return const AuthResult.failure(AuthError.invalidCredentials);
           }
           final identity = _identity(user);

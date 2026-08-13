@@ -5,8 +5,8 @@ import 'package:drift/drift.dart' show QueryRow, Variable;
 import 'package:drift/native.dart';
 import 'package:features/src/database/cootrafa_database.dart'
     hide CredentialHasher;
-import 'package:features/src/security/activation_code_generator.dart';
-import 'package:features/src/security/credential_hasher.dart';
+import 'package:core/security/activation_code_generator.dart';
+import 'package:core/security/credential_hasher.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

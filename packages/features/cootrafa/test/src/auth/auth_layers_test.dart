@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
+import 'package:core/security/activation_code_generator.dart';
 import 'package:drift/native.dart';
 import 'package:features/src/auth/data/datasources/auth_local_datasource.dart';
 import 'package:features/src/auth/data/repository/auth_repository_impl.dart';
@@ -24,7 +25,7 @@ void main() {
       credentialHasher: hasher,
     );
     repository = AuthRepositoryImpl(
-      AuthLocalDatasource(database, credentialHasher: hasher),
+      AuthLocalDatasource(database, hasher, SecureActivationCodeGenerator()),
     );
     await database.customStatement(
       "INSERT INTO users VALUES (2,'Client@Example.com','Client','client',"

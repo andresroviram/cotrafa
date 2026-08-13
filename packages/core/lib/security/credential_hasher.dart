@@ -2,14 +2,16 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:cryptography/cryptography.dart';
+import 'package:injectable/injectable.dart';
 
+@lazySingleton
 class CredentialHasher {
   CredentialHasher({
-    this.memoryKiB = 19456,
-    this.iterations = 2,
-    this.parallelism = 1,
-    this.hashLength = 32,
-    List<int> Function()? saltFactory,
+    @ignoreParam this.memoryKiB = 19456,
+    @ignoreParam this.iterations = 2,
+    @ignoreParam this.parallelism = 1,
+    @ignoreParam this.hashLength = 32,
+    @ignoreParam List<int> Function()? saltFactory,
   }) : _saltFactory = saltFactory ?? _secureSalt;
 
   final int memoryKiB;

@@ -1,11 +1,14 @@
 import 'dart:math';
 
+import 'package:injectable/injectable.dart';
+
 abstract interface class ActivationCodeGenerator {
   String generate();
 }
 
+@LazySingleton(as: ActivationCodeGenerator)
 final class SecureActivationCodeGenerator implements ActivationCodeGenerator {
-  SecureActivationCodeGenerator([Random? random])
+  SecureActivationCodeGenerator([@ignoreParam Random? random])
     : _random = random ?? Random.secure();
 
   final Random _random;

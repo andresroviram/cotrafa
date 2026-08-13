@@ -1,9 +1,9 @@
+import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
 import 'package:features/src/auth/domain/entities/demo_credentials.dart';
-import 'package:features/src/security/credential_hasher.dart';
 
 export 'package:features/src/auth/domain/entities/demo_credentials.dart';
-export 'package:features/src/security/credential_hasher.dart';
+export 'package:core/security/credential_hasher.dart';
 
 part 'cootrafa_database.g.dart';
 part 'tables/addresses.dart';
