@@ -1,5 +1,5 @@
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:drift/drift.dart';
-import 'package:features/src/database/cootrafa_database.dart';
 
 enum AddressError { unauthorized, inactiveTarget, notFound, storageFailure }
 
@@ -24,8 +24,8 @@ final class AddressInput {
   final String? line2, state, postalCode;
 }
 
-final class AddressService {
-  AddressService(this._database);
+final class AddressDriftAdapter {
+  AddressDriftAdapter(this._database);
   final CootrafaDatabase _database;
   Future<AddressResult<List<AddressesData>>> list(int actorId, int userId) =>
       _guard(() async {

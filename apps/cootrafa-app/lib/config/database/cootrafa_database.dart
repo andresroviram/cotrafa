@@ -1,9 +1,7 @@
+import 'package:core/database/connection/shared.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
-import 'package:features/src/auth/domain/entities/demo_credentials.dart';
-
-export 'package:features/src/auth/domain/entities/demo_credentials.dart';
-export 'package:core/security/credential_hasher.dart';
+import 'package:features/auth.dart';
 
 part 'cootrafa_database.g.dart';
 part 'tables/addresses.dart';
@@ -16,8 +14,9 @@ part 'tables/users.dart';
   tables: <Type>[Users, LoginIdentifiers, Addresses, Transfers, LocalSession],
 )
 class CootrafaDatabase extends _$CootrafaDatabase {
-  CootrafaDatabase(super.executor, {CredentialHasher? credentialHasher})
-    : _credentialHasher = credentialHasher ?? CredentialHasher();
+  CootrafaDatabase(this._credentialHasher) : super(connect('cootrafa'));
+
+  CootrafaDatabase.forTesting(super.executor, this._credentialHasher);
 
   final CredentialHasher _credentialHasher;
 

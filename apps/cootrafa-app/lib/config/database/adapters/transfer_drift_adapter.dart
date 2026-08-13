@@ -1,5 +1,5 @@
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:drift/drift.dart';
-import 'package:features/src/database/cootrafa_database.dart';
 
 enum TransferError {
   unauthorized,
@@ -77,8 +77,8 @@ final class TransferReceipt {
   );
 }
 
-final class TransferService {
-  TransferService(
+final class TransferDriftAdapter {
+  TransferDriftAdapter(
     this._database, {
     required this.idGenerator,
     DateTime Function()? clock,

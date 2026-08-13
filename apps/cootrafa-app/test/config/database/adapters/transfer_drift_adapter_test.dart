@@ -1,21 +1,22 @@
+import 'package:core/security/credential_hasher.dart';
 import 'package:drift/native.dart';
-import 'package:features/src/database/cootrafa_database.dart';
-import 'package:features/src/transfer/transfer_service.dart';
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_app/config/database/adapters/transfer_drift_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late CootrafaDatabase db;
-  late TransferService transfers;
+  late TransferDriftAdapter transfers;
   setUp(() async {
-    db = CootrafaDatabase(
+    db = CootrafaDatabase.forTesting(
       NativeDatabase.memory(),
-      credentialHasher: CredentialHasher(
+      CredentialHasher(
         memoryKiB: 64,
         iterations: 1,
         saltFactory: () => List<int>.filled(16, 7),
       ),
     );
-    transfers = TransferService(
+    transfers = TransferDriftAdapter(
       db,
       idGenerator: () => 'transfer-1',
       clock: () => DateTime.fromMillisecondsSinceEpoch(1234),
@@ -51,7 +52,7 @@ void main() {
     expect(await _balance(db, 3), 40);
     expect(await _count(db, 'transfers'), 1);
     expect(
-      (await TransferService(
+      (await TransferDriftAdapter(
         db,
         idGenerator: () => 'transfer-2',
         clock: () => DateTime.fromMillisecondsSinceEpoch(2000),
@@ -99,7 +100,7 @@ void main() {
       "UPDATE users SET status='inactive' WHERE id=3",
     ]) {
       var called = false;
-      final service = TransferService(
+      final service = TransferDriftAdapter(
         db,
         idGenerator: () => 'race-${mutation.hashCode}',
         clock: () => DateTime.fromMillisecondsSinceEpoch(1),

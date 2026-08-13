@@ -1,24 +1,25 @@
 import 'dart:io';
 
+import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:features/src/database/cootrafa_database.dart';
-import 'package:features/src/user/address/address_service.dart';
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_app/config/database/adapters/address_drift_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late CootrafaDatabase database;
-  late AddressService addresses;
+  late AddressDriftAdapter addresses;
   setUp(() async {
-    database = CootrafaDatabase(
+    database = CootrafaDatabase.forTesting(
       NativeDatabase.memory(),
-      credentialHasher: CredentialHasher(
+      CredentialHasher(
         memoryKiB: 64,
         iterations: 1,
         saltFactory: () => List<int>.filled(16, 7),
       ),
     );
-    addresses = AddressService(database);
+    addresses = AddressDriftAdapter(database);
     await database.customSelect('SELECT 1').getSingle();
     await _activeUser(database, 2, 'client@example.com');
     await _activeUser(database, 3, 'other@example.com');
@@ -129,9 +130,9 @@ void main() {
   test('migrates v1 addresses without data loss', () async {
     final directory = await Directory.systemTemp.createTemp('cootrafa-v1-');
     final file = File('${directory.path}/legacy.sqlite');
-    final legacy = CootrafaDatabase(
+    final legacy = CootrafaDatabase.forTesting(
       NativeDatabase(file),
-      credentialHasher: _fastHasher(),
+      _fastHasher(),
     );
     await legacy.customSelect('SELECT 1').getSingle();
     await _activeUser(legacy, 4, 'legacy@example.com');
@@ -144,11 +145,11 @@ void main() {
     }
     await legacy.customStatement('PRAGMA user_version = 1');
     await legacy.close();
-    final migrated = CootrafaDatabase(
+    final migrated = CootrafaDatabase.forTesting(
       NativeDatabase(file),
-      credentialHasher: _fastHasher(),
+      _fastHasher(),
     );
-    final service = AddressService(migrated);
+    final service = AddressDriftAdapter(migrated);
     final created = await service.create(1, 4, _input('Migrated'));
     expect(created.value?.country, 'Colombia');
     final rows = (await service.list(1, 4)).value!;

@@ -1,13 +1,14 @@
 import 'dart:io';
 
+import 'package:core/security/credential_hasher.dart';
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:drift/native.dart';
-import 'package:features/src/auth/data/datasources/auth_local_datasource.dart';
+import 'package:cootrafa_app/config/database/adapters/auth_drift_adapter.dart';
 import 'package:features/src/auth/data/repository/auth_repository_impl.dart';
 import 'package:features/src/auth/domain/usecases/auth_usecases.dart';
-import 'package:features/src/database/cootrafa_database.dart';
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -20,12 +21,9 @@ void main() {
       iterations: 1,
       saltFactory: () => List<int>.filled(16, 7),
     );
-    database = CootrafaDatabase(
-      NativeDatabase.memory(),
-      credentialHasher: hasher,
-    );
+    database = CootrafaDatabase.forTesting(NativeDatabase.memory(), hasher);
     repository = AuthRepositoryImpl(
-      AuthLocalDatasource(database, hasher, SecureActivationCodeGenerator()),
+      AuthDriftAdapter(database, hasher, SecureActivationCodeGenerator()),
     );
     await database.customStatement(
       "INSERT INTO users VALUES (2,'Client@Example.com','Client','client',"
@@ -79,6 +77,7 @@ void main() {
 
     final root = <Directory>[
       Directory('packages/features/cootrafa/lib/src/auth'),
+      Directory('../../packages/features/cootrafa/lib/src/auth'),
       Directory('lib/src/auth'),
     ].firstWhere((directory) => directory.existsSync());
     final repositorySource = File(

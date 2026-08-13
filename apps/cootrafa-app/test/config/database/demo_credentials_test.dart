@@ -2,10 +2,9 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:features/src/auth/auth_module.dart';
-import 'package:features/src/auth/domain/entities/demo_credentials.dart';
-import 'package:features/src/database/cootrafa_database.dart'
-    hide CredentialHasher, DemoAdmin;
+import 'package:cootrafa_app/config/injectable/auth_module.dart';
+import 'package:features/auth.dart';
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -60,10 +59,7 @@ void main() {
     final directory = await Directory.systemTemp.createTemp('demo-admin-');
     final file = File('${directory.path}/cootrafa.sqlite');
     final hasher = _fastHasher();
-    final first = CootrafaDatabase(
-      NativeDatabase(file),
-      credentialHasher: hasher,
-    );
+    final first = CootrafaDatabase.forTesting(NativeDatabase(file), hasher);
     await first.customSelect('SELECT 1').getSingle();
     final seeded = await _admin(first);
     final encoded = seeded.read<String>('password_hash');
@@ -78,10 +74,7 @@ void main() {
     expect(await hasher.verify('wrong-password', encoded), isFalse);
     await first.close();
 
-    final reopened = CootrafaDatabase(
-      NativeDatabase(file),
-      credentialHasher: hasher,
-    );
+    final reopened = CootrafaDatabase.forTesting(NativeDatabase(file), hasher);
     final rows = await reopened
         .customSelect('SELECT password_hash FROM users WHERE id = 1')
         .get();
@@ -107,6 +100,7 @@ Directory _packageRoot() =>
     <Directory>[
       Directory.current,
       Directory('${Directory.current.path}/packages/features/cootrafa'),
+      Directory('${Directory.current.path}/../../packages/features/cootrafa'),
     ].firstWhere(
       (root) => File(
         '${root.path}/lib/src/auth/domain/entities/demo_credentials.dart',

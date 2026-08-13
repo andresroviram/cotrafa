@@ -1,4 +1,4 @@
-import 'package:features/src/auth/domain/entities/demo_credentials.dart';
+import 'package:features/auth.dart';
 import 'package:injectable/injectable.dart';
 
 @module

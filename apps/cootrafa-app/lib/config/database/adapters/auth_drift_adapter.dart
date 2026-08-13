@@ -1,31 +1,13 @@
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
-import 'package:features/src/auth/domain/entities/auth_identity.dart';
-import 'package:features/src/database/cootrafa_database.dart'
-    show CootrafaDatabase;
+import 'package:features/auth.dart';
 import 'package:injectable/injectable.dart';
 
-// dart format off
-enum AuthError { unauthorized, clientNotPending, identifierTaken, invalidCredentials, storageFailure }
-final class AuthResult<T> {
-  const AuthResult.ok(this.value) : error = null;
-  const AuthResult.failure(this.error) : value = null;
-  final T? value;
-  final AuthError? error;
-}
-abstract interface class IAuthLocalDatasource {
-  Future<AuthResult<String>> issueActivationCode(int actorUserId, String email);
-  Future<AuthResult<AuthIdentity>> activate(String email, String code, String username, String password);
-  Future<AuthResult<AuthIdentity>> login(String identifier, String password);
-  Future<AuthResult<AuthIdentity?>> restore();
-  Future<AuthResult<void>> logout();
-}
-// dart format on
-
 @LazySingleton(as: IAuthLocalDatasource)
-final class AuthLocalDatasource implements IAuthLocalDatasource {
-  AuthLocalDatasource(
+final class AuthDriftAdapter implements IAuthLocalDatasource {
+  AuthDriftAdapter(
     this._database,
     this._credentialHasher,
     this._activationCodeGenerator,
@@ -179,5 +161,3 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
 
   String _normalize(String value) => value.trim().toLowerCase();
 }
-
-typedef AuthService = AuthLocalDatasource;

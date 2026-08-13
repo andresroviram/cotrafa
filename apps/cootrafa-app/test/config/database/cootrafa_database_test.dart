@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:features/auth.dart';
 import 'package:drift/drift.dart' show QueryRow, Variable;
 import 'package:drift/native.dart';
-import 'package:features/src/database/cootrafa_database.dart'
-    hide CredentialHasher;
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,15 +33,7 @@ void main() {
     expect(codes, everyElement(matches(RegExp(r'^\d{6}$'))));
   });
   test('keeps Drift tables in dedicated source parts', () {
-    final packageRoot =
-        <Directory>[
-          Directory.current,
-          Directory('${Directory.current.path}/packages/features/cootrafa'),
-        ].firstWhere(
-          (root) => File(
-            '${root.path}/lib/src/database/cootrafa_database.dart',
-          ).existsSync(),
-        );
+    final packageRoot = _appRoot();
     const tableNames = <String>[
       'users',
       'login_identifiers',
@@ -50,12 +42,12 @@ void main() {
       'local_session',
     ];
     final databaseSource = File(
-      '${packageRoot.path}/lib/src/database/cootrafa_database.dart',
+      '${packageRoot.path}/lib/config/database/cootrafa_database.dart',
     ).readAsStringSync();
     for (final name in tableNames) {
       expect(
         File(
-          '${packageRoot.path}/lib/src/database/tables/$name.dart',
+          '${packageRoot.path}/lib/config/database/tables/$name.dart',
         ).existsSync(),
         isTrue,
       );
@@ -130,15 +122,15 @@ void main() {
   test('reopens without data loss and stores only session userId', () async {
     final directory = await Directory.systemTemp.createTemp('cootrafa-db-');
     final file = File('${directory.path}/cootrafa.sqlite');
-    final first = CootrafaDatabase(
+    final first = CootrafaDatabase.forTesting(
       NativeDatabase(file),
-      credentialHasher: _fastHasher(),
+      _fastHasher(),
     );
     await first.setSessionUserId(DemoAdmin.userId);
     await first.close();
-    final reopened = CootrafaDatabase(
+    final reopened = CootrafaDatabase.forTesting(
       NativeDatabase(file),
-      credentialHasher: _fastHasher(),
+      _fastHasher(),
     );
     expect(await reopened.currentSessionUserId(), DemoAdmin.userId);
     final adminCount = await _one(
@@ -160,8 +152,18 @@ void main() {
   });
 }
 
+Directory _appRoot() =>
+    <Directory>[
+      Directory.current,
+      Directory('${Directory.current.path}/apps/cootrafa-app'),
+    ].firstWhere(
+      (root) => File(
+        '${root.path}/lib/config/database/cootrafa_database.dart',
+      ).existsSync(),
+    );
+
 CootrafaDatabase _memoryDatabase() =>
-    CootrafaDatabase(NativeDatabase.memory(), credentialHasher: _fastHasher());
+    CootrafaDatabase.forTesting(NativeDatabase.memory(), _fastHasher());
 CredentialHasher _fastHasher() => CredentialHasher(
   memoryKiB: 64,
   iterations: 1,

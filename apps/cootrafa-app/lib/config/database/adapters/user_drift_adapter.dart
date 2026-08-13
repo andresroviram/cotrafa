@@ -1,5 +1,6 @@
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:drift/drift.dart';
-import 'package:features/src/database/cootrafa_database.dart';
+import 'package:features/auth.dart';
 
 enum UserError {
   unauthorized,
@@ -36,8 +37,8 @@ final class UserProfile {
   final int balanceCop;
 }
 
-final class UserService {
-  UserService(this._database);
+final class UserDriftAdapter {
+  UserDriftAdapter(this._database);
   final CootrafaDatabase _database;
 
   Future<UserResult<List<UserProfile>>> listUsers(

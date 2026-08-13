@@ -1,22 +1,24 @@
+import 'package:core/security/credential_hasher.dart';
+import 'package:features/auth.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:features/src/database/cootrafa_database.dart';
-import 'package:features/src/user/user_service.dart';
+import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_app/config/database/adapters/user_drift_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late CootrafaDatabase database;
-  late UserService users;
+  late UserDriftAdapter users;
   setUp(() async {
-    database = CootrafaDatabase(
+    database = CootrafaDatabase.forTesting(
       NativeDatabase.memory(),
-      credentialHasher: CredentialHasher(
+      CredentialHasher(
         memoryKiB: 64,
         iterations: 1,
         saltFactory: () => List<int>.filled(16, 7),
       ),
     );
-    users = UserService(database);
+    users = UserDriftAdapter(database);
     await database.customSelect('SELECT 1').getSingle();
   });
   tearDown(() => database.close());
@@ -148,7 +150,7 @@ void main() {
 }
 
 Future<UserProfile> _activeClient(
-  UserService users,
+  UserDriftAdapter users,
   CootrafaDatabase database,
   String email,
   int balance,
@@ -161,7 +163,7 @@ Future<UserProfile> _activeClient(
 }
 
 Future<UserResult<UserProfile>> _create(
-  UserService users,
+  UserDriftAdapter users,
   String email,
   int balance,
 ) => users.createClient(

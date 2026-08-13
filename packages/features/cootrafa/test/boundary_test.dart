@@ -169,22 +169,13 @@ void main() {
       );
 
       expect(report.violations, isEmpty, reason: report.describeViolations());
-      expect(
-        report.activeExceptions,
-        'src/transfer/transfer_service.dart,src/user/address/address_service.dart,src/user/user_service.dart'
-            .split(',')
-            .toSet(),
-        reason: 'Only the three current characterization debts may remain.',
-      );
+      expect(report.activeExceptions, isEmpty);
     });
   });
 }
 
 const Set<String> _temporaryPersistenceExceptions = <String>{
   'src/auth/auth_service.dart',
-  'src/transfer/transfer_service.dart',
-  'src/user/address/address_service.dart',
-  'src/user/user_service.dart',
 };
 
 const String _requiredAppPersistence =
