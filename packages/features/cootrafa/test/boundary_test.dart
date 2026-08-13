@@ -47,6 +47,7 @@ void main() {
         <BoundaryRule>[
           BoundaryRule.featureDoesNotImportApp,
           BoundaryRule.layerDoesNotImportDataImplementation,
+          BoundaryRule.featureDoesNotImportDrift,
           BoundaryRule.layerDoesNotImportPersistence,
           BoundaryRule.persistenceImportsStayInDataSources,
           BoundaryRule.featureDoesNotImportApp,
@@ -103,22 +104,79 @@ void main() {
       expect(report.activeExceptions, isEmpty);
     });
 
-    test(
-      'scans the live feature tree with only known characterization debt',
-      () {
-        final Directory featureLib = findFeatureLib();
-        final BoundaryScanReport report = scanArchitectureTree(featureLib);
+    test('canonical transition and final architectures are accepted', () {
+      final BoundaryScanReport p2 = scanArchitectureSources(
+        _sources(
+          "src/database/cootrafa_database.dart|class CootrafaDatabase {}|app/lib/config/database/cootrafa_database.dart|import 'package:drift/drift.dart'; class AppDatabase {}|app/lib/config/database/tables/users.dart|import 'package:drift/drift.dart'; class Users {}|app/lib/config/database/database_module.dart|import 'package:drift/drift.dart'; class DatabaseModule {}",
+        ),
+      );
+      final BoundaryScanReport pureBarrel = scanArchitectureSources(
+        _sources(
+          "auth.dart|export 'src/auth/domain/auth_port.dart';|src/auth/domain/auth_port.dart|abstract interface class AuthPort {}",
+        ),
+      );
+      final violations = <BoundaryViolation>[
+        ...scanArchitectureSources(
+          _sources(
+            "src/database/cootrafa_database.dart|import 'package:drift/drift.dart';",
+          ),
+        ).violations,
+        ...p2.violations,
+        ...pureBarrel.violations,
+        ...scanArchitectureSources(_finalArchitectureSources()).violations,
+      ];
+      expect(violations, isEmpty, reason: violations.join('\n'));
+    });
 
-        expect(report.violations, isEmpty, reason: report.describeViolations());
-        expect(
-          report.activeExceptions.difference(_temporaryPersistenceExceptions),
-          isEmpty,
-          reason:
-              'No source outside the four characterization services may '
-              'be exempt.',
+    final List<String> rejectedFixtures = <String>[
+      "feature app import|featureDoesNotImportApp|src/auth/domain/usecases/login.dart|import 'package:cootrafa_app/config/database/cootrafa_database.dart';",
+      "feature Drift import|featureDoesNotImportDrift|src/user/domain/entities/profile.dart|import 'package:drift/drift.dart';",
+      "app private feature import|appImportsPrivateFeature|app/lib/config/database/adapters/auth.dart|import '../../../../packages/features/cootrafa/lib/src/auth/port.dart';",
+      "app DI private feature import|appImportsPrivateFeature|app/lib/config/injectable/injectable_dependency.dart|import 'package:features/src/injectable.dart';",
+      "public barrel concrete leak|publicBarrelLeaksPersistence|auth.dart|export 'src/database/cootrafa_database.dart';",
+      'final feature database|finalFeatureHasInfrastructure|src/database/cootrafa_database.dart|',
+      'final feature security|finalFeatureHasInfrastructure|src/security/credential_hasher.dart|',
+      'final feature Drift manifest|featureDoesNotImportDrift|features/pubspec.yaml|dependencies:\n  drift: ^2.24.0',
+      'missing Freezed event|invalidFreezedEvent|src/user/presentation/users/bloc/user_event.dart|sealed class UserEvent {}',
+      'missing Freezed state|invalidFreezedState|src/transfer/presentation/bloc/transfer_state.dart|class TransferState {}',
+      "dual runtime database composition|dualRuntimeDatabaseAuthority|app/lib/config/injectable/database_module.dart|import '../database/cootrafa_database.dart';\nimport 'package:features/src/database/cootrafa_database.dart';",
+      'feature reverse manifest dependency|featureManifestDependsOnApp|features/pubspec.yaml|dependencies:\n  cootrafa_app:\n    path: ../../app',
+      'forbidden database abstraction|forbiddenDatabaseAbstraction|src/auth/domain/i_cootrafa_database.dart|abstract class ICootrafaDatabase {}',
+      'generic CRUD abstraction|forbiddenDatabaseAbstraction|src/user/domain/i_user_crud.dart|abstract class IUserCrud {}',
+      'final feature Drift type|featureDoesNotImportDrift|src/auth/domain/entities/bad_identity.dart|final CootrafaDatabase database;',
+      "public barrel closure|publicBarrelLeaksPersistence|auth.dart|export 'src/auth/contracts.dart';|src/auth/contracts.dart|final QueryRow leakedRow;",
+      "relative barrel closure|publicBarrelLeaksPersistence|auth.dart|export 'src/auth/api.dart';|src/auth/api.dart|export '../data/contracts.dart';|src/data/contracts.dart|final AddressesData exposedRow;",
+      "P7 obsolete persistence|finalFeatureHasInfrastructure|injectable.dart|void configureDependencies() {}|app/lib/config/injectable/injectable_dependency.dart|import 'package:features/injectable.dart';|src/database/cootrafa_database.g.dart|class _GeneratedDatabase {}",
+    ];
+    for (final String fixture in rejectedFixtures) {
+      final List<String> parts = fixture.split('|');
+      test('rejects ${parts[0]}', () {
+        final BoundaryScanReport report = scanArchitectureSources(
+          _sources(parts.sublist(2).join('|')),
+          finalArchitecture: parts[0].startsWith('final'),
         );
-      },
-    );
+        expect(
+          report.violations.map((BoundaryViolation item) => item.rule),
+          contains(BoundaryRule.values.byName(parts[1])),
+          reason: report.describeViolations(),
+        );
+      });
+    }
+
+    test('scans the live workspace with only known characterization debt', () {
+      final BoundaryScanReport report = scanArchitectureWorkspace(
+        findWorkspaceRoot(),
+      );
+
+      expect(report.violations, isEmpty, reason: report.describeViolations());
+      expect(
+        report.activeExceptions,
+        'src/transfer/transfer_service.dart,src/user/address/address_service.dart,src/user/user_service.dart'
+            .split(',')
+            .toSet(),
+        reason: 'Only the three current characterization debts may remain.',
+      );
+    });
   });
 }
 
@@ -129,12 +187,25 @@ const Set<String> _temporaryPersistenceExceptions = <String>{
   'src/user/user_service.dart',
 };
 
+const String _requiredAppPersistence =
+    'app/lib/config/database/cootrafa_database.dart,app/lib/config/database/tables/users.dart,app/lib/config/database/tables/login_identifiers.dart,app/lib/config/database/tables/addresses.dart,app/lib/config/database/tables/transfers.dart,app/lib/config/database/tables/local_session.dart,app/lib/config/database/database_module.dart,app/lib/config/database/adapters/auth_drift_adapter.dart,app/lib/config/database/adapters/user_drift_adapter.dart,app/lib/config/database/adapters/address_drift_adapter.dart,app/lib/config/database/adapters/transfer_drift_adapter.dart,app/lib/config/injectable/injectable_dependency.dart';
+
 enum BoundaryRule {
+  appImportsPrivateFeature,
+  dualRuntimeDatabaseAuthority,
   featureDoesNotImportApp,
+  featureDoesNotImportDrift,
+  featureManifestDependsOnApp,
+  finalFeatureHasInfrastructure,
   finalArchitectureHasActiveExceptions,
+  forbiddenDatabaseAbstraction,
+  invalidFreezedEvent,
+  invalidFreezedState,
   layerDoesNotImportDataImplementation,
   layerDoesNotImportPersistence,
   persistenceImportsStayInDataSources,
+  publicBarrelLeaksPersistence,
+  missingFinalAppPersistence,
 }
 
 class ArchitectureSource {
@@ -196,7 +267,12 @@ BoundaryScanReport scanArchitectureTree(Directory featureLib) {
       )
       .toList();
 
-  final BoundaryScanReport report = scanArchitectureSources(sources);
+  final BoundaryScanReport report = scanArchitectureSources(
+    sources,
+    finalArchitecture:
+        File('${featureLib.path}/injectable.dart').existsSync() &&
+        File('${featureLib.path}/routes.dart').existsSync(),
+  );
   final bool hasFinalMarkers =
       File('${featureLib.path}/injectable.dart').existsSync() &&
       File('${featureLib.path}/routes.dart').existsSync();
@@ -219,15 +295,114 @@ BoundaryScanReport scanArchitectureTree(Directory featureLib) {
   );
 }
 
-BoundaryScanReport scanArchitectureSources(List<ArchitectureSource> sources) {
+BoundaryScanReport scanArchitectureWorkspace(Directory workspace) {
+  final Directory feature = Directory(
+    '${workspace.path}/packages/features/cootrafa/lib',
+  );
+  final List<ArchitectureSource> sources = <ArchitectureSource>[
+    ..._readDartSources(feature, ''),
+    ..._readDartSources(
+      Directory('${workspace.path}/apps/cootrafa-app/lib'),
+      'app/lib/',
+    ),
+    for (final String pair
+        in 'packages/features/cootrafa/pubspec.yaml|features/pubspec.yaml,apps/cootrafa-app/pubspec.yaml|app/pubspec.yaml'
+            .split(','))
+      _readSource(workspace, pair.split('|').first, pair.split('|').last),
+  ];
+  final bool finalArchitecture =
+      File('${feature.path}/injectable.dart').existsSync() &&
+      File('${feature.path}/routes.dart').existsSync();
+  return scanArchitectureSources(
+    sources,
+    finalArchitecture: finalArchitecture,
+    requireAppPersistence: finalArchitecture,
+  );
+}
+
+Iterable<ArchitectureSource> _readDartSources(Directory root, String prefix) =>
+    root
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((File file) => file.path.endsWith('.dart'))
+        .map(
+          (File file) => ArchitectureSource(
+            path: '$prefix${_relativePath(root, file)}',
+            content: file.readAsStringSync(),
+          ),
+        );
+
+ArchitectureSource _readSource(
+  Directory workspace,
+  String physical,
+  String normalized,
+) => ArchitectureSource(
+  path: normalized,
+  content: File('${workspace.path}/$physical').readAsStringSync(),
+);
+
+BoundaryScanReport scanArchitectureSources(
+  List<ArchitectureSource> sources, {
+  bool finalArchitecture = false,
+  bool requireAppPersistence = false,
+}) {
   final List<BoundaryViolation> violations = <BoundaryViolation>[];
   final Set<String> activeExceptions = <String>{};
+  final Set<String> sourcePaths = sources
+      .map((ArchitectureSource source) => source.path)
+      .toSet();
+  final bool persistenceFinal =
+      sourcePaths.contains('injectable.dart') &&
+      sourcePaths.contains(_requiredAppPersistence.split(',').last);
+  final bool enforceFinal = finalArchitecture || persistenceFinal;
   final RegExp directive = RegExp(
     r'''^\s*(?:import|export)\s+['"]([^'"]+)['"]''',
   );
 
   for (final ArchitectureSource source in sources) {
     final String path = source.path.replaceAll('\\', '/');
+    final bool appSource = path.startsWith('app/');
+    final bool featureSource =
+        !appSource &&
+        !RegExp(r'(?:pubspec\.yaml|\.freezed\.dart|\.g\.dart)$').hasMatch(path);
+    if (path == 'features/pubspec.yaml' &&
+        (source.content.contains('cootrafa_app:') ||
+            source.content.contains('apps/cootrafa-app'))) {
+      violations.add(
+        _sourceViolation(BoundaryRule.featureManifestDependsOnApp, path),
+      );
+    }
+    if (source.content.contains('ICootrafaDatabase') ||
+        RegExp(r'\b(?:GenericCrud|I\w*Crud)\b').hasMatch(source.content)) {
+      violations.add(
+        _sourceViolation(BoundaryRule.forbiddenDatabaseAbstraction, path),
+      );
+    }
+    if (enforceFinal && !appSource && _isInvalidFinalFeaturePath(path)) {
+      violations.add(
+        _sourceViolation(BoundaryRule.finalFeatureHasInfrastructure, path),
+      );
+    }
+    if (enforceFinal &&
+        featureSource &&
+        (source.content.contains('CootrafaDatabase') ||
+            source.content.contains('QueryRow') ||
+            source.content.contains('GeneratedDatabase'))) {
+      violations.add(
+        _sourceViolation(BoundaryRule.featureDoesNotImportDrift, path),
+      );
+    }
+    if (enforceFinal &&
+        path == 'features/pubspec.yaml' &&
+        RegExp(r'^\s*drift:', multiLine: true).hasMatch(source.content)) {
+      violations.add(
+        _sourceViolation(BoundaryRule.featureDoesNotImportDrift, path),
+      );
+    }
+    final BoundaryRule? freezedFailure = _freezedFailure(source);
+    if (freezedFailure != null) {
+      violations.add(_sourceViolation(freezedFailure, path));
+    }
     final List<String> lines = source.content.split('\n');
     for (int index = 0; index < lines.length; index++) {
       final RegExpMatch? match = directive.firstMatch(lines[index]);
@@ -237,10 +412,44 @@ BoundaryScanReport scanArchitectureSources(List<ArchitectureSource> sources) {
       final String importUri = match.group(1)!;
       final bool importsPersistence = _importsPersistence(importUri);
 
-      if (_importsApplication(importUri)) {
+      if (featureSource && _importsApplication(importUri)) {
         violations.add(
           _violation(
             BoundaryRule.featureDoesNotImportApp,
+            path,
+            index,
+            importUri,
+          ),
+        );
+      }
+      if (appSource && _importsPrivateFeature(path, importUri)) {
+        violations.add(
+          _violation(
+            BoundaryRule.appImportsPrivateFeature,
+            path,
+            index,
+            importUri,
+          ),
+        );
+      }
+      if (featureSource &&
+          importUri.startsWith('package:drift/') &&
+          (enforceFinal ||
+              (!_isPersistenceOwner(path) &&
+                  !_temporaryPersistenceExceptions.contains(path)))) {
+        violations.add(
+          _violation(
+            BoundaryRule.featureDoesNotImportDrift,
+            path,
+            index,
+            importUri,
+          ),
+        );
+      }
+      if (_isPublicBarrel(path) && _leaksPersistence(importUri)) {
+        violations.add(
+          _violation(
+            BoundaryRule.publicBarrelLeaksPersistence,
             path,
             index,
             importUri,
@@ -282,12 +491,98 @@ BoundaryScanReport scanArchitectureSources(List<ArchitectureSource> sources) {
         }
       }
     }
+    if (appSource &&
+        source.content.contains('cootrafa_database.dart') &&
+        source.content.contains('package:features/src/database/')) {
+      violations.add(
+        _sourceViolation(BoundaryRule.dualRuntimeDatabaseAuthority, path),
+      );
+    }
+  }
+
+  final Map<String, ArchitectureSource> byPath = <String, ArchitectureSource>{
+    for (final ArchitectureSource source in sources) source.path: source,
+  };
+  for (final ArchitectureSource barrel in sources.where(
+    (ArchitectureSource source) => _isPublicBarrel(source.path),
+  )) {
+    final Set<String> closure = <String>{barrel.path};
+    for (int pass = 0; pass < sources.length; pass++) {
+      for (final String path in closure.toList()) {
+        for (final RegExpMatch export in RegExp(
+          r'''export\s+['"]([^'"]+)['"]''',
+        ).allMatches(byPath[path]!.content)) {
+          final String target = _resolveExport(path, export.group(1)!);
+          if (byPath.containsKey(target)) closure.add(target);
+        }
+      }
+    }
+    if (closure.any(
+      (String path) => _leaksPersistenceContent(byPath[path]!.content),
+    )) {
+      violations.add(
+        _sourceViolation(
+          BoundaryRule.publicBarrelLeaksPersistence,
+          barrel.path,
+        ),
+      );
+    }
+  }
+
+  if (enforceFinal) {
+    for (final String path in activeExceptions) {
+      violations.add(
+        _sourceViolation(
+          BoundaryRule.finalArchitectureHasActiveExceptions,
+          path,
+        ),
+      );
+    }
+  }
+
+  if (enforceFinal && (requireAppPersistence || persistenceFinal)) {
+    for (final String path
+        in _requiredAppPersistence.split(',').toSet().difference(sourcePaths)) {
+      violations.add(
+        _sourceViolation(BoundaryRule.missingFinalAppPersistence, path),
+      );
+    }
   }
 
   return BoundaryScanReport(
     violations: violations,
     activeExceptions: activeExceptions,
   );
+}
+
+BoundaryViolation _sourceViolation(BoundaryRule rule, String path) =>
+    BoundaryViolation(rule: rule, path: path, line: 1, importUri: '');
+
+BoundaryRule? _freezedFailure(ArchitectureSource source) {
+  final String name = source.path.split('/').last;
+  final String stem = name.replaceFirst('.dart', '');
+  final String content = source.content;
+  if (name.endsWith('_event.dart') && !name.endsWith('.freezed.dart')) {
+    final bool valid =
+        content.contains('package:freezed_annotation/') &&
+        content.contains("part '$stem.freezed.dart';") &&
+        content.contains('@freezed') &&
+        RegExp(r'sealed class \w+ with _\$\w+').hasMatch(content) &&
+        content.contains('const factory');
+    return valid ? null : BoundaryRule.invalidFreezedEvent;
+  }
+  if (name.endsWith('_state.dart') &&
+      !name.endsWith('.freezed.dart') &&
+      content.contains('class ')) {
+    final bool valid =
+        content.contains('package:freezed_annotation/') &&
+        content.contains("part '$stem.freezed.dart';") &&
+        content.contains('@freezed') &&
+        RegExp(r'abstract class \w+ with _\$\w+').hasMatch(content) &&
+        content.contains('factory');
+    return valid ? null : BoundaryRule.invalidFreezedState;
+  }
+  return null;
 }
 
 BoundaryViolation _violation(
@@ -307,6 +602,18 @@ bool _importsApplication(String importUri) =>
     importUri.contains('apps/cootrafa-app/') ||
     importUri.contains('apps/cootrafa_app/');
 
+bool _importsPrivateFeature(String path, String importUri) {
+  if (importUri.startsWith('package:features/src/') ||
+      importUri.contains('packages/features/cootrafa/lib/src/')) {
+    return true;
+  }
+  return path.startsWith('app/lib/config/database/adapters/') &&
+      importUri.startsWith('package:features/') &&
+      !RegExp(
+        r'^package:features/(?:auth|user|address|transfer)\.dart$',
+      ).hasMatch(importUri);
+}
+
 bool _importsPersistence(String importUri) =>
     importUri.startsWith('package:drift/') ||
     importUri.endsWith('/cootrafa_database.dart') ||
@@ -323,9 +630,41 @@ bool _isDomainOrPresentation(String path) =>
     path.contains('/domain/') || path.contains('/presentation/');
 
 bool _isPersistenceOwner(String path) =>
+    path.startsWith('app/lib/config/database/') ||
     path.startsWith('src/database/') ||
     (path.contains('/data/datasources/') &&
         path.endsWith('_local_datasource.dart'));
+
+bool _isInvalidFinalFeaturePath(String path) {
+  final String normalized = path.replaceFirst('features/lib/', '');
+  if (!normalized.startsWith('src/')) {
+    return false;
+  }
+  final String topLevel = normalized.substring(4).split('/').first;
+  return !<String>{'auth', 'user', 'transfer'}.contains(topLevel);
+}
+
+bool _isPublicBarrel(String path) =>
+    'auth.dart,user.dart,address.dart,transfer.dart,features.dart'
+        .split(',')
+        .contains(path.replaceFirst('features/lib/', ''));
+
+bool _leaksPersistence(String importUri) =>
+    importUri.contains('cootrafa_database') ||
+    importUri.endsWith('.g.dart') ||
+    importUri.contains('drift_adapter') ||
+    importUri.contains('repository_impl') ||
+    (importUri.contains('/data/datasources/') &&
+        !importUri.split('/').last.startsWith('i_'));
+
+bool _leaksPersistenceContent(String content) => RegExp(
+  r'''\b(?:QueryRow|GeneratedDatabase|CootrafaDatabase|DataClass|AddressesData|LocalSessionData)\b|package:drift/|(?:export|import)\s+['"][^'"]*(?:\.g\.dart|cootrafa_database)[^'"]*['"]''',
+).hasMatch(content);
+
+String _resolveExport(String path, String uri) =>
+    uri.startsWith('package:features/')
+    ? uri.substring('package:features/'.length)
+    : Uri.parse(path).resolve(uri).path;
 
 String _relativePath(Directory root, File file) =>
     file.path.substring(root.path.length + 1).replaceAll('\\', '/');
@@ -342,6 +681,12 @@ Directory findFeatureLib() {
         throw StateError('Unable to locate the features lib directory.'),
   );
 }
+
+Directory findWorkspaceRoot() =>
+    File('pubspec.yaml').existsSync() &&
+        File('packages/features/cootrafa/pubspec.yaml').existsSync()
+    ? Directory.current
+    : Directory.current.parent.parent.parent;
 
 Directory _temporaryFeatureTree({
   bool hasInjectable = true,
@@ -366,3 +711,26 @@ Directory _temporaryFeatureTree({
     );
   return root;
 }
+
+List<ArchitectureSource> _finalArchitectureSources() => <ArchitectureSource>[
+  ..._sources(
+    "injectable.dart|void configureDependencies() {}|auth.dart|export 'src/auth/data/datasources/i_auth_local_datasource.dart';|src/auth/presentation/auth/bloc/auth_event.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_event.freezed.dart';\n@freezed sealed class AuthEvent with _\$AuthEvent { const factory AuthEvent.restore() = Restore; }|src/auth/presentation/auth/bloc/auth_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_state.freezed.dart';\n@freezed abstract class AuthState with _\$AuthState { const factory AuthState() = _AuthState; }|src/auth/presentation/auth/bloc/auth_state.freezed.dart|class GeneratedAuthState {}",
+  ),
+  for (final String path in _requiredAppPersistence.split(','))
+    ArchitectureSource(
+      path: path,
+      content: path.contains('/adapters/')
+          ? "import 'package:drift/drift.dart'; import 'package:features/${path.split('/').last.split('_').first}.dart';"
+          : path.endsWith('injectable_dependency.dart')
+          ? "import 'package:features/injectable.dart';"
+          : "import 'package:drift/drift.dart'; class AppPersistenceConcept {}",
+    ),
+];
+
+List<ArchitectureSource> _sources(String encoded) => <ArchitectureSource>[
+  for (int index = 0; index < encoded.split('|').length; index += 2)
+    ArchitectureSource(
+      path: encoded.split('|')[index],
+      content: encoded.split('|')[index + 1],
+    ),
+];
