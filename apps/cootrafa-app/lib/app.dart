@@ -16,7 +16,7 @@ class App extends StatelessWidget {
     return AdaptiveTheme(
       light: AppTheme.light,
       dark: AppTheme.dark,
-      initial: AdaptiveThemeMode.system,
+      initial: AdaptiveThemeMode.light,
       builder: (theme, darkTheme) => Builder(
         builder: (ctx) => ResponsiveBreakpoints.builder(
           breakpoints: const [

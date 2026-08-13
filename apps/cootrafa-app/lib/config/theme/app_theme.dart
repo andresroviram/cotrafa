@@ -1,14 +1,26 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
-  static const _seed = Color(0xFF00856A);
+  static const primaryColor = Color(0xFF004183);
+  static const secondaryColor = Color(0xFFFF8C00);
+  static const accentColor = Color(0xFF004EB5);
 
-  static final lightColorScheme = ColorScheme.fromSeed(seedColor: _seed);
+  static final lightColorScheme = ColorScheme.fromSeed(seedColor: primaryColor)
+      .copyWith(
+        primary: primaryColor,
+        onPrimary: Colors.white,
+        secondary: secondaryColor,
+        onSecondary: Colors.black,
+        tertiary: accentColor,
+        onTertiary: Colors.white,
+        surface: Colors.white,
+        onSurface: Colors.black,
+      );
 
   static final darkColorScheme = ColorScheme.fromSeed(
-    seedColor: _seed,
+    seedColor: primaryColor,
     brightness: Brightness.dark,
-  );
+  ).copyWith(secondary: secondaryColor, tertiary: accentColor);
 
   static final light = ThemeData(
     colorScheme: lightColorScheme,

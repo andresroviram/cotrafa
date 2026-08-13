@@ -1,3 +1,4 @@
+import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:cootrafa_app/app.dart';
 import 'package:cootrafa_app/config/routes/app_router.dart';
 import 'package:core/get_it.dart';
@@ -23,7 +24,9 @@ void main() {
     await EasyLocalization.ensureInitialized();
   });
 
-  testWidgets('starts on the login screen', (tester) async {
+  testWidgets('starts on the login screen in light adaptive mode', (
+    tester,
+  ) async {
     final authBloc = MockAuthBloc();
     when(
       () => authBloc.state,
@@ -50,6 +53,14 @@ void main() {
     );
     await tester.pump();
 
+    expect(
+      tester.widget<AdaptiveTheme>(find.byType(AdaptiveTheme)).initial,
+      AdaptiveThemeMode.light,
+    );
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+      ThemeMode.system,
+    );
     expect(find.text('Cootrafa'), findsOneWidget);
     expect(find.text('Iniciar sesión'), findsOneWidget);
   });
