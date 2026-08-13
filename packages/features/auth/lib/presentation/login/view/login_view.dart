@@ -77,158 +77,171 @@ class _LoginViewState extends State<LoginView> {
       child: Scaffold(
         backgroundColor: colors.surfaceContainerLow,
         body: SafeArea(
-          child: LayoutBuilder(
-            builder: (context, constraints) => SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 56,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.manual,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 28,
                 ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    child: BlocBuilder<AuthBloc, AuthState>(
-                      builder: (context, state) {
-                        final isLoading = state.status == AuthStatus.loading;
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Semantics(
-                              label: 'Logo de Cootrafa',
-                              image: true,
-                              child: Image.asset(
-                                logoPath,
-                                width: 176,
-                                height: 60,
-                                fit: BoxFit.contain,
-                                errorBuilder: (_, _, _) =>
-                                    const SizedBox(height: 60),
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-                            Card(
-                              margin: EdgeInsets.zero,
-                              color: colors.surface,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  24,
-                                  32,
-                                  24,
-                                  28,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight - 56,
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, state) {
+                          final isLoading = state.status == AuthStatus.loading;
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Semantics(
+                                label: 'Logo de Cootrafa',
+                                image: true,
+                                child: Image.asset(
+                                  logoPath,
+                                  width: 176,
+                                  height: 60,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, _, _) =>
+                                      const SizedBox(height: 60),
                                 ),
-                                child: Form(
-                                  key: _formKey,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Text(
-                                        'Bienvenido',
-                                        textAlign: TextAlign.center,
-                                        style: theme.textTheme.headlineSmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 28),
-                                      const _FieldLabel(
-                                        text: 'Correo o nombre de usuario',
-                                      ),
-                                      const SizedBox(height: 8),
-                                      TextFormField(
-                                        controller: _identifierController,
-                                        enabled: !isLoading,
-                                        keyboardType:
-                                            TextInputType.emailAddress,
-                                        textInputAction: TextInputAction.next,
-                                        autocorrect: false,
-                                        autofillHints: const [
-                                          AutofillHints.username,
-                                          AutofillHints.email,
-                                        ],
-                                        decoration: _inputDecoration(
-                                          context,
-                                          hint: 'tu@correo.com',
+                              ),
+                              const SizedBox(height: 28),
+                              Card(
+                                margin: EdgeInsets.zero,
+                                color: colors.surface,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    24,
+                                    32,
+                                    24,
+                                    28,
+                                  ),
+                                  child: Form(
+                                    key: _formKey,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Text(
+                                          'Bienvenido',
+                                          textAlign: TextAlign.center,
+                                          style: theme.textTheme.headlineSmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w700,
+                                              ),
                                         ),
-                                        validator: (value) =>
-                                            value == null ||
-                                                value.trim().isEmpty
-                                            ? 'Ingresa tu correo o nombre de usuario.'
-                                            : null,
-                                      ),
-                                      const SizedBox(height: 14),
-                                      const _FieldLabel(text: 'Contraseña'),
-                                      const SizedBox(height: 8),
-                                      TextFormField(
-                                        controller: _passwordController,
-                                        enabled: !isLoading,
-                                        obscureText: _obscurePassword,
-                                        textInputAction: TextInputAction.done,
-                                        autofillHints: const [
-                                          AutofillHints.password,
-                                        ],
-                                        onFieldSubmitted: (_) =>
-                                            _submitClient(),
-                                        decoration:
-                                            _inputDecoration(
-                                              context,
-                                              hint: 'Ingresa tu contraseña',
-                                            ).copyWith(
-                                              suffixIcon: IconButton(
-                                                tooltip: _obscurePassword
-                                                    ? 'Mostrar contraseña'
-                                                    : 'Ocultar contraseña',
-                                                onPressed: () => setState(
-                                                  () => _obscurePassword =
-                                                      !_obscurePassword,
-                                                ),
-                                                icon: Icon(
-                                                  _obscurePassword
-                                                      ? Icons
-                                                            .visibility_outlined
-                                                      : Icons
-                                                            .visibility_off_outlined,
+                                        const SizedBox(height: 28),
+                                        const _FieldLabel(
+                                          text: 'Correo o nombre de usuario',
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextFormField(
+                                          controller: _identifierController,
+                                          enabled: !isLoading,
+                                          keyboardType:
+                                              TextInputType.emailAddress,
+                                          textInputAction: TextInputAction.next,
+                                          autocorrect: false,
+                                          autofillHints: const [
+                                            AutofillHints.username,
+                                            AutofillHints.email,
+                                          ],
+                                          decoration: _inputDecoration(
+                                            context,
+                                            hint: 'tu@correo.com',
+                                          ),
+                                          validator: (value) =>
+                                              value == null ||
+                                                  value.trim().isEmpty
+                                              ? 'Ingresa tu correo o nombre de usuario.'
+                                              : null,
+                                        ),
+                                        const SizedBox(height: 14),
+                                        const _FieldLabel(text: 'Contraseña'),
+                                        const SizedBox(height: 8),
+                                        TextFormField(
+                                          controller: _passwordController,
+                                          enabled: !isLoading,
+                                          obscureText: _obscurePassword,
+                                          textInputAction: TextInputAction.done,
+                                          autovalidateMode: AutovalidateMode
+                                              .onUserInteraction,
+                                          autofillHints: const [
+                                            AutofillHints.password,
+                                          ],
+                                          onFieldSubmitted: (_) =>
+                                              _submitClient(),
+                                          decoration:
+                                              _inputDecoration(
+                                                context,
+                                                hint: 'Ingresa tu contraseña',
+                                              ).copyWith(
+                                                suffixIcon: IconButton(
+                                                  tooltip: _obscurePassword
+                                                      ? 'Mostrar contraseña'
+                                                      : 'Ocultar contraseña',
+                                                  onPressed: () => setState(
+                                                    () => _obscurePassword =
+                                                        !_obscurePassword,
+                                                  ),
+                                                  icon: Icon(
+                                                    _obscurePassword
+                                                        ? Icons
+                                                              .visibility_outlined
+                                                        : Icons
+                                                              .visibility_off_outlined,
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                        validator: (value) =>
-                                            value == null || value.isEmpty
-                                            ? 'Ingresa tu contraseña.'
-                                            : null,
-                                      ),
-                                      const SizedBox(height: 24),
-                                      FilledButton(
-                                        style: _buttonStyle(),
-                                        onPressed: isLoading
-                                            ? null
-                                            : _submitClient,
-                                        child: _ButtonLabel(
-                                          loading: isLoading,
-                                          text: 'Iniciar sesión',
+                                          validator: (value) =>
+                                              value == null || value.isEmpty
+                                              ? 'Ingresa tu contraseña.'
+                                              : null,
                                         ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      OutlinedButton(
-                                        style: _buttonStyle(),
-                                        onPressed: isLoading
-                                            ? null
-                                            : () => context.read<AuthBloc>().add(
-                                                const AuthEvent.demoAdminLoginRequested(),
-                                              ),
-                                        child: const Text('Iniciar como Admin'),
-                                      ),
-                                    ],
+                                        const SizedBox(height: 24),
+                                        FilledButton(
+                                          style: _buttonStyle(),
+                                          onPressed: isLoading
+                                              ? null
+                                              : _submitClient,
+                                          child: _ButtonLabel(
+                                            loading: isLoading,
+                                            text: 'Iniciar sesión',
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        OutlinedButton(
+                                          style: _buttonStyle(),
+                                          onPressed: isLoading
+                                              ? null
+                                              : () => context.read<AuthBloc>().add(
+                                                  const AuthEvent.demoAdminLoginRequested(),
+                                                ),
+                                          child: const Text(
+                                            'Iniciar como Admin',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        );
-                      },
+                            ],
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),

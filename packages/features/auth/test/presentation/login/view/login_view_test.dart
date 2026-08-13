@@ -69,6 +69,49 @@ void main() {
     verifyNever(() => bloc.add(any()));
   });
 
+  testWidgets('clears the password validation error while typing', (
+    tester,
+  ) async {
+    await tester.pumpWidget(subject());
+    await tester.ensureVisible(find.text('Iniciar sesión'));
+    await tester.tap(find.text('Iniciar sesión'));
+    await tester.pump();
+
+    expect(find.text('Ingresa tu contraseña.'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).at(1), 'secret');
+    await tester.pump();
+
+    expect(find.text('Ingresa tu contraseña.'), findsNothing);
+    expect(find.text('Ingresa tu correo o nombre de usuario.'), findsOneWidget);
+  });
+
+  testWidgets('dismisses the keyboard on outside tap but not while scrolling', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(400, 500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(subject());
+    await tester.showKeyboard(find.byType(TextFormField).first);
+    expect(tester.testTextInput.isVisible, isTrue);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byType(SingleChildScrollView)),
+    );
+    await gesture.moveBy(const Offset(0, -100));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.testTextInput.isVisible, isTrue);
+    await gesture.up();
+    await tester.pump();
+
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pump();
+    expect(tester.testTextInput.isVisible, isFalse);
+  });
+
   testWidgets('dispatches client and injected demo login events', (
     tester,
   ) async {
