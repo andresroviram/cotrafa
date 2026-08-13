@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
+import 'package:features/src/auth/domain/entities/demo_credentials.dart';
 import 'package:features/src/security/credential_hasher.dart';
 
+export 'package:features/src/auth/domain/entities/demo_credentials.dart';
 export 'package:features/src/security/credential_hasher.dart';
 
 part 'cootrafa_database.g.dart';
@@ -57,13 +59,14 @@ class CootrafaDatabase extends _$CootrafaDatabase {
   );
 
   Future<void> _seedDemoAdmin() => transaction(() async {
+    const credentials = DemoAdmin.credentials;
     final int count = await customSelect(
       'SELECT COUNT(*) AS count FROM users WHERE id = ?',
       variables: <Variable<Object>>[const Variable<int>(DemoAdmin.userId)],
     ).map((QueryRow row) => row.read<int>('count')).getSingle();
     if (count == 1) return;
     final String passwordHash = await _credentialHasher.hash(
-      DemoAdmin.password,
+      credentials.password,
     );
     final int now = DateTime.now().millisecondsSinceEpoch;
     await customStatement(
@@ -72,7 +75,7 @@ class CootrafaDatabase extends _$CootrafaDatabase {
       "VALUES (?, ?, ?, 'admin', 'active', ?, 0, ?, ?)",
       <Object?>[
         DemoAdmin.userId,
-        DemoAdmin.email,
+        credentials.identifier,
         DemoAdmin.fullName,
         passwordHash,
         now,
@@ -81,7 +84,7 @@ class CootrafaDatabase extends _$CootrafaDatabase {
     );
     await customStatement(
       "INSERT INTO login_identifiers (normalized, user_id, kind) VALUES (?, ?, 'email')",
-      <Object?>[DemoAdmin.email, DemoAdmin.userId],
+      <Object?>[credentials.identifier, DemoAdmin.userId],
     );
   });
 
@@ -94,11 +97,4 @@ class CootrafaDatabase extends _$CootrafaDatabase {
   Future<int?> currentSessionUserId() => customSelect(
     'SELECT user_id FROM local_session WHERE slot = 1',
   ).map((QueryRow row) => row.read<int>('user_id')).getSingleOrNull();
-}
-
-abstract final class DemoAdmin {
-  static const int userId = 1;
-  static const String email = 'admin@cootrafa.local';
-  static const String fullName = 'Cootrafa Demo Admin';
-  static const String password = 'CootrafaDemo2026!';
 }
