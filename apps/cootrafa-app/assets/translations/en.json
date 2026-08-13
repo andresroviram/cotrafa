@@ -1,0 +1,10 @@
+{
+  "app_title": "Cootrafa",
+  "nav": {
+    "home": "Users",
+    "transactions": "Transfers"
+  },
+  "dashboard": "Menu",
+  "switch_to_dark": "Switch to dark mode",
+  "switch_to_light": "Switch to light mode"
+}
