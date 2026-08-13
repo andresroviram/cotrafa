@@ -55,3 +55,11 @@ class DuplicateException implements Exception {
   @override
   String toString() => 'DuplicateException: $message';
 }
+
+class NotFoundException implements Exception {
+  const NotFoundException({this.message = 'Resource not found'});
+  final String message;
+
+  @override
+  String toString() => 'NotFoundException: $message';
+}

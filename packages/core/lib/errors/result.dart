@@ -94,6 +94,7 @@ Failure _failureFrom(Object error, Failure fallback) => switch (error) {
     message: message,
   ),
   DuplicateException() => const DuplicateFailure(),
+  NotFoundException() => const NotFoundFailure(),
   StorageException() => const StorageFailure(),
   NetworkException() => const NetworkFailure(),
   ServerException() => const ServerFailure(),

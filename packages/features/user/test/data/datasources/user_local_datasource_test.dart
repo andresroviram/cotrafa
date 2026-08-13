@@ -1,8 +1,10 @@
+import 'package:core/errors/error.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
+import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -25,66 +27,68 @@ void main() {
 
   test('admin CRUD rejects invalid identifiers or balance', () async {
     final created = await _create(users, ' CLIENT@EXAMPLE.COM ', 250);
-    expect(created.value?.email, 'client@example.com');
-    expect(created.value?.status, 'pendingActivation');
-    expect(created.value?.balanceCop, 250);
-    final row = await _user(database, created.value!.id);
+    expect(created.email, 'client@example.com');
+    expect(created.status, 'pendingActivation');
+    expect(created.balanceCop, 250);
+    final row = await _user(database, created.id);
     expect(row.readNullable<String>('password_hash'), isNull);
     expect(row.readNullable<String>('activation_code_hash'), isNull);
-    expect((await users.listUsers(1)).value?.length, 2);
+    expect((await users.listUsers(1)).length, 2);
     expect(
-      (await users.editProfile(
-        1,
-        created.value!.id,
-        fullName: 'Edited',
-      )).value?.fullName,
+      (await users.editProfile(1, created.id, fullName: 'Edited')).fullName,
       'Edited',
     );
-    expect(
-      (await _create(
-        users,
-        CootrafaDatabaseSeed.test.email.toUpperCase(),
-        0,
-      )).error,
-      UserError.identifierTaken,
+    await expectLater(
+      _create(users, CootrafaDatabaseSeed.test.email.toUpperCase(), 0),
+      throwsA(isA<DuplicateException>()),
     );
     await database.customStatement(
-      "INSERT INTO login_identifiers VALUES ('reserved',${created.value!.id},'username')",
+      "INSERT INTO login_identifiers VALUES ('reserved',${created.id},'username')",
     );
-    expect(
-      (await _create(users, 'RESERVED', 0)).error,
-      UserError.identifierTaken,
+    await expectLater(
+      _create(users, 'RESERVED', 0),
+      throwsA(isA<DuplicateException>()),
     );
-    expect(
-      (await _create(users, 'negative@example.com', -1)).error,
-      UserError.invalidBalance,
+    await expectLater(
+      _create(users, 'negative@example.com', -1),
+      throwsA(
+        isA<ValidationException>().having(
+          (error) => error.message,
+          'message',
+          'Initial balance cannot be negative.',
+        ),
+      ),
     );
-    expect((await users.listUsers(1)).value?.length, 2);
+    expect((await users.listUsers(1)).length, 2);
   });
 
   test('active client can view and edit only own name', () async {
-    final client = (await _create(users, 'client@example.com', 75)).value!;
+    final client = await _create(users, 'client@example.com', 75);
     await database.customStatement(
       "UPDATE users SET status='active' WHERE id=${client.id}",
     );
-    expect(
-      (await users.getUser(client.id, client.id)).value?.fullName,
-      'Client',
-    );
+    expect((await users.getUser(client.id, client.id)).fullName, 'Client');
     expect(
       (await users.editProfile(
         client.id,
         client.id,
         fullName: 'Self',
-      )).value?.fullName,
+      )).fullName,
       'Self',
     );
-    expect((await users.getUser(client.id, 1)).error, UserError.unauthorized);
-    expect(
-      (await users.editProfile(client.id, 1, fullName: 'Attack')).error,
-      UserError.unauthorized,
+    await expectLater(
+      users.getUser(client.id, 1),
+      throwsA(isA<UnauthorizedException>()),
     );
-    expect((await users.listUsers(client.id)).error, UserError.unauthorized);
+    await expectLater(
+      users.editProfile(client.id, 1, fullName: 'Attack'),
+      throwsA(isA<UnauthorizedException>()),
+    );
+    await expectLater(
+      users.listUsers(client.id),
+      throwsA(isA<UnauthorizedException>()),
+    );
+    await expectLater(users.getUser(1, 999), throwsA(isA<NotFoundException>()));
     final unchanged = await _user(database, client.id);
     expect(unchanged.read<String>('role'), 'client');
     expect(unchanged.read<String>('status'), 'active');
@@ -102,7 +106,7 @@ void main() {
       "INSERT INTO addresses (user_id,line1,city,label,is_primary) VALUES (${client.id},'One','Medellin','Home',1)",
     );
     await database.setSessionUserId(client.id);
-    expect((await users.deleteUser(1, client.id)).value, DeleteOutcome.deleted);
+    expect(await users.deleteUser(1, client.id), DeleteOutcome.deleted);
     expect(await _count(database, 'users', 'id=${client.id}'), 0);
     expect(
       await _count(database, 'login_identifiers', 'user_id=${client.id}'),
@@ -130,10 +134,7 @@ void main() {
     );
     await database.setSessionUserId(origin.id);
     await database.customStatement(_transferSql(origin.id, destination.id));
-    expect(
-      (await users.deleteUser(1, origin.id)).value,
-      DeleteOutcome.deactivated,
-    );
+    expect(await users.deleteUser(1, origin.id), DeleteOutcome.deactivated);
     final retained = await _user(database, origin.id);
     expect(retained.read<String>('status'), 'inactive');
     expect(retained.read<int>('balance_cop'), 100);
@@ -148,7 +149,16 @@ void main() {
       1,
     );
     expect(await database.currentSessionUserId(), isNull);
-    expect((await users.deleteUser(1, 1)).error, UserError.demoAdminProtected);
+    await expectLater(
+      users.deleteUser(1, 1),
+      throwsA(
+        isA<ValidationException>().having(
+          (error) => error.message,
+          'message',
+          'Demo admin cannot be deleted.',
+        ),
+      ),
+    );
     expect((await _user(database, 1)).read<String>('status'), 'active');
   });
 }
@@ -159,14 +169,14 @@ Future<UserProfile> _activeClient(
   String email,
   int balance,
 ) async {
-  final user = (await _create(users, email, balance)).value!;
+  final user = await _create(users, email, balance);
   await database.customStatement(
     "UPDATE users SET status='active' WHERE id=${user.id}",
   );
   return user;
 }
 
-Future<UserResult<UserProfile>> _create(
+Future<UserProfile> _create(
   UserLocalDatasource users,
   String email,
   int balance,

@@ -13,6 +13,7 @@ void main() {
       const UnauthorizedException(): UnauthorizedFailure,
       const ValidationException(message: 'Not pending'): ValidationFailure,
       const DuplicateException(): DuplicateFailure,
+      const NotFoundException(): NotFoundFailure,
       const StorageException(): StorageFailure,
       const NetworkException(): NetworkFailure,
       const ServerException(): ServerFailure,

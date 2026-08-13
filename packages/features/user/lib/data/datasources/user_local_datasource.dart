@@ -1,173 +1,158 @@
 import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:injectable/injectable.dart';
-
-enum UserError {
-  unauthorized,
-  invalidBalance,
-  identifierTaken,
-  notFound,
-  demoAdminProtected,
-  storageFailure,
-}
 
 enum DeleteOutcome { deleted, deactivated }
 
-final class UserResult<T> {
-  const UserResult.ok(this.value) : error = null;
-  const UserResult.failure(this.error) : value = null;
-  final T? value;
-  final UserError? error;
-}
-
-final class UserProfile {
-  const UserProfile({
-    required this.id,
-    required this.email,
-    required this.fullName,
-    required this.role,
-    required this.status,
-    required this.balanceCop,
+abstract interface class IUserLocalDatasource {
+  Future<List<UserProfile>> listUsers(int actorUserId);
+  Future<UserProfile> getUser(int actorUserId, int userId);
+  Future<UserProfile> createClient(
+    int actorUserId, {
+    required String email,
+    required String fullName,
+    required int initialBalanceCop,
   });
-  final int id;
-  final String email;
-  final String fullName;
-  final String role;
-  final String status;
-  final int balanceCop;
+  Future<UserProfile> editProfile(
+    int actorUserId,
+    int userId, {
+    required String fullName,
+  });
+  Future<DeleteOutcome> deleteUser(int actorUserId, int userId);
 }
 
-@lazySingleton
-final class UserLocalDatasource {
+@LazySingleton(as: IUserLocalDatasource)
+final class UserLocalDatasource implements IUserLocalDatasource {
   UserLocalDatasource(this._database, CootrafaDatabaseSeed seed)
     : protectedAdminUserId = seed.userId;
   final CootrafaDatabase _database;
   final int protectedAdminUserId;
 
-  Future<UserResult<List<UserProfile>>> listUsers(
-    int actorUserId,
-  ) => _guard(() async {
+  @override
+  Future<List<UserProfile>> listUsers(int actorUserId) async {
     if (!await _isActiveAdmin(actorUserId)) {
-      return const UserResult.failure(UserError.unauthorized);
+      throw const UnauthorizedException();
     }
     final rows = await _database
         .customSelect(
           'SELECT id,email,full_name,role,status,balance_cop FROM users ORDER BY id',
         )
         .get();
-    return UserResult.ok(rows.map(_profile).toList());
-  });
+    return rows.map(_profile).toList();
+  }
 
-  Future<UserResult<UserProfile>> getUser(int actorUserId, int userId) =>
-      _guard(() async {
-        final actor = await _user(actorUserId);
-        if (!_canAccess(actor, userId)) {
-          return const UserResult.failure(UserError.unauthorized);
-        }
-        final target = await _user(userId);
-        return target == null
-            ? const UserResult.failure(UserError.notFound)
-            : UserResult.ok(_profile(target));
-      });
+  @override
+  Future<UserProfile> getUser(int actorUserId, int userId) async {
+    final actor = await _user(actorUserId);
+    if (!_canAccess(actor, userId)) {
+      throw const UnauthorizedException();
+    }
+    final target = await _user(userId);
+    if (target == null) throw const NotFoundException();
+    return _profile(target);
+  }
 
-  Future<UserResult<UserProfile>> createClient(
+  @override
+  Future<UserProfile> createClient(
     int actorUserId, {
     required String email,
     required String fullName,
     required int initialBalanceCop,
-  }) => _guard(
-    () => _database.transaction(() async {
-      if (!await _isActiveAdmin(actorUserId)) {
-        return const UserResult.failure(UserError.unauthorized);
-      }
-      if (initialBalanceCop < 0) {
-        return const UserResult.failure(UserError.invalidBalance);
-      }
-      final normalized = _normalize(email);
-      if (await _identifierExists(normalized)) {
-        return const UserResult.failure(UserError.identifierTaken);
-      }
-      final id = await _database
-          .customSelect('SELECT COALESCE(MAX(id),0)+1 AS id FROM users')
-          .map((row) => row.read<int>('id'))
-          .getSingle();
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await _database.customStatement(
-        "INSERT INTO users (id,email,full_name,role,status,balance_cop,created_at,updated_at) "
-        "VALUES (?, ?, ?, 'client', 'pendingActivation', ?, ?, ?)",
-        <Object?>[id, normalized, fullName, initialBalanceCop, now, now],
+  }) => _database.transaction(() async {
+    if (!await _isActiveAdmin(actorUserId)) {
+      throw const UnauthorizedException();
+    }
+    if (initialBalanceCop < 0) {
+      throw const ValidationException(
+        message: 'Initial balance cannot be negative.',
       );
-      await _database.customStatement(
-        "INSERT INTO login_identifiers VALUES (?,?,'email')",
-        <Object?>[normalized, id],
-      );
-      return UserResult.ok(_profile((await _user(id))!));
-    }),
-  );
+    }
+    final normalized = _normalize(email);
+    if (await _identifierExists(normalized)) {
+      throw const DuplicateException();
+    }
+    final id = await _database
+        .customSelect('SELECT COALESCE(MAX(id),0)+1 AS id FROM users')
+        .map((row) => row.read<int>('id'))
+        .getSingle();
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await _database.customStatement(
+      "INSERT INTO users (id,email,full_name,role,status,balance_cop,created_at,updated_at) "
+      "VALUES (?, ?, ?, 'client', 'pendingActivation', ?, ?, ?)",
+      <Object?>[id, normalized, fullName, initialBalanceCop, now, now],
+    );
+    await _database.customStatement(
+      "INSERT INTO login_identifiers VALUES (?,?,'email')",
+      <Object?>[normalized, id],
+    );
+    return _profile((await _user(id))!);
+  });
 
-  Future<UserResult<UserProfile>> editProfile(
+  @override
+  Future<UserProfile> editProfile(
     int actorUserId,
     int userId, {
     required String fullName,
-  }) => _guard(
-    () => _database.transaction(() async {
-      final actor = await _user(actorUserId);
-      if (!_canAccess(actor, userId)) {
-        return const UserResult.failure(UserError.unauthorized);
-      }
-      if (await _user(userId) == null) {
-        return const UserResult.failure(UserError.notFound);
-      }
-      await _database.customStatement(
-        'UPDATE users SET full_name=?,updated_at=? WHERE id=?',
-        <Object?>[fullName, DateTime.now().millisecondsSinceEpoch, userId],
-      );
-      return UserResult.ok(_profile((await _user(userId))!));
-    }),
-  );
+  }) => _database.transaction(() async {
+    final actor = await _user(actorUserId);
+    if (!_canAccess(actor, userId)) {
+      throw const UnauthorizedException();
+    }
+    if (await _user(userId) == null) {
+      throw const NotFoundException();
+    }
+    await _database.customStatement(
+      'UPDATE users SET full_name=?,updated_at=? WHERE id=?',
+      <Object?>[fullName, DateTime.now().millisecondsSinceEpoch, userId],
+    );
+    return _profile((await _user(userId))!);
+  });
 
-  Future<UserResult<DeleteOutcome>> deleteUser(int actorUserId, int userId) =>
-      _guard(
-        () => _database.transaction(() async {
-          if (!await _isActiveAdmin(actorUserId)) {
-            return const UserResult.failure(UserError.unauthorized);
-          }
-          if (userId == protectedAdminUserId) {
-            return const UserResult.failure(UserError.demoAdminProtected);
-          }
-          if (await _user(userId) == null) {
-            return const UserResult.failure(UserError.notFound);
-          }
-          final references = await _database
-              .customSelect(
-                'SELECT COUNT(*) AS count FROM transfers '
-                'WHERE origin_user_id=? OR destination_user_id=?',
-                variables: <Variable<Object>>[
-                  Variable<int>(userId),
-                  Variable<int>(userId),
-                ],
-              )
-              .map((row) => row.read<int>('count'))
-              .getSingle();
-          await _database.customStatement(
-            'DELETE FROM local_session WHERE user_id=?',
-            <Object?>[userId],
+  @override
+  Future<DeleteOutcome> deleteUser(int actorUserId, int userId) =>
+      _database.transaction(() async {
+        if (!await _isActiveAdmin(actorUserId)) {
+          throw const UnauthorizedException();
+        }
+        if (userId == protectedAdminUserId) {
+          throw const ValidationException(
+            message: 'Demo admin cannot be deleted.',
           );
-          if (references > 0) {
-            await _database.customStatement(
-              "UPDATE users SET status='inactive',password_hash=NULL,"
-              'activation_code_hash=NULL,updated_at=? WHERE id=?',
-              <Object?>[DateTime.now().millisecondsSinceEpoch, userId],
-            );
-            return const UserResult.ok(DeleteOutcome.deactivated);
-          }
+        }
+        if (await _user(userId) == null) {
+          throw const NotFoundException();
+        }
+        final references = await _database
+            .customSelect(
+              'SELECT COUNT(*) AS count FROM transfers '
+              'WHERE origin_user_id=? OR destination_user_id=?',
+              variables: <Variable<Object>>[
+                Variable<int>(userId),
+                Variable<int>(userId),
+              ],
+            )
+            .map((row) => row.read<int>('count'))
+            .getSingle();
+        await _database.customStatement(
+          'DELETE FROM local_session WHERE user_id=?',
+          <Object?>[userId],
+        );
+        if (references > 0) {
           await _database.customStatement(
-            'DELETE FROM users WHERE id=?',
-            <Object?>[userId],
+            "UPDATE users SET status='inactive',password_hash=NULL,"
+            'activation_code_hash=NULL,updated_at=? WHERE id=?',
+            <Object?>[DateTime.now().millisecondsSinceEpoch, userId],
           );
-          return const UserResult.ok(DeleteOutcome.deleted);
-        }),
-      );
+          return DeleteOutcome.deactivated;
+        }
+        await _database.customStatement(
+          'DELETE FROM users WHERE id=?',
+          <Object?>[userId],
+        );
+        return DeleteOutcome.deleted;
+      });
 
   Future<QueryRow?> _user(int id) => _database
       .customSelect(
@@ -205,16 +190,6 @@ final class UserLocalDatasource {
     status: row.read<String>('status'),
     balanceCop: row.read<int>('balance_cop'),
   );
-
-  Future<UserResult<T>> _guard<T>(
-    Future<UserResult<T>> Function() action,
-  ) async {
-    try {
-      return await action();
-    } on Object {
-      return const UserResult.failure(UserError.storageFailure);
-    }
-  }
 
   String _normalize(String value) => value.trim().toLowerCase();
 }

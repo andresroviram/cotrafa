@@ -8,7 +8,7 @@ import 'package:feature_user/data/datasources/user_local_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('App composes the database with the Auth datasource', () async {
+  test('App composes the database with feature datasource ports', () async {
     await getIt.reset();
     addTearDown(() async {
       if (getIt.isRegistered<CootrafaDatabase>()) {
@@ -21,7 +21,7 @@ void main() {
 
     expect(getIt.isRegistered<CootrafaDatabase>(), isTrue);
     expect(getIt<IAuthLocalDatasource>(), isA<AuthLocalDatasource>());
-    expect(getIt<UserLocalDatasource>(), isA<UserLocalDatasource>());
+    expect(getIt<IUserLocalDatasource>(), isA<UserLocalDatasource>());
     expect(getIt<AddressLocalDatasource>(), isA<AddressLocalDatasource>());
     expect(getIt<TransferLocalDatasource>(), isA<TransferLocalDatasource>());
   });
