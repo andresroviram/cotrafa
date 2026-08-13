@@ -4,12 +4,12 @@ import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:cootrafa_database/cootrafa_database.dart';
-import 'package:cootrafa_app/config/database/adapters/address_drift_adapter.dart';
+import 'package:feature_user/data/datasources/address_local_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late CootrafaDatabase database;
-  late AddressDriftAdapter addresses;
+  late AddressLocalDatasource addresses;
   setUp(() async {
     database = CootrafaDatabase.forTesting(
       NativeDatabase.memory(),
@@ -19,7 +19,7 @@ void main() {
         saltFactory: () => List<int>.filled(16, 7),
       ),
     );
-    addresses = AddressDriftAdapter(database);
+    addresses = AddressLocalDatasource(database);
     await database.customSelect('SELECT 1').getSingle();
     await _activeUser(database, 2, 'client@example.com');
     await _activeUser(database, 3, 'other@example.com');
@@ -149,7 +149,7 @@ void main() {
       NativeDatabase(file),
       _fastHasher(),
     );
-    final service = AddressDriftAdapter(migrated);
+    final service = AddressLocalDatasource(migrated);
     final created = await service.create(1, 4, _input('Migrated'));
     expect(created.value?.country, 'Colombia');
     final rows = (await service.list(1, 4)).value!;

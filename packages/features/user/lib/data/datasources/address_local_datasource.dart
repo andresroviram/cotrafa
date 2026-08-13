@@ -1,5 +1,6 @@
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:drift/drift.dart';
+import 'package:injectable/injectable.dart';
 
 enum AddressError { unauthorized, inactiveTarget, notFound, storageFailure }
 
@@ -24,8 +25,9 @@ final class AddressInput {
   final String? line2, state, postalCode;
 }
 
-final class AddressDriftAdapter {
-  AddressDriftAdapter(this._database);
+@lazySingleton
+final class AddressLocalDatasource {
+  AddressLocalDatasource(this._database);
   final CootrafaDatabase _database;
   Future<AddressResult<List<AddressesData>>> list(int actorId, int userId) =>
       _guard(() async {

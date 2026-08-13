@@ -1,6 +1,6 @@
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
-import 'package:feature_auth/data/datasources/i_auth_local_datasource.dart';
+import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
 import 'package:feature_auth/domain/repository/i_auth_repository.dart';
 import 'package:injectable/injectable.dart';

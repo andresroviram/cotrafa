@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:cootrafa_app/config/injectable/auth_module.dart';
+import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
+import 'package:feature_auth/di/auth_module.dart';
 import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:core/security/credential_hasher.dart';
@@ -46,6 +47,7 @@ void main() {
       password: 'CootrafaDemo2026!',
     );
     final bound = _TestAuthModule().demoCredentials;
+    final seed = _TestAuthDatasourceModule().databaseSeed;
 
     expect(identical(bound, DemoAdmin.credentials), isTrue);
     expect(identical(bound, expected), isTrue);
@@ -53,6 +55,10 @@ void main() {
     expect(DemoAdmin.password, bound.password);
     expect(DemoAdmin.userId, 1);
     expect(DemoAdmin.fullName, 'Cootrafa Demo Admin');
+    expect(seed.userId, DemoAdmin.userId);
+    expect(seed.email, DemoAdmin.email);
+    expect(seed.fullName, DemoAdmin.fullName);
+    expect(seed.password, DemoAdmin.password);
   });
 
   test('database seeds and reopens with the canonical credentials', () async {
@@ -103,6 +109,8 @@ void main() {
 }
 
 final class _TestAuthModule extends AuthModule {}
+
+final class _TestAuthDatasourceModule extends AuthDatasourceModule {}
 
 const _demoSeed = CootrafaDatabaseSeed(
   userId: DemoAdmin.userId,

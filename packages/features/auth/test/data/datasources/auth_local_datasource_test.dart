@@ -1,9 +1,8 @@
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:cootrafa_app/config/database/adapters/auth_drift_adapter.dart';
+import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
-import 'package:feature_auth/data/datasources/i_auth_local_datasource.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
 import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:cootrafa_database/cootrafa_database.dart';
@@ -13,7 +12,7 @@ void main() {
   late CootrafaDatabase database;
   late CredentialHasher hasher;
   late QueueCodeGenerator codes;
-  late AuthDriftAdapter auth;
+  late AuthLocalDatasource auth;
 
   setUp(() async {
     hasher = CredentialHasher(
@@ -27,7 +26,7 @@ void main() {
       seed: _demoSeed,
     );
     codes = QueueCodeGenerator(<String>['FIRST1', 'SECOND2', 'THIRD3']);
-    auth = AuthDriftAdapter(database, hasher, codes);
+    auth = AuthLocalDatasource(database, hasher, codes);
     await database.customSelect('SELECT 1').getSingle();
   });
 

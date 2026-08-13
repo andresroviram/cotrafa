@@ -1,6 +1,6 @@
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:drift/drift.dart';
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
+import 'package:injectable/injectable.dart';
 
 enum UserError {
   unauthorized,
@@ -37,9 +37,12 @@ final class UserProfile {
   final int balanceCop;
 }
 
-final class UserDriftAdapter {
-  UserDriftAdapter(this._database);
+@lazySingleton
+final class UserLocalDatasource {
+  UserLocalDatasource(this._database, CootrafaDatabaseSeed seed)
+    : protectedAdminUserId = seed.userId;
   final CootrafaDatabase _database;
+  final int protectedAdminUserId;
 
   Future<UserResult<List<UserProfile>>> listUsers(
     int actorUserId,
@@ -129,7 +132,7 @@ final class UserDriftAdapter {
           if (!await _isActiveAdmin(actorUserId)) {
             return const UserResult.failure(UserError.unauthorized);
           }
-          if (userId == DemoAdmin.userId) {
+          if (userId == protectedAdminUserId) {
             return const UserResult.failure(UserError.demoAdminProtected);
           }
           if (await _user(userId) == null) {

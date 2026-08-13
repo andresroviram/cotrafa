@@ -1,14 +1,13 @@
 import 'package:core/security/credential_hasher.dart';
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:cootrafa_database/cootrafa_database.dart';
-import 'package:cootrafa_app/config/database/adapters/user_drift_adapter.dart';
+import 'package:feature_user/data/datasources/user_local_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late CootrafaDatabase database;
-  late UserDriftAdapter users;
+  late UserLocalDatasource users;
   setUp(() async {
     database = CootrafaDatabase.forTesting(
       NativeDatabase.memory(),
@@ -19,7 +18,7 @@ void main() {
       ),
       seed: _demoSeed,
     );
-    users = UserDriftAdapter(database);
+    users = UserLocalDatasource(database, CootrafaDatabaseSeed.test);
     await database.customSelect('SELECT 1').getSingle();
   });
   tearDown(() => database.close());
@@ -42,7 +41,11 @@ void main() {
       'Edited',
     );
     expect(
-      (await _create(users, DemoAdmin.email.toUpperCase(), 0)).error,
+      (await _create(
+        users,
+        CootrafaDatabaseSeed.test.email.toUpperCase(),
+        0,
+      )).error,
       UserError.identifierTaken,
     );
     await database.customStatement(
@@ -151,7 +154,7 @@ void main() {
 }
 
 Future<UserProfile> _activeClient(
-  UserDriftAdapter users,
+  UserLocalDatasource users,
   CootrafaDatabase database,
   String email,
   int balance,
@@ -164,7 +167,7 @@ Future<UserProfile> _activeClient(
 }
 
 Future<UserResult<UserProfile>> _create(
-  UserDriftAdapter users,
+  UserLocalDatasource users,
   String email,
   int balance,
 ) => users.createClient(
@@ -186,9 +189,4 @@ Future<int> _count(CootrafaDatabase database, String table, String where) =>
 String _transferSql(int origin, int destination) =>
     "INSERT INTO transfers VALUES ('history',$origin,$destination,10,'completed',NULL,1,'Origin','Destination')";
 
-const _demoSeed = CootrafaDatabaseSeed(
-  userId: DemoAdmin.userId,
-  email: DemoAdmin.email,
-  fullName: DemoAdmin.fullName,
-  password: DemoAdmin.password,
-);
+const _demoSeed = CootrafaDatabaseSeed.test;

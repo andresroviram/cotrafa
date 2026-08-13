@@ -1,5 +1,6 @@
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:drift/drift.dart';
+import 'package:injectable/injectable.dart';
 
 enum TransferError {
   unauthorized,
@@ -77,8 +78,14 @@ final class TransferReceipt {
   );
 }
 
-final class TransferDriftAdapter {
-  TransferDriftAdapter(
+@lazySingleton
+final class TransferLocalDatasource {
+  TransferLocalDatasource(this._database)
+    : idGenerator = _generateTransferId,
+      _clock = DateTime.now,
+      afterRead = null;
+
+  TransferLocalDatasource.forTesting(
     this._database, {
     required this.idGenerator,
     DateTime Function()? clock,
@@ -88,6 +95,9 @@ final class TransferDriftAdapter {
   final String Function() idGenerator;
   final DateTime Function() _clock;
   final Future<void> Function()? afterRead;
+
+  static String _generateTransferId() =>
+      DateTime.now().microsecondsSinceEpoch.toRadixString(36);
 
   Future<TransferResult<TransferReceipt>> execute(
     TransferCommand command,

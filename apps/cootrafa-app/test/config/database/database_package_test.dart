@@ -30,11 +30,59 @@ void main() {
 
     expect(
       File('${appDatabase.path}/database_module.dart').existsSync(),
-      isTrue,
+      isFalse,
     );
+    expect(Directory('${appDatabase.path}/adapters').existsSync(), isFalse);
     expect(Directory('${appDatabase.path}/tables').existsSync(), isFalse);
     expect(
       File('${appDatabase.path}/cootrafa_database.dart').existsSync(),
+      isFalse,
+    );
+
+    for (final datasource in <String, String>{
+      'auth': 'auth_local_datasource.dart',
+      'user': 'user_local_datasource.dart',
+      'user/address': 'address_local_datasource.dart',
+      'transfer': 'transfer_local_datasource.dart',
+    }.entries) {
+      expect(
+        File(
+          '${workspace.path}/packages/features/${datasource.key.split('/').first}'
+          '/lib/data/datasources/${datasource.value}',
+        ).existsSync(),
+        isTrue,
+      );
+    }
+    expect(
+      File(
+        '${workspace.path}/packages/features/auth/lib/di/auth_module.dart',
+      ).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(
+        '${workspace.path}/apps/cootrafa-app/lib/config/injectable/auth_module.dart',
+      ).existsSync(),
+      isFalse,
+    );
+
+    final authDatasource = File(
+      '${workspace.path}/packages/features/auth/lib/data/datasources/'
+      'auth_local_datasource.dart',
+    ).readAsStringSync();
+    expect(
+      authDatasource,
+      contains('abstract interface class IAuthLocalDatasource'),
+    );
+    expect(
+      authDatasource,
+      contains('@LazySingleton(as: IAuthLocalDatasource)'),
+    );
+    expect(
+      File(
+        '${workspace.path}/packages/features/auth/lib/data/datasources/'
+        'i_auth_local_datasource.dart',
+      ).existsSync(),
       isFalse,
     );
   });

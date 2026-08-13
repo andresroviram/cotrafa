@@ -20,7 +20,7 @@ import 'package:injectable/injectable.dart';
 
 @module
 abstract class RouterModule {
-  @singleton
+  @lazySingleton
   GoRouter router(AuthBloc authBloc) => createRouter(authBloc);
 }
 

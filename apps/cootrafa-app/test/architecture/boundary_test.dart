@@ -11,7 +11,7 @@ void main() {
               path: 'data/datasources/auth_local_datasource.dart',
               content:
                   "import 'package:drift/drift.dart';\n"
-                  "import 'package:feature_auth/database/"
+                  "import 'package:cootrafa_database/"
                   "cootrafa_database.dart';",
             ),
           ]);
@@ -37,7 +37,7 @@ void main() {
               path: 'src/shared/application_adapter.dart',
               content:
                   "import '../../../../apps/cootrafa-app/lib/app.dart';\n"
-                  "import 'package:feature_auth/database/"
+                  "import 'package:cootrafa_database/"
                   "cootrafa_database.dart';",
             ),
           ]);
@@ -107,7 +107,7 @@ void main() {
     test('canonical transition and final architectures are accepted', () {
       final BoundaryScanReport p2 = scanArchitectureSources(
         _sources(
-          "database/lib/cootrafa_database.dart|import 'package:drift/drift.dart'; class CootrafaDatabase {}|database/lib/tables/users.dart|part of '../cootrafa_database.dart'; class Users {}|app/lib/config/database/database_module.dart|import 'package:cootrafa_database/cootrafa_database.dart'; class DatabaseModule {}",
+          "database/lib/cootrafa_database.dart|import 'package:drift/drift.dart'; class CootrafaDatabase {}|database/lib/tables/users.dart|part of '../cootrafa_database.dart'; class Users {}|database/lib/injectable.dart|import 'package:injectable/injectable.dart';|app/lib/config/injectable/injectable_dependency.dart|import 'package:cootrafa_database/injectable.module.dart';",
         ),
       );
       final BoundaryScanReport pureBarrel = scanArchitectureSources(
@@ -178,7 +178,7 @@ const Set<String> _temporaryPersistenceExceptions = <String>{
 };
 
 const String _requiredAppPersistence =
-    'database/lib/cootrafa_database.dart,database/lib/tables/users.dart,database/lib/tables/login_identifiers.dart,database/lib/tables/addresses.dart,database/lib/tables/transfers.dart,database/lib/tables/local_session.dart,app/lib/config/database/database_module.dart,app/lib/config/injectable/injectable_dependency.dart';
+    'database/lib/cootrafa_database.dart,database/lib/injectable.dart,database/lib/tables/users.dart,database/lib/tables/login_identifiers.dart,database/lib/tables/addresses.dart,database/lib/tables/transfers.dart,database/lib/tables/local_session.dart,app/lib/config/injectable/injectable_dependency.dart';
 
 enum BoundaryRule {
   appImportsPrivateFeature,
@@ -336,6 +336,7 @@ Iterable<ArchitectureSource> _readDartSources(Directory root, String prefix) =>
         .whereType<File>()
         .where((File file) => file.path.endsWith('.dart'))
         .where((File file) => !file.path.endsWith('.config.dart'))
+        .where((File file) => !file.path.endsWith('.module.dart'))
         .map(
           (File file) => ArchitectureSource(
             path: '$prefix${_relativePath(root, file)}',
@@ -441,9 +442,8 @@ BoundaryScanReport scanArchitectureSources(
       }
       if (featureSource &&
           importUri.startsWith('package:drift/') &&
-          (enforceFinal ||
-              (!_isPersistenceOwner(path) &&
-                  !_temporaryPersistenceExceptions.contains(path)))) {
+          !_isPersistenceOwner(path) &&
+          !_temporaryPersistenceExceptions.contains(path)) {
         violations.add(
           _violation(
             BoundaryRule.featureDoesNotImportDrift,
@@ -743,17 +743,15 @@ Directory _temporaryFeatureTree({
 
 List<ArchitectureSource> _finalArchitectureSources() => <ArchitectureSource>[
   ..._sources(
-    "injectable.dart|void configureDependencies() {}|data/datasources/i_auth_local_datasource.dart|abstract interface class IAuthLocalDatasource {}|presentation/auth/bloc/auth_event.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_event.freezed.dart';\n@freezed sealed class AuthEvent with _\$AuthEvent { const factory AuthEvent.restore() = Restore; }|presentation/auth/bloc/auth_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_state.freezed.dart';\n@freezed abstract class AuthState with _\$AuthState { const factory AuthState() = _AuthState; }|presentation/auth/bloc/auth_state.freezed.dart|class GeneratedAuthState {}",
+    "injectable.dart|void configureDependencies() {}|data/datasources/auth_local_datasource.dart|import 'package:drift/drift.dart'; abstract interface class IAuthLocalDatasource {}|presentation/auth/bloc/auth_event.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_event.freezed.dart';\n@freezed sealed class AuthEvent with _\$AuthEvent { const factory AuthEvent.restore() = Restore; }|presentation/auth/bloc/auth_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_state.freezed.dart';\n@freezed abstract class AuthState with _\$AuthState { const factory AuthState() = _AuthState; }|presentation/auth/bloc/auth_state.freezed.dart|class GeneratedAuthState {}",
   ),
   for (final String path in _requiredAppPersistence.split(','))
     ArchitectureSource(
       path: path,
-      content: path.contains('/adapters/')
-          ? path.endsWith('auth_drift_adapter.dart')
-                ? "import 'package:drift/drift.dart'; import 'package:feature_auth/data/datasources/i_auth_local_datasource.dart';"
-                : "import 'package:drift/drift.dart';"
-          : path.endsWith('injectable_dependency.dart')
-          ? "import 'package:feature_auth/injectable.module.dart';"
+      content: path.endsWith('injectable_dependency.dart')
+          ? "import 'package:cootrafa_database/injectable.module.dart';"
+          : path.endsWith('injectable.dart')
+          ? "import 'package:injectable/injectable.dart';"
           : "import 'package:drift/drift.dart'; class AppPersistenceConcept {}",
     ),
 ];

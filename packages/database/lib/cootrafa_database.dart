@@ -1,6 +1,7 @@
 import 'package:core/database/connection/shared.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
+import 'package:injectable/injectable.dart';
 
 part 'cootrafa_database.g.dart';
 part 'tables/addresses.dart';
@@ -12,8 +13,9 @@ part 'tables/users.dart';
 @DriftDatabase(
   tables: <Type>[Users, LoginIdentifiers, Addresses, Transfers, LocalSession],
 )
+@singleton
 class CootrafaDatabase extends _$CootrafaDatabase {
-  CootrafaDatabase(this._credentialHasher, {required this._seed})
+  CootrafaDatabase(this._credentialHasher, this._seed)
     : super(connect('cootrafa'));
 
   CootrafaDatabase.forTesting(
