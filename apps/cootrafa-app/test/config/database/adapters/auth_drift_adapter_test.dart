@@ -6,7 +6,7 @@ import 'package:core/security/credential_hasher.dart';
 import 'package:feature_auth/data/datasources/i_auth_local_datasource.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
 import 'package:feature_auth/domain/entities/demo_credentials.dart';
-import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -21,7 +21,11 @@ void main() {
       iterations: 1,
       saltFactory: () => List<int>.filled(16, 7),
     );
-    database = CootrafaDatabase.forTesting(NativeDatabase.memory(), hasher);
+    database = CootrafaDatabase.forTesting(
+      NativeDatabase.memory(),
+      hasher,
+      seed: _demoSeed,
+    );
     codes = QueueCodeGenerator(<String>['FIRST1', 'SECOND2', 'THIRD3']);
     auth = AuthDriftAdapter(database, hasher, codes);
     await database.customSelect('SELECT 1').getSingle();
@@ -201,3 +205,10 @@ final class QueueCodeGenerator implements ActivationCodeGenerator {
   @override
   String generate() => values.removeAt(0);
 }
+
+const _demoSeed = CootrafaDatabaseSeed(
+  userId: DemoAdmin.userId,
+  email: DemoAdmin.email,
+  fullName: DemoAdmin.fullName,
+  password: DemoAdmin.password,
+);

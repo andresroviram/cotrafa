@@ -1,4 +1,4 @@
-import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:drift/drift.dart';
 
 enum TransferError {

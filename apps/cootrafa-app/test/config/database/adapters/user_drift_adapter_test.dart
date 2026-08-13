@@ -2,7 +2,7 @@ import 'package:core/security/credential_hasher.dart';
 import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:cootrafa_app/config/database/adapters/user_drift_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -17,6 +17,7 @@ void main() {
         iterations: 1,
         saltFactory: () => List<int>.filled(16, 7),
       ),
+      seed: _demoSeed,
     );
     users = UserDriftAdapter(database);
     await database.customSelect('SELECT 1').getSingle();
@@ -184,3 +185,10 @@ Future<int> _count(CootrafaDatabase database, String table, String where) =>
 
 String _transferSql(int origin, int destination) =>
     "INSERT INTO transfers VALUES ('history',$origin,$destination,10,'completed',NULL,1,'Origin','Destination')";
+
+const _demoSeed = CootrafaDatabaseSeed(
+  userId: DemoAdmin.userId,
+  email: DemoAdmin.email,
+  fullName: DemoAdmin.fullName,
+  password: DemoAdmin.password,
+);

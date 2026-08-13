@@ -1,7 +1,6 @@
 import 'package:core/database/connection/shared.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
 
 part 'cootrafa_database.g.dart';
 part 'tables/addresses.dart';
@@ -14,11 +13,17 @@ part 'tables/users.dart';
   tables: <Type>[Users, LoginIdentifiers, Addresses, Transfers, LocalSession],
 )
 class CootrafaDatabase extends _$CootrafaDatabase {
-  CootrafaDatabase(this._credentialHasher) : super(connect('cootrafa'));
+  CootrafaDatabase(this._credentialHasher, {required this._seed})
+    : super(connect('cootrafa'));
 
-  CootrafaDatabase.forTesting(super.executor, this._credentialHasher);
+  CootrafaDatabase.forTesting(
+    super.executor,
+    this._credentialHasher, {
+    this._seed = CootrafaDatabaseSeed.test,
+  });
 
   final CredentialHasher _credentialHasher;
+  final CootrafaDatabaseSeed _seed;
 
   @override
   int get schemaVersion => 2;
@@ -58,24 +63,21 @@ class CootrafaDatabase extends _$CootrafaDatabase {
   );
 
   Future<void> _seedDemoAdmin() => transaction(() async {
-    const credentials = DemoAdmin.credentials;
     final int count = await customSelect(
       'SELECT COUNT(*) AS count FROM users WHERE id = ?',
-      variables: <Variable<Object>>[const Variable<int>(DemoAdmin.userId)],
+      variables: <Variable<Object>>[Variable<int>(_seed.userId)],
     ).map((QueryRow row) => row.read<int>('count')).getSingle();
     if (count == 1) return;
-    final String passwordHash = await _credentialHasher.hash(
-      credentials.password,
-    );
+    final String passwordHash = await _credentialHasher.hash(_seed.password);
     final int now = DateTime.now().millisecondsSinceEpoch;
     await customStatement(
       'INSERT INTO users '
       '(id, email, full_name, role, status, password_hash, balance_cop, created_at, updated_at) '
       "VALUES (?, ?, ?, 'admin', 'active', ?, 0, ?, ?)",
       <Object?>[
-        DemoAdmin.userId,
-        credentials.identifier,
-        DemoAdmin.fullName,
+        _seed.userId,
+        _seed.email,
+        _seed.fullName,
         passwordHash,
         now,
         now,
@@ -83,7 +85,7 @@ class CootrafaDatabase extends _$CootrafaDatabase {
     );
     await customStatement(
       "INSERT INTO login_identifiers (normalized, user_id, kind) VALUES (?, ?, 'email')",
-      <Object?>[credentials.identifier, DemoAdmin.userId],
+      <Object?>[_seed.email, _seed.userId],
     );
   });
 
@@ -96,4 +98,25 @@ class CootrafaDatabase extends _$CootrafaDatabase {
   Future<int?> currentSessionUserId() => customSelect(
     'SELECT user_id FROM local_session WHERE slot = 1',
   ).map((QueryRow row) => row.read<int>('user_id')).getSingleOrNull();
+}
+
+final class CootrafaDatabaseSeed {
+  const CootrafaDatabaseSeed({
+    required this.userId,
+    required this.email,
+    required this.fullName,
+    required this.password,
+  });
+
+  static const test = CootrafaDatabaseSeed(
+    userId: 1,
+    email: 'test-admin@cootrafa.local',
+    fullName: 'Test Admin',
+    password: 'test-password',
+  );
+
+  final int userId;
+  final String email;
+  final String fullName;
+  final String password;
 }

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:cootrafa_app/config/database/adapters/address_drift_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
 

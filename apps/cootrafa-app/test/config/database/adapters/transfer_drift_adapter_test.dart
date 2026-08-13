@@ -1,6 +1,6 @@
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/native.dart';
-import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:cootrafa_app/config/database/adapters/transfer_drift_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
 

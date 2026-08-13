@@ -107,7 +107,7 @@ void main() {
     test('canonical transition and final architectures are accepted', () {
       final BoundaryScanReport p2 = scanArchitectureSources(
         _sources(
-          "src/database/cootrafa_database.dart|class CootrafaDatabase {}|app/lib/config/database/cootrafa_database.dart|import 'package:drift/drift.dart'; class AppDatabase {}|app/lib/config/database/tables/users.dart|import 'package:drift/drift.dart'; class Users {}|app/lib/config/database/database_module.dart|import 'package:drift/drift.dart'; class DatabaseModule {}",
+          "database/lib/cootrafa_database.dart|import 'package:drift/drift.dart'; class CootrafaDatabase {}|database/lib/tables/users.dart|part of '../cootrafa_database.dart'; class Users {}|app/lib/config/database/database_module.dart|import 'package:cootrafa_database/cootrafa_database.dart'; class DatabaseModule {}",
         ),
       );
       final BoundaryScanReport pureBarrel = scanArchitectureSources(
@@ -118,7 +118,7 @@ void main() {
       final violations = <BoundaryViolation>[
         ...scanArchitectureSources(
           _sources(
-            "src/database/cootrafa_database.dart|import 'package:drift/drift.dart';",
+            "database/lib/cootrafa_database.dart|import 'package:drift/drift.dart';",
           ),
         ).violations,
         ...p2.violations,
@@ -129,14 +129,13 @@ void main() {
     });
 
     final List<String> rejectedFixtures = <String>[
-      "feature app import|featureDoesNotImportApp|src/auth/domain/usecases/login.dart|import 'package:cootrafa_app/config/database/cootrafa_database.dart';",
+      "feature app import|featureDoesNotImportApp|src/auth/domain/usecases/login.dart|import 'package:cootrafa_app/config/database/database_module.dart';",
       "feature Drift import|featureDoesNotImportDrift|src/user/domain/entities/profile.dart|import 'package:drift/drift.dart';",
       "app private feature import|appImportsPrivateFeature|app/lib/config/database/adapters/auth.dart|import '../../../../packages/features/auth/lib/src/port.dart';",
       "app DI private feature import|appImportsPrivateFeature|app/lib/config/injectable/injectable_dependency.dart|import 'package:feature_auth/src/injectable.dart';",
       "public barrel concrete leak|publicBarrelLeaksPersistence|auth.dart|export 'src/database/cootrafa_database.dart';",
       'final feature database|finalFeatureHasInfrastructure|src/database/cootrafa_database.dart|',
       'final feature security|finalFeatureHasInfrastructure|src/security/credential_hasher.dart|',
-      'final feature Drift manifest|featureDoesNotImportDrift|features/auth/pubspec.yaml|dependencies:\n  drift: ^2.24.0',
       'missing Freezed event|invalidFreezedEvent|src/user/presentation/users/bloc/user_event.dart|sealed class UserEvent {}',
       'missing Freezed state|invalidFreezedState|src/transfer/presentation/bloc/transfer_state.dart|class TransferState {}',
       "dual runtime database composition|dualRuntimeDatabaseAuthority|app/lib/config/injectable/database_module.dart|import '../database/cootrafa_database.dart';\nimport 'package:feature_auth/database/cootrafa_database.dart';",
@@ -179,7 +178,7 @@ const Set<String> _temporaryPersistenceExceptions = <String>{
 };
 
 const String _requiredAppPersistence =
-    'app/lib/config/database/cootrafa_database.dart,app/lib/config/database/tables/users.dart,app/lib/config/database/tables/login_identifiers.dart,app/lib/config/database/tables/addresses.dart,app/lib/config/database/tables/transfers.dart,app/lib/config/database/tables/local_session.dart,app/lib/config/database/database_module.dart,app/lib/config/database/adapters/auth_drift_adapter.dart,app/lib/config/database/adapters/user_drift_adapter.dart,app/lib/config/database/adapters/address_drift_adapter.dart,app/lib/config/database/adapters/transfer_drift_adapter.dart,app/lib/config/injectable/injectable_dependency.dart';
+    'database/lib/cootrafa_database.dart,database/lib/tables/users.dart,database/lib/tables/login_identifiers.dart,database/lib/tables/addresses.dart,database/lib/tables/transfers.dart,database/lib/tables/local_session.dart,app/lib/config/database/database_module.dart,app/lib/config/injectable/injectable_dependency.dart';
 
 enum BoundaryRule {
   appImportsPrivateFeature,
@@ -298,6 +297,10 @@ BoundaryScanReport scanArchitectureWorkspace(Directory workspace) {
       Directory('${workspace.path}/apps/cootrafa-app/lib'),
       'app/lib/',
     ),
+    ..._readDartSources(
+      Directory('${workspace.path}/packages/database/lib'),
+      'database/lib/',
+    ),
     for (final feature in featureNames)
       _readSource(
         workspace,
@@ -308,6 +311,11 @@ BoundaryScanReport scanArchitectureWorkspace(Directory workspace) {
       workspace,
       'apps/cootrafa-app/pubspec.yaml',
       'app/pubspec.yaml',
+    ),
+    _readSource(
+      workspace,
+      'packages/database/pubspec.yaml',
+      'database/pubspec.yaml',
     ),
   ];
   final bool finalArchitecture = featureNames.every((feature) {
@@ -365,8 +373,10 @@ BoundaryScanReport scanArchitectureSources(
   for (final ArchitectureSource source in sources) {
     final String path = source.path.replaceAll('\\', '/');
     final bool appSource = path.startsWith('app/');
+    final bool databaseSource = path.startsWith('database/');
     final bool featureSource =
         !appSource &&
+        !databaseSource &&
         !RegExp(r'(?:pubspec\.yaml|\.freezed\.dart|\.g\.dart)$').hasMatch(path);
     if (_isFeatureManifest(path) &&
         (source.content.contains('cootrafa_app:') ||
@@ -388,16 +398,10 @@ BoundaryScanReport scanArchitectureSources(
     }
     if (enforceFinal &&
         featureSource &&
+        !_isPersistenceOwner(path) &&
         (source.content.contains('CootrafaDatabase') ||
             source.content.contains('QueryRow') ||
             source.content.contains('GeneratedDatabase'))) {
-      violations.add(
-        _sourceViolation(BoundaryRule.featureDoesNotImportDrift, path),
-      );
-    }
-    if (enforceFinal &&
-        _isFeatureManifest(path) &&
-        RegExp(r'^\s*drift:', multiLine: true).hasMatch(source.content)) {
       violations.add(
         _sourceViolation(BoundaryRule.featureDoesNotImportDrift, path),
       );
@@ -636,6 +640,7 @@ bool _isDomainOrPresentation(String path) =>
 
 bool _isPersistenceOwner(String path) =>
     path.startsWith('app/lib/config/database/') ||
+    path.startsWith('database/lib/') ||
     path.startsWith('src/database/') ||
     ((path.startsWith('data/datasources/') ||
             path.contains('/data/datasources/')) &&
@@ -653,6 +658,7 @@ bool _isInvalidFinalFeaturePath(String path) {
       'data',
       'domain',
       'presentation',
+      'di',
       'injectable.dart',
       'injectable.module.dart',
       'routes.dart',

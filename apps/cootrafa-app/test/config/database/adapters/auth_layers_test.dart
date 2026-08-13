@@ -7,8 +7,9 @@ import 'package:core/security/activation_code_generator.dart';
 import 'package:drift/native.dart';
 import 'package:cootrafa_app/config/database/adapters/auth_drift_adapter.dart';
 import 'package:feature_auth/data/repository/auth_repository_impl.dart';
+import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:feature_auth/domain/usecases/auth_usecases.dart';
-import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -21,7 +22,11 @@ void main() {
       iterations: 1,
       saltFactory: () => List<int>.filled(16, 7),
     );
-    database = CootrafaDatabase.forTesting(NativeDatabase.memory(), hasher);
+    database = CootrafaDatabase.forTesting(
+      NativeDatabase.memory(),
+      hasher,
+      seed: _demoSeed,
+    );
     repository = AuthRepositoryImpl(
       AuthDriftAdapter(database, hasher, SecureActivationCodeGenerator()),
     );
@@ -90,3 +95,10 @@ void main() {
     expect(useCaseSource, isNot(contains('/data/')));
   });
 }
+
+const _demoSeed = CootrafaDatabaseSeed(
+  userId: DemoAdmin.userId,
+  email: DemoAdmin.email,
+  fullName: DemoAdmin.fullName,
+  password: DemoAdmin.password,
+);

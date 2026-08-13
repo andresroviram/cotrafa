@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
-import 'package:drift/drift.dart' show QueryRow, Variable;
-import 'package:drift/native.dart';
-import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
+import 'package:drift/drift.dart' show QueryRow, Variable;
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -33,7 +32,7 @@ void main() {
     expect(codes, everyElement(matches(RegExp(r'^\d{6}$'))));
   });
   test('keeps Drift tables in dedicated source parts', () {
-    final packageRoot = _appRoot();
+    final packageRoot = _packageRoot();
     const tableNames = <String>[
       'users',
       'login_identifiers',
@@ -42,20 +41,18 @@ void main() {
       'local_session',
     ];
     final databaseSource = File(
-      '${packageRoot.path}/lib/config/database/cootrafa_database.dart',
+      '${packageRoot.path}/lib/cootrafa_database.dart',
     ).readAsStringSync();
     for (final name in tableNames) {
       expect(
-        File(
-          '${packageRoot.path}/lib/config/database/tables/$name.dart',
-        ).existsSync(),
+        File('${packageRoot.path}/lib/tables/$name.dart').existsSync(),
         isTrue,
       );
       expect(databaseSource, contains("part 'tables/$name.dart';"));
     }
     expect(databaseSource, isNot(contains('class Users extends Table')));
   });
-  group('schema v1', () {
+  group('schema', () {
     late CootrafaDatabase database;
     setUp(() async {
       database = _memoryDatabase();
@@ -67,13 +64,16 @@ void main() {
         database,
         'SELECT role,status,balance_cop,password_hash,activation_code_hash '
         'FROM users WHERE id = ?',
-        variables: [const Variable<int>(DemoAdmin.userId)],
+        variables: [Variable<int>(CootrafaDatabaseSeed.test.userId)],
       );
       expect(row.read<String>('role'), 'admin');
       expect(row.read<String>('status'), 'active');
       expect(row.read<int>('balance_cop'), 0);
       expect(row.read<String>('password_hash'), startsWith(r'$argon2id$'));
-      expect(row.read<String>('password_hash'), isNot(DemoAdmin.password));
+      expect(
+        row.read<String>('password_hash'),
+        isNot(CootrafaDatabaseSeed.test.password),
+      );
       expect(row.readNullable<String>('activation_code_hash'), isNull);
       for (final values in <String>[
         "'owner','active',0",
@@ -126,13 +126,16 @@ void main() {
       NativeDatabase(file),
       _fastHasher(),
     );
-    await first.setSessionUserId(DemoAdmin.userId);
+    await first.setSessionUserId(CootrafaDatabaseSeed.test.userId);
     await first.close();
     final reopened = CootrafaDatabase.forTesting(
       NativeDatabase(file),
       _fastHasher(),
     );
-    expect(await reopened.currentSessionUserId(), DemoAdmin.userId);
+    expect(
+      await reopened.currentSessionUserId(),
+      CootrafaDatabaseSeed.test.userId,
+    );
     final adminCount = await _one(
       reopened,
       "SELECT COUNT(*) AS count FROM users WHERE role='admin'",
@@ -152,14 +155,12 @@ void main() {
   });
 }
 
-Directory _appRoot() =>
+Directory _packageRoot() =>
     <Directory>[
       Directory.current,
-      Directory('${Directory.current.path}/apps/cootrafa-app'),
+      Directory('${Directory.current.path}/packages/database'),
     ].firstWhere(
-      (root) => File(
-        '${root.path}/lib/config/database/cootrafa_database.dart',
-      ).existsSync(),
+      (root) => File('${root.path}/lib/cootrafa_database.dart').existsSync(),
     );
 
 CootrafaDatabase _memoryDatabase() =>

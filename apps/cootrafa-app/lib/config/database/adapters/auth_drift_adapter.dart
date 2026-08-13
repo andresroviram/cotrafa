@@ -1,4 +1,4 @@
-import 'package:cootrafa_app/config/database/cootrafa_database.dart';
+import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';

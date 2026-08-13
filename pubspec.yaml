@@ -8,6 +8,7 @@ workspace:
   - apps/cootrafa-app
   - packages/core
   - packages/components
+  - packages/database
   - packages/features/auth
   - packages/features/user
   - packages/features/transfer
