@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
+import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 

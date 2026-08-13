@@ -1,0 +1,1 @@
+enum DeleteOutcome { deleted, deactivated }

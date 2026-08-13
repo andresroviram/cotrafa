@@ -1,10 +1,9 @@
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:injectable/injectable.dart';
-
-enum DeleteOutcome { deleted, deactivated }
 
 abstract interface class IUserLocalDatasource {
   Future<List<UserProfile>> listUsers(int actorUserId);

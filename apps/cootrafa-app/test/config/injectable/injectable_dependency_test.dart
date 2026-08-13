@@ -5,6 +5,8 @@ import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:feature_transfer/data/datasources/transfer_local_datasource.dart';
 import 'package:feature_user/data/datasources/address_local_datasource.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
+import 'package:feature_user/domain/repository/i_user_repository.dart';
+import 'package:feature_user/domain/usecases/user_usecases.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -22,6 +24,9 @@ void main() {
     expect(getIt.isRegistered<CootrafaDatabase>(), isTrue);
     expect(getIt<IAuthLocalDatasource>(), isA<AuthLocalDatasource>());
     expect(getIt<IUserLocalDatasource>(), isA<UserLocalDatasource>());
+    expect(getIt.isRegistered<IUserRepository>(), isTrue);
+    expect(getIt.isRegistered<ListUsers>(), isTrue);
+    expect(getIt.isRegistered<CreateClient>(), isTrue);
     expect(getIt<AddressLocalDatasource>(), isA<AddressLocalDatasource>());
     expect(getIt<TransferLocalDatasource>(), isA<TransferLocalDatasource>());
   });
