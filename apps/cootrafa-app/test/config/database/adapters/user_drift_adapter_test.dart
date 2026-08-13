@@ -1,5 +1,5 @@
 import 'package:core/security/credential_hasher.dart';
-import 'package:features/auth.dart';
+import 'package:features/src/auth/auth.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:cootrafa_app/config/database/cootrafa_database.dart';

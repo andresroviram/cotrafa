@@ -595,14 +595,17 @@ bool _importsApplication(String importUri) =>
     importUri.contains('apps/cootrafa_app/');
 
 bool _importsPrivateFeature(String path, String importUri) {
-  if (importUri.startsWith('package:features/src/') ||
+  final isModuleEntry = RegExp(
+    r'^package:features/src/(?:auth/auth|user/user|transfer/transfer)\.dart$',
+  ).hasMatch(importUri);
+  if ((importUri.startsWith('package:features/src/') && !isModuleEntry) ||
       importUri.contains('packages/features/cootrafa/lib/src/')) {
     return true;
   }
   return path.startsWith('app/lib/config/database/adapters/') &&
       importUri.startsWith('package:features/') &&
       !RegExp(
-        r'^package:features/(?:auth|user|address|transfer)\.dart$',
+        r'^package:features/src/(?:auth/auth|user/user|transfer/transfer)\.dart$',
       ).hasMatch(importUri);
 }
 
@@ -636,10 +639,20 @@ bool _isInvalidFinalFeaturePath(String path) {
   return !<String>{'auth', 'user', 'transfer'}.contains(topLevel);
 }
 
-bool _isPublicBarrel(String path) =>
-    'auth.dart,user.dart,address.dart,transfer.dart,features.dart'
-        .split(',')
-        .contains(path.replaceFirst('features/lib/', ''));
+bool _isPublicBarrel(String path) {
+  final normalized = path.replaceFirst('features/lib/', '');
+  return const <String>{
+    'src/auth/auth.dart',
+    'src/user/user.dart',
+    'src/transfer/transfer.dart',
+    // Legacy paths remain recognized so negative fixtures cannot bypass checks.
+    'auth.dart',
+    'user.dart',
+    'address.dart',
+    'transfer.dart',
+    'features.dart',
+  }.contains(normalized);
+}
 
 bool _leaksPersistence(String importUri) =>
     importUri.contains('cootrafa_database') ||
@@ -706,13 +719,15 @@ Directory _temporaryFeatureTree({
 
 List<ArchitectureSource> _finalArchitectureSources() => <ArchitectureSource>[
   ..._sources(
-    "injectable.dart|void configureDependencies() {}|auth.dart|export 'src/auth/data/datasources/i_auth_local_datasource.dart';|src/auth/presentation/auth/bloc/auth_event.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_event.freezed.dart';\n@freezed sealed class AuthEvent with _\$AuthEvent { const factory AuthEvent.restore() = Restore; }|src/auth/presentation/auth/bloc/auth_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_state.freezed.dart';\n@freezed abstract class AuthState with _\$AuthState { const factory AuthState() = _AuthState; }|src/auth/presentation/auth/bloc/auth_state.freezed.dart|class GeneratedAuthState {}",
+    "injectable.dart|void configureDependencies() {}|src/auth/auth.dart|export 'data/datasources/i_auth_local_datasource.dart';|src/auth/presentation/auth/bloc/auth_event.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_event.freezed.dart';\n@freezed sealed class AuthEvent with _\$AuthEvent { const factory AuthEvent.restore() = Restore; }|src/auth/presentation/auth/bloc/auth_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_state.freezed.dart';\n@freezed abstract class AuthState with _\$AuthState { const factory AuthState() = _AuthState; }|src/auth/presentation/auth/bloc/auth_state.freezed.dart|class GeneratedAuthState {}",
   ),
   for (final String path in _requiredAppPersistence.split(','))
     ArchitectureSource(
       path: path,
       content: path.contains('/adapters/')
-          ? "import 'package:drift/drift.dart'; import 'package:features/${path.split('/').last.split('_').first}.dart';"
+          ? path.endsWith('auth_drift_adapter.dart')
+                ? "import 'package:drift/drift.dart'; import 'package:features/src/auth/auth.dart';"
+                : "import 'package:drift/drift.dart';"
           : path.endsWith('injectable_dependency.dart')
           ? "import 'package:features/injectable.dart';"
           : "import 'package:drift/drift.dart'; class AppPersistenceConcept {}",

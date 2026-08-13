@@ -1,4 +1,4 @@
-import 'package:features/auth.dart';
+import 'package:features/src/auth/auth.dart';
 import 'package:injectable/injectable.dart';
 
 @module

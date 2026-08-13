@@ -2,7 +2,7 @@ import 'package:cootrafa_app/app.dart';
 import 'package:cootrafa_app/config/routes/app_router.dart';
 import 'package:core/get_it.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:features/auth.dart';
+import 'package:features/src/auth/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';

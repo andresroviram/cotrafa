@@ -1,6 +1,6 @@
-import 'package:features/auth.dart';
-import 'package:features/transfer.dart';
-import 'package:features/user.dart';
+import 'package:features/src/auth/auth.dart';
+import 'package:features/src/transfer/transfer.dart';
+import 'package:features/src/user/user.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
