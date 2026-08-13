@@ -109,7 +109,7 @@ void main() {
       await _columns(reopened, 'users'),
       isNot(containsAll(<String>{'password', 'activation_code'})),
     );
-    expect(reopened.schemaVersion, 1);
+    expect(reopened.schemaVersion, 2);
     await reopened.close();
     await directory.delete(recursive: true);
   });

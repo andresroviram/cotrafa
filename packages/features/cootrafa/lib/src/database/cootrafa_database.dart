@@ -46,7 +46,11 @@ class Addresses extends Table {
   IntColumn get userId =>
       integer().references(Users, #id, onDelete: KeyAction.cascade)();
   TextColumn get line1 => text()();
+  TextColumn get line2 => text().nullable()();
   TextColumn get city => text()();
+  TextColumn get state => text().nullable()();
+  TextColumn get postalCode => text().nullable()();
+  TextColumn get country => text().nullable()();
   TextColumn get label => text()();
   BoolColumn get isPrimary => boolean().withDefault(const Constant(false))();
 }
@@ -97,7 +101,7 @@ class CootrafaDatabase extends _$CootrafaDatabase {
   final CredentialHasher _credentialHasher;
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -117,7 +121,14 @@ class CootrafaDatabase extends _$CootrafaDatabase {
         'CREATE INDEX transfers_destination_idx ON transfers (destination_user_id)',
       );
     },
-    onUpgrade: (Migrator _, int from, int to) async {
+    onUpgrade: (Migrator migrator, int from, int to) async {
+      if (from == 1 && to == 2) {
+        await migrator.addColumn(addresses, addresses.line2);
+        await migrator.addColumn(addresses, addresses.state);
+        await migrator.addColumn(addresses, addresses.postalCode);
+        await migrator.addColumn(addresses, addresses.country);
+        return;
+      }
       throw StateError('No migration path registered from $from to $to.');
     },
     beforeOpen: (_) async {
