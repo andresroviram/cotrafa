@@ -1,0 +1,46 @@
+name: cootrafa_workspace
+publish_to: none
+
+environment:
+  sdk: ">=3.12.2 <4.0.0"
+
+workspace:
+  - apps/cootrafa-app
+  - packages/core
+  - packages/components
+  - packages/features/cootrafa
+
+dev_dependencies:
+  melos: ^7.4.0
+
+melos:
+  command:
+    bootstrap:
+      hooks:
+        post: echo "Cootrafa workspace bootstrap complete."
+
+  scripts:
+    generate:
+      run: fvm dart run melos exec --depends-on=build_runner --concurrency=1 -- "fvm dart run build_runner build"
+      description: Generate code for packages that use build_runner.
+
+    analyze:
+      exec: fvm dart analyze .
+      concurrency: 4
+      description: Analyze every workspace package.
+
+    test:
+      run: fvm dart run melos exec --dir-exists=test --concurrency=4 -- "fvm flutter test"
+      description: Run tests in every package that has a test directory.
+
+    format:check:
+      run: git ls-files --cached --others --exclude-standard -z -- "*.dart" | xargs -0 fvm dart format --output=none --set-exit-if-changed
+      description: Check tracked and intended untracked Dart files without formatting ignored generated outputs.
+
+    run:mobile:
+      run: cd "$MELOS_ROOT_PATH/apps/cootrafa-app" && fvm flutter run
+      description: Run the Cootrafa application on a mobile target.
+
+    run:web:
+      run: cd "$MELOS_ROOT_PATH/apps/cootrafa-app" && fvm flutter run -d chrome
+      description: Run the Cootrafa application in Chrome.

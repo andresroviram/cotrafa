@@ -1,4 +1,62 @@
+# Gentle AI local state
 .atl/
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Keep project-owned VS Code configuration visible by default.
+#.vscode/
+
+# Flutter, Dart, and Pub
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/build_web/
+/coverage/
+packages/**/build/
+
+# Generated Dart sources
+*.g.dart
+*.freezed.dart
+*.gr.dart
+*.config.dart
+injectable.module.dart
+
+# Symbolication and obfuscation
+app.*.symbols
+app.*.map.json
+
+# Android build artifacts
+/android/app/debug
+/android/app/profile
+/android/app/release
 
 # FVM Version Cache
 .fvm/
+
+# Local environment files
+.env
+.env.dev
+.env.qa
+.env.prod
