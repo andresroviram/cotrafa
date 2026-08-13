@@ -2,24 +2,11 @@ import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_auth/data/datasources/auth_result.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
 import 'package:injectable/injectable.dart';
 
-enum AuthError {
-  unauthorized,
-  clientNotPending,
-  identifierTaken,
-  invalidCredentials,
-  storageFailure,
-}
-
-final class AuthResult<T> {
-  const AuthResult.ok(this.value) : error = null;
-  const AuthResult.failure(this.error) : value = null;
-
-  final T? value;
-  final AuthError? error;
-}
+export 'package:feature_auth/data/datasources/auth_result.dart';
 
 abstract interface class IAuthLocalDatasource {
   Future<AuthResult<String>> issueActivationCode(int actorUserId, String email);

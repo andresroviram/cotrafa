@@ -1,4 +1,3 @@
-import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
@@ -10,38 +9,25 @@ class AuthRepositoryImpl implements IAuthRepository {
   const AuthRepositoryImpl(this._datasource);
   final IAuthLocalDatasource _datasource;
 
-  Future<Result<T>> _map<T>(Future<AuthResult<T>> pending) async {
-    final result = await pending;
-    if (result.error == null) return Success<T>(result.value as T);
-    return Error<T>(switch (result.error!) {
-      AuthError.unauthorized => const UnauthorizedFailure(),
-      AuthError.clientNotPending => const ValidationFailure(
-        message: 'Client is not pending activation.',
-      ),
-      AuthError.identifierTaken => const DuplicateFailure(),
-      AuthError.invalidCredentials => const AuthFailure(),
-      AuthError.storageFailure => const StorageFailure(),
-    });
-  }
-
   @override
   Future<Result<String>> issueActivationCode(int actorUserId, String email) =>
-      _map(_datasource.issueActivationCode(actorUserId, email));
+      _datasource.issueActivationCode(actorUserId, email).toDomainResult();
   @override
   Future<Result<AuthIdentity>> activate(
     String email,
     String code,
     String username,
     String password,
-  ) => _map(_datasource.activate(email, code, username, password));
+  ) => _datasource.activate(email, code, username, password).toDomainResult();
   @override
   Future<Result<AuthIdentity>> login(String identifier, String password) =>
-      _map(_datasource.login(identifier, password));
+      _datasource.login(identifier, password).toDomainResult();
   @override
   Future<Result<AuthIdentity>> loginDemoAdmin() =>
-      _map(_datasource.loginDemoAdmin());
+      _datasource.loginDemoAdmin().toDomainResult();
   @override
-  Future<Result<AuthIdentity?>> restore() => _map(_datasource.restore());
+  Future<Result<AuthIdentity?>> restore() =>
+      _datasource.restore().toDomainResult();
   @override
-  Future<Result<void>> logout() => _map(_datasource.logout());
+  Future<Result<void>> logout() => _datasource.logout().toDomainResult();
 }
