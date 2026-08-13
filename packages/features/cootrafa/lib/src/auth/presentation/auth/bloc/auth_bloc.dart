@@ -8,7 +8,7 @@ import 'package:features/src/auth/presentation/auth/bloc/auth_state.dart';
 import 'package:injectable/injectable.dart';
 
 @lazySingleton
-final class AuthBloc extends Bloc<AuthEvent, AuthState> {
+class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc(
     this._restoreSession,
     this._login,
