@@ -67,9 +67,8 @@ GoRouter createRouter(AuthBloc authBloc) {
                 const LanguageSwitcherButton(),
                 IconButton(
                   tooltip: 'Cerrar sesión',
-                  onPressed: () => context.read<AuthBloc>().add(
-                    const AuthEvent.logoutRequested(),
-                  ),
+                  onPressed: () =>
+                      authBloc.add(const AuthEvent.logoutRequested()),
                   icon: const Icon(Icons.logout),
                 ),
                 const Gap(2),
