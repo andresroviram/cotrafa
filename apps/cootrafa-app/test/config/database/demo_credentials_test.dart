@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:cootrafa_app/config/injectable/auth_module.dart';
-import 'package:features/src/auth/auth.dart';
+import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,9 +19,9 @@ void main() {
     expect(devDependencies, contains('  freezed: ^3.2.5'));
 
     final canonical = File(
-      '${root.path}/lib/src/auth/domain/entities/demo_credentials.dart',
+      '${root.path}/lib/domain/entities/demo_credentials.dart',
     );
-    final productionSources = Directory('${root.path}/lib/src')
+    final productionSources = Directory('${root.path}/lib')
         .listSync(recursive: true)
         .whereType<File>()
         .where(
@@ -99,11 +99,11 @@ final class _TestAuthModule extends AuthModule {}
 Directory _packageRoot() =>
     <Directory>[
       Directory.current,
-      Directory('${Directory.current.path}/packages/features/cootrafa'),
-      Directory('${Directory.current.path}/../../packages/features/cootrafa'),
+      Directory('${Directory.current.path}/packages/features/auth'),
+      Directory('${Directory.current.path}/../../packages/features/auth'),
     ].firstWhere(
       (root) => File(
-        '${root.path}/lib/src/auth/domain/entities/demo_credentials.dart',
+        '${root.path}/lib/domain/entities/demo_credentials.dart',
       ).existsSync(),
     );
 

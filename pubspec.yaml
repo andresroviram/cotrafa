@@ -8,7 +8,9 @@ workspace:
   - apps/cootrafa-app
   - packages/core
   - packages/components
-  - packages/features/cootrafa
+  - packages/features/auth
+  - packages/features/user
+  - packages/features/transfer
 
 dev_dependencies:
   melos: ^7.4.0

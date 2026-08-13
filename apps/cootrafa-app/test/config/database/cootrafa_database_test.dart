@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:features/src/auth/auth.dart';
+import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:drift/drift.dart' show QueryRow, Variable;
 import 'package:drift/native.dart';
 import 'package:cootrafa_app/config/database/cootrafa_database.dart';

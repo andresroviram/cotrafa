@@ -3,7 +3,9 @@ import 'package:drift/native.dart';
 import 'package:cootrafa_app/config/database/adapters/auth_drift_adapter.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
-import 'package:features/src/auth/auth.dart';
+import 'package:feature_auth/data/datasources/i_auth_local_datasource.dart';
+import 'package:feature_auth/domain/entities/auth_identity.dart';
+import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 

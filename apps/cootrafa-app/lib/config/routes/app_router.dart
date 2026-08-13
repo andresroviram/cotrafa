@@ -3,9 +3,14 @@ import 'package:components/language_switcher.dart';
 import 'package:components/layout/scaffold_with_navigation.dart';
 import 'package:components/theme_button.dart';
 import 'package:core/enum/navigation_item.dart';
-import 'package:features/src/auth/auth.dart';
-import 'package:features/routes.dart';
-import 'package:features/src/user/user.dart';
+import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
+import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
+import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
+import 'package:feature_auth/presentation/login/view/login_view.dart';
+import 'package:feature_auth/routes.dart';
+import 'package:feature_transfer/routes.dart';
+import 'package:feature_user/presentation/users/view/users_view.dart';
+import 'package:feature_user/routes.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -37,7 +42,7 @@ GoRouter createRouter(AuthBloc authBloc) {
       return null;
     },
     routes: [
-      loginRoute,
+      loginRoute(authenticatedLocation: UsersView.path),
       StatefulShellRoute.indexedStack(
         builder: (context, _, navigationShell) => BlocProvider.value(
           value: authBloc,

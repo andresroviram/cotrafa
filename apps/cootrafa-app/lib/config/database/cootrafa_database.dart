@@ -1,7 +1,7 @@
 import 'package:core/database/connection/shared.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
-import 'package:features/src/auth/auth.dart';
+import 'package:feature_auth/domain/entities/demo_credentials.dart';
 
 part 'cootrafa_database.g.dart';
 part 'tables/addresses.dart';

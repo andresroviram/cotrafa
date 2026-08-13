@@ -14,8 +14,12 @@ dependencies:
     path: ../../packages/core
   components:
     path: ../../packages/components
-  features:
-    path: ../../packages/features/cootrafa
+  feature_auth:
+    path: ../../packages/features/auth
+  feature_user:
+    path: ../../packages/features/user
+  feature_transfer:
+    path: ../../packages/features/transfer
   adaptive_theme: ^3.7.2
   responsive_framework: ^1.5.1
   bot_toast: ^4.1.3

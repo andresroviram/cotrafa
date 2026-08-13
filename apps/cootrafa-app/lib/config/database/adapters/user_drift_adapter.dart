@@ -1,6 +1,6 @@
 import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:drift/drift.dart';
-import 'package:features/src/auth/auth.dart';
+import 'package:feature_auth/domain/entities/demo_credentials.dart';
 
 enum UserError {
   unauthorized,

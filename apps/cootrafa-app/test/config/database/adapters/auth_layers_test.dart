@@ -6,8 +6,8 @@ import 'package:core/errors/result.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:drift/native.dart';
 import 'package:cootrafa_app/config/database/adapters/auth_drift_adapter.dart';
-import 'package:features/src/auth/data/repository/auth_repository_impl.dart';
-import 'package:features/src/auth/domain/usecases/auth_usecases.dart';
+import 'package:feature_auth/data/repository/auth_repository_impl.dart';
+import 'package:feature_auth/domain/usecases/auth_usecases.dart';
 import 'package:cootrafa_app/config/database/cootrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -76,9 +76,9 @@ void main() {
     expect(row.readNullable<String>('activation_code_hash'), isNotNull);
 
     final root = <Directory>[
-      Directory('packages/features/cootrafa/lib/src/auth'),
-      Directory('../../packages/features/cootrafa/lib/src/auth'),
-      Directory('lib/src/auth'),
+      Directory('packages/features/auth/lib'),
+      Directory('../../packages/features/auth/lib'),
+      Directory('lib'),
     ].firstWhere((directory) => directory.existsSync());
     final repositorySource = File(
       '${root.path}/data/repository/auth_repository_impl.dart',
