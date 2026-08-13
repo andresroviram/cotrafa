@@ -1,0 +1,43 @@
+name: components
+description: "Widgets y componentes UI compartidos entre features."
+publish_to: "none"
+resolution: workspace
+version: 0.0.1
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  core:
+    path: ../core
+
+  # UI
+  adaptive_theme: ^3.7.2
+  responsive_framework: ^1.5.1
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  gap: ^3.0.1
+
+  # Navigation
+  go_router: ^17.1.0
+  native_glass_navbar: ^1.0.2
+
+  # State Management
+  flutter_bloc: ^9.1.1
+
+  # i18n
+  easy_localization: ^3.0.8
+
+  # DI
+  injectable: ^3.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
