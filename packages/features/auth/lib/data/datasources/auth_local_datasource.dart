@@ -37,15 +37,15 @@ abstract interface class IAuthLocalDatasource {
   Future<AuthResult<void>> logout();
 }
 
-@module
-abstract class AuthDatasourceModule {
-  @singleton
-  CootrafaDatabaseSeed get databaseSeed => const CootrafaDatabaseSeed(
-    userId: DemoAdmin.userId,
-    email: DemoAdmin.email,
-    fullName: DemoAdmin.fullName,
-    password: DemoAdmin.password,
-  );
+@Singleton(as: CootrafaDatabaseSeed)
+final class DemoAdminDatabaseSeed extends CootrafaDatabaseSeed {
+  const DemoAdminDatabaseSeed()
+    : super(
+        userId: DemoAdmin.userId,
+        email: DemoAdmin.email,
+        fullName: DemoAdmin.fullName,
+        password: DemoAdmin.password,
+      );
 }
 
 @LazySingleton(as: IAuthLocalDatasource)

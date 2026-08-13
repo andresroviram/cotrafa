@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:feature_auth/domain/usecases/auth_usecases.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
@@ -12,9 +11,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc(
     this._restoreSession,
     this._login,
+    this._loginDemoAdminUseCase,
     this._activateClient,
     this._logout,
-    this._demoCredentials,
   ) : super(const AuthState()) {
     on<AuthRestoreRequested>(_restore);
     on<DemoAdminLoginRequested>(_loginDemoAdmin);
@@ -25,9 +24,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   final RestoreSession _restoreSession;
   final Login _login;
+  final LoginDemoAdmin _loginDemoAdminUseCase;
   final ActivateClient _activateClient;
   final Logout _logout;
-  final DemoCredentials _demoCredentials;
 
   AuthState _next(
     AuthStatus status, {
@@ -56,7 +55,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     DemoAdminLoginRequested event,
     Emitter<AuthState> emit,
   ) => _authenticate(
-    () => _login(_demoCredentials.identifier, _demoCredentials.password),
+    _loginDemoAdminUseCase.call,
     'Unable to sign in.',
     AuthStatus.authenticated,
     emit,

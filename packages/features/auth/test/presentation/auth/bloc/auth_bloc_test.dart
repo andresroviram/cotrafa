@@ -2,7 +2,6 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:feature_auth/domain/usecases/auth_usecases.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
@@ -14,13 +13,14 @@ class _Restore extends Mock implements RestoreSession {}
 
 class _Login extends Mock implements Login {}
 
+class _LoginDemoAdmin extends Mock implements LoginDemoAdmin {}
+
 class _Activate extends Mock implements ActivateClient {}
 
 class _Logout extends Mock implements Logout {}
 
 void main() {
   const identity = AuthIdentity(userId: 7, role: 'client');
-  const credentials = DemoAdmin.credentials;
   const authenticatedStates = <AuthState>[
     AuthState(status: AuthStatus.loading),
     AuthState(status: AuthStatus.authenticated, identity: identity),
@@ -31,14 +31,17 @@ void main() {
   ];
   late _Restore restore;
   late _Login login;
+  late _LoginDemoAdmin loginDemoAdmin;
   late _Activate activate;
   late _Logout logout;
 
-  AuthBloc build() => AuthBloc(restore, login, activate, logout, credentials);
+  AuthBloc build() =>
+      AuthBloc(restore, login, loginDemoAdmin, activate, logout);
 
   setUp(() {
     restore = _Restore();
     login = _Login();
+    loginDemoAdmin = _LoginDemoAdmin();
     activate = _Activate();
     logout = _Logout();
   });
@@ -110,26 +113,23 @@ void main() {
   );
 
   blocTest<AuthBloc, AuthState>(
-    'demo request passes the injected credentials to Login',
+    'demo request delegates credential ownership to LoginDemoAdmin',
     setUp: () => when(
-      () => login(credentials.identifier, credentials.password),
+      loginDemoAdmin.call,
     ).thenAnswer((_) async => const Success(identity)),
     build: build,
     act: (bloc) => bloc.add(const AuthEvent.demoAdminLoginRequested()),
     expect: () => authenticatedStates,
-    verify: (_) => verify(
-      () => login(credentials.identifier, credentials.password),
-    ).called(1),
+    verify: (_) => verify(loginDemoAdmin.call).called(1),
   );
 
   blocTest<AuthBloc, AuthState>(
     'demo failure does not leak infrastructure details',
-    setUp: () => when(() => login(credentials.identifier, credentials.password))
-        .thenAnswer(
-          (_) async => const Error<AuthIdentity>(
-            StorageFailure(message: 'users.password_hash'),
-          ),
-        ),
+    setUp: () => when(loginDemoAdmin.call).thenAnswer(
+      (_) async => const Error<AuthIdentity>(
+        StorageFailure(message: 'users.password_hash'),
+      ),
+    ),
     build: build,
     act: (bloc) => bloc.add(const AuthEvent.demoAdminLoginRequested()),
     expect: () => signInFailureStates,

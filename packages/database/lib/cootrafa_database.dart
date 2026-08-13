@@ -102,7 +102,7 @@ class CootrafaDatabase extends _$CootrafaDatabase {
   ).map((QueryRow row) => row.read<int>('user_id')).getSingleOrNull();
 }
 
-final class CootrafaDatabaseSeed {
+class CootrafaDatabaseSeed {
   const CootrafaDatabaseSeed({
     required this.userId,
     required this.email,

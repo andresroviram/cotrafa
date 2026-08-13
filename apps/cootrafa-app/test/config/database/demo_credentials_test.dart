@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
-import 'package:feature_auth/di/auth_module.dart';
 import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:core/security/credential_hasher.dart';
@@ -41,13 +40,13 @@ void main() {
     }
   });
 
-  test('module binds the canonical const credentials by identity', () {
+  test('concrete data seed adapts the canonical auth credentials', () {
     const expected = DemoCredentials(
       identifier: 'admin@cootrafa.local',
       password: 'CootrafaDemo2026!',
     );
-    final bound = _TestAuthModule().demoCredentials;
-    final seed = _TestAuthDatasourceModule().databaseSeed;
+    const bound = DemoAdmin.credentials;
+    const seed = DemoAdminDatabaseSeed();
 
     expect(identical(bound, DemoAdmin.credentials), isTrue);
     expect(identical(bound, expected), isTrue);
@@ -107,10 +106,6 @@ void main() {
     await directory.delete(recursive: true);
   });
 }
-
-final class _TestAuthModule extends AuthModule {}
-
-final class _TestAuthDatasourceModule extends AuthDatasourceModule {}
 
 const _demoSeed = CootrafaDatabaseSeed(
   userId: DemoAdmin.userId,

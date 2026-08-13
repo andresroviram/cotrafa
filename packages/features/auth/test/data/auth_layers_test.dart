@@ -60,6 +60,13 @@ void main() {
     expect((await RestoreSession(repository)()).valueOrNull, isNull);
   });
 
+  test('demo login use case owns the fixed admin credentials', () async {
+    final result = await LoginDemoAdmin(repository)();
+
+    expect(result.valueOrNull?.userId, DemoAdmin.userId);
+    expect(result.valueOrNull?.role, 'admin');
+  });
+
   test('duplicate normalized username rolls activation back', () async {
     final code = (await IssueActivationCode(repository)(
       1,

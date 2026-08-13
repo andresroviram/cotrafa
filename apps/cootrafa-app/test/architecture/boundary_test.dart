@@ -658,7 +658,6 @@ bool _isInvalidFinalFeaturePath(String path) {
       'data',
       'domain',
       'presentation',
-      'di',
       'injectable.dart',
       'injectable.module.dart',
       'routes.dart',

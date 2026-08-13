@@ -57,7 +57,7 @@ void main() {
       File(
         '${workspace.path}/packages/features/auth/lib/di/auth_module.dart',
       ).existsSync(),
-      isTrue,
+      isFalse,
     );
     expect(
       File(
@@ -77,6 +77,12 @@ void main() {
     expect(
       authDatasource,
       contains('@LazySingleton(as: IAuthLocalDatasource)'),
+    );
+    expect(authDatasource, isNot(contains('@module')));
+    expect(authDatasource, contains('@Singleton(as: CootrafaDatabaseSeed)'));
+    expect(
+      authDatasource,
+      contains('class DemoAdminDatabaseSeed extends CootrafaDatabaseSeed'),
     );
     expect(
       File(
