@@ -61,7 +61,7 @@ void main() {
       tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
       ThemeMode.system,
     );
-    expect(find.text('Cootrafa'), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
     expect(find.text('Iniciar sesión'), findsOneWidget);
   });
 }

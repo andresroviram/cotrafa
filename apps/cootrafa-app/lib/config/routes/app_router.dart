@@ -42,7 +42,11 @@ GoRouter createRouter(AuthBloc authBloc) {
       return null;
     },
     routes: [
-      loginRoute(authenticatedLocation: UsersView.path),
+      loginRoute(
+        authenticatedLocation: UsersView.path,
+        logoAssetPath: 'assets/img/logo.png',
+        logoDarkAssetPath: 'assets/img/logo_dark.png',
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, _, navigationShell) => BlocProvider.value(
           value: authBloc,

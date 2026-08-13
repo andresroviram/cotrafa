@@ -16,7 +16,11 @@ void main() {
 
   test('builds login and shell branch routes', () {
     expect(
-      loginRoute(authenticatedLocation: UsersView.path).path,
+      loginRoute(
+        authenticatedLocation: UsersView.path,
+        logoAssetPath: 'assets/img/logo.png',
+        logoDarkAssetPath: 'assets/img/logo_dark.png',
+      ).path,
       LoginView.path,
     );
     expect((usersRoutes.routes.single as GoRoute).path, UsersView.path);

@@ -28,35 +28,40 @@ void main() {
   Widget subject() => MaterialApp(
     theme: ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00856A)),
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF004183)),
     ),
     home: BlocProvider<AuthBloc>.value(
       value: bloc,
-      child: const LoginView(authenticatedLocation: '/users'),
+      child: const LoginView(
+        authenticatedLocation: '/users',
+        logoAssetPath: 'assets/img/logo.png',
+        logoDarkAssetPath: 'assets/img/logo_dark.png',
+      ),
     ),
   );
 
-  testWidgets(
-    'renders demo and client access with the reference form language',
-    (tester) async {
-      await tester.pumpWidget(subject());
+  testWidgets('renders a minimal client login with a separate admin action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(subject());
 
-      expect(find.text('Cootrafa'), findsOneWidget);
-      expect(find.text('Bienvenido'), findsOneWidget);
-      expect(find.text('Iniciar sesión'), findsOneWidget);
-      expect(find.text('Correo o nombre de usuario'), findsOneWidget);
-      expect(find.text('Contraseña'), findsOneWidget);
-      expect(find.text('Ingresar con mi cuenta'), findsOneWidget);
-      expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
-    },
-  );
+    expect(find.byType(Image), findsOneWidget);
+    expect(find.text('Bienvenido'), findsOneWidget);
+    expect(find.text('Iniciar sesión'), findsOneWidget);
+    expect(find.text('Iniciar como Admin'), findsOneWidget);
+    expect(find.text('Correo o nombre de usuario'), findsOneWidget);
+    expect(find.text('Contraseña'), findsOneWidget);
+    expect(find.textContaining('credencial configurada'), findsNothing);
+    expect(find.textContaining('Remember me'), findsNothing);
+    expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+  });
 
   testWidgets('validates client credentials before dispatching login', (
     tester,
   ) async {
     await tester.pumpWidget(subject());
-    await tester.ensureVisible(find.text('Ingresar con mi cuenta'));
-    await tester.tap(find.text('Ingresar con mi cuenta'));
+    await tester.ensureVisible(find.text('Iniciar sesión'));
+    await tester.tap(find.text('Iniciar sesión'));
     await tester.pump();
 
     expect(find.text('Ingresa tu correo o nombre de usuario.'), findsOneWidget);
@@ -71,8 +76,8 @@ void main() {
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), ' CLIENT@EXAMPLE.COM ');
     await tester.enterText(fields.at(1), 'secret');
-    await tester.ensureVisible(find.text('Ingresar con mi cuenta'));
-    await tester.tap(find.text('Ingresar con mi cuenta'));
+    await tester.ensureVisible(find.text('Iniciar sesión'));
+    await tester.tap(find.text('Iniciar sesión'));
     await tester.pump();
 
     verify(
@@ -81,8 +86,8 @@ void main() {
       ),
     ).called(1);
 
-    await tester.ensureVisible(find.text('Iniciar sesión'));
-    await tester.tap(find.text('Iniciar sesión'));
+    await tester.ensureVisible(find.text('Iniciar como Admin'));
+    await tester.tap(find.text('Iniciar como Admin'));
     verify(() => bloc.add(const AuthEvent.demoAdminLoginRequested())).called(1);
   });
 }

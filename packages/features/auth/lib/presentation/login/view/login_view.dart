@@ -7,18 +7,32 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class LoginView extends StatefulWidget {
-  const LoginView({required this.authenticatedLocation, super.key});
+  const LoginView({
+    required this.authenticatedLocation,
+    required this.logoAssetPath,
+    required this.logoDarkAssetPath,
+    super.key,
+  });
 
   final String authenticatedLocation;
+  final String logoAssetPath;
+  final String logoDarkAssetPath;
 
   static const String path = '/login';
   static const String name = 'login';
 
-  static Widget create({required String authenticatedLocation}) =>
-      BlocProvider.value(
-        value: getIt<AuthBloc>()..add(const AuthEvent.restoreRequested()),
-        child: LoginView(authenticatedLocation: authenticatedLocation),
-      );
+  static Widget create({
+    required String authenticatedLocation,
+    required String logoAssetPath,
+    required String logoDarkAssetPath,
+  }) => BlocProvider.value(
+    value: getIt<AuthBloc>()..add(const AuthEvent.restoreRequested()),
+    child: LoginView(
+      authenticatedLocation: authenticatedLocation,
+      logoAssetPath: logoAssetPath,
+      logoDarkAssetPath: logoDarkAssetPath,
+    ),
+  );
 
   @override
   State<LoginView> createState() => _LoginViewState();
@@ -39,7 +53,12 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final logoPath = theme.brightness == Brightness.dark
+        ? widget.logoDarkAssetPath
+        : widget.logoAssetPath;
+
     return BlocListener<AuthBloc, AuthState>(
       listenWhen: (previous, current) =>
           previous.status != current.status ||
@@ -56,63 +75,51 @@ class _LoginViewState extends State<LoginView> {
         }
       },
       child: Scaffold(
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceContainerLow,
         body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - 40,
+                  minHeight: constraints.maxHeight - 56,
                 ),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 440),
+                    constraints: const BoxConstraints(maxWidth: 420),
                     child: BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {
                         final isLoading = state.status == AuthStatus.loading;
                         return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              width: 76,
-                              height: 76,
-                              decoration: BoxDecoration(
-                                color: colors.primaryContainer,
-                                shape: BoxShape.circle,
+                            Semantics(
+                              label: 'Logo de Cootrafa',
+                              image: true,
+                              child: Image.asset(
+                                logoPath,
+                                width: 176,
+                                height: 60,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, _, _) =>
+                                    const SizedBox(height: 60),
                               ),
-                              child: Icon(
-                                Icons.account_balance_rounded,
-                                color: colors.onPrimaryContainer,
-                                size: 38,
-                              ),
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Cootrafa',
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(
-                                    color: colors.primary,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Bienvenido',
-                              style: Theme.of(context).textTheme.headlineMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Administra usuarios y transferencias de forma segura.',
-                              textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: colors.onSurfaceVariant),
-                            ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 28),
                             Card(
+                              margin: EdgeInsets.zero,
+                              color: colors.surface,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
                               child: Padding(
-                                padding: const EdgeInsets.all(20),
+                                padding: const EdgeInsets.fromLTRB(
+                                  24,
+                                  32,
+                                  24,
+                                  28,
+                                ),
                                 child: Form(
                                   key: _formKey,
                                   child: Column(
@@ -120,62 +127,18 @@ class _LoginViewState extends State<LoginView> {
                                         CrossAxisAlignment.stretch,
                                     children: [
                                       Text(
-                                        'Acceso demo de administrador',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
+                                        'Bienvenido',
+                                        textAlign: TextAlign.center,
+                                        style: theme.textTheme.headlineSmall
                                             ?.copyWith(
-                                              fontWeight: FontWeight.w600,
+                                              fontWeight: FontWeight.w700,
                                             ),
                                       ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'La credencial configurada se inyecta automáticamente.',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                              color: colors.onSurfaceVariant,
-                                            ),
+                                      const SizedBox(height: 28),
+                                      const _FieldLabel(
+                                        text: 'Correo o nombre de usuario',
                                       ),
-                                      const SizedBox(height: 14),
-                                      FilledButton.icon(
-                                        onPressed: isLoading
-                                            ? null
-                                            : () => context.read<AuthBloc>().add(
-                                                const AuthEvent.demoAdminLoginRequested(),
-                                              ),
-                                        icon: const Icon(
-                                          Icons.verified_user_outlined,
-                                        ),
-                                        label: _ButtonLabel(
-                                          loading: isLoading,
-                                          text: 'Iniciar sesión',
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                      Row(
-                                        children: [
-                                          const Expanded(child: Divider()),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                            ),
-                                            child: Text(
-                                              'o ingresa como cliente',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelMedium
-                                                  ?.copyWith(
-                                                    color:
-                                                        colors.onSurfaceVariant,
-                                                  ),
-                                            ),
-                                          ),
-                                          const Expanded(child: Divider()),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 20),
+                                      const SizedBox(height: 8),
                                       TextFormField(
                                         controller: _identifierController,
                                         enabled: !isLoading,
@@ -183,10 +146,13 @@ class _LoginViewState extends State<LoginView> {
                                             TextInputType.emailAddress,
                                         textInputAction: TextInputAction.next,
                                         autocorrect: false,
+                                        autofillHints: const [
+                                          AutofillHints.username,
+                                          AutofillHints.email,
+                                        ],
                                         decoration: _inputDecoration(
                                           context,
-                                          label: 'Correo o nombre de usuario',
-                                          icon: Icons.person_outline_rounded,
+                                          hint: 'tu@correo.com',
                                         ),
                                         validator: (value) =>
                                             value == null ||
@@ -195,20 +161,27 @@ class _LoginViewState extends State<LoginView> {
                                             : null,
                                       ),
                                       const SizedBox(height: 14),
+                                      const _FieldLabel(text: 'Contraseña'),
+                                      const SizedBox(height: 8),
                                       TextFormField(
                                         controller: _passwordController,
                                         enabled: !isLoading,
                                         obscureText: _obscurePassword,
                                         textInputAction: TextInputAction.done,
+                                        autofillHints: const [
+                                          AutofillHints.password,
+                                        ],
                                         onFieldSubmitted: (_) =>
                                             _submitClient(),
                                         decoration:
                                             _inputDecoration(
                                               context,
-                                              label: 'Contraseña',
-                                              icon: Icons.lock_outline_rounded,
+                                              hint: 'Ingresa tu contraseña',
                                             ).copyWith(
                                               suffixIcon: IconButton(
+                                                tooltip: _obscurePassword
+                                                    ? 'Mostrar contraseña'
+                                                    : 'Ocultar contraseña',
                                                 onPressed: () => setState(
                                                   () => _obscurePassword =
                                                       !_obscurePassword,
@@ -227,14 +200,26 @@ class _LoginViewState extends State<LoginView> {
                                             ? 'Ingresa tu contraseña.'
                                             : null,
                                       ),
-                                      const SizedBox(height: 16),
-                                      OutlinedButton(
+                                      const SizedBox(height: 24),
+                                      FilledButton(
+                                        style: _buttonStyle(),
                                         onPressed: isLoading
                                             ? null
                                             : _submitClient,
-                                        child: const Text(
-                                          'Ingresar con mi cuenta',
+                                        child: _ButtonLabel(
+                                          loading: isLoading,
+                                          text: 'Iniciar sesión',
                                         ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      OutlinedButton(
+                                        style: _buttonStyle(),
+                                        onPressed: isLoading
+                                            ? null
+                                            : () => context.read<AuthBloc>().add(
+                                                const AuthEvent.demoAdminLoginRequested(),
+                                              ),
+                                        child: const Text('Iniciar como Admin'),
                                       ),
                                     ],
                                   ),
@@ -257,16 +242,34 @@ class _LoginViewState extends State<LoginView> {
 
   InputDecoration _inputDecoration(
     BuildContext context, {
-    required String label,
-    required IconData icon,
-  }) => InputDecoration(
-    labelText: label,
-    prefixIcon: Icon(icon),
-    filled: true,
-    fillColor: Theme.of(
-      context,
-    ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    required String hint,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(16);
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: TextStyle(color: colors.onSurfaceVariant),
+      filled: true,
+      fillColor: colors.surfaceContainerHighest.withValues(alpha: 0.5),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      border: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: radius,
+        borderSide: BorderSide(color: colors.primary, width: 1.4),
+      ),
+    );
+  }
+
+  ButtonStyle _buttonStyle() => ButtonStyle(
+    minimumSize: const WidgetStatePropertyAll(Size.fromHeight(52)),
+    shape: const WidgetStatePropertyAll(StadiumBorder()),
   );
 
   void _submitClient() {
@@ -278,6 +281,20 @@ class _LoginViewState extends State<LoginView> {
       ),
     );
   }
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: Theme.of(
+      context,
+    ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+  );
 }
 
 class _ButtonLabel extends StatelessWidget {
