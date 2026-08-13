@@ -8,10 +8,10 @@ void main() {
       final BoundaryScanReport report =
           scanArchitectureSources(<ArchitectureSource>[
             const ArchitectureSource(
-              path: 'src/auth/data/datasources/auth_local_datasource.dart',
+              path: 'data/datasources/auth_local_datasource.dart',
               content:
                   "import 'package:drift/drift.dart';\n"
-                  "import 'package:features/src/database/"
+                  "import 'package:feature_auth/database/"
                   "cootrafa_database.dart';",
             ),
           ]);
@@ -37,7 +37,7 @@ void main() {
               path: 'src/shared/application_adapter.dart',
               content:
                   "import '../../../../apps/cootrafa-app/lib/app.dart';\n"
-                  "import 'package:features/src/database/"
+                  "import 'package:feature_auth/database/"
                   "cootrafa_database.dart';",
             ),
           ]);
@@ -131,22 +131,22 @@ void main() {
     final List<String> rejectedFixtures = <String>[
       "feature app import|featureDoesNotImportApp|src/auth/domain/usecases/login.dart|import 'package:cootrafa_app/config/database/cootrafa_database.dart';",
       "feature Drift import|featureDoesNotImportDrift|src/user/domain/entities/profile.dart|import 'package:drift/drift.dart';",
-      "app private feature import|appImportsPrivateFeature|app/lib/config/database/adapters/auth.dart|import '../../../../packages/features/cootrafa/lib/src/auth/port.dart';",
-      "app DI private feature import|appImportsPrivateFeature|app/lib/config/injectable/injectable_dependency.dart|import 'package:features/src/injectable.dart';",
+      "app private feature import|appImportsPrivateFeature|app/lib/config/database/adapters/auth.dart|import '../../../../packages/features/auth/lib/src/port.dart';",
+      "app DI private feature import|appImportsPrivateFeature|app/lib/config/injectable/injectable_dependency.dart|import 'package:feature_auth/src/injectable.dart';",
       "public barrel concrete leak|publicBarrelLeaksPersistence|auth.dart|export 'src/database/cootrafa_database.dart';",
       'final feature database|finalFeatureHasInfrastructure|src/database/cootrafa_database.dart|',
       'final feature security|finalFeatureHasInfrastructure|src/security/credential_hasher.dart|',
-      'final feature Drift manifest|featureDoesNotImportDrift|features/pubspec.yaml|dependencies:\n  drift: ^2.24.0',
+      'final feature Drift manifest|featureDoesNotImportDrift|features/auth/pubspec.yaml|dependencies:\n  drift: ^2.24.0',
       'missing Freezed event|invalidFreezedEvent|src/user/presentation/users/bloc/user_event.dart|sealed class UserEvent {}',
       'missing Freezed state|invalidFreezedState|src/transfer/presentation/bloc/transfer_state.dart|class TransferState {}',
-      "dual runtime database composition|dualRuntimeDatabaseAuthority|app/lib/config/injectable/database_module.dart|import '../database/cootrafa_database.dart';\nimport 'package:features/src/database/cootrafa_database.dart';",
-      'feature reverse manifest dependency|featureManifestDependsOnApp|features/pubspec.yaml|dependencies:\n  cootrafa_app:\n    path: ../../app',
+      "dual runtime database composition|dualRuntimeDatabaseAuthority|app/lib/config/injectable/database_module.dart|import '../database/cootrafa_database.dart';\nimport 'package:feature_auth/database/cootrafa_database.dart';",
+      'feature reverse manifest dependency|featureManifestDependsOnApp|features/auth/pubspec.yaml|dependencies:\n  cootrafa_app:\n    path: ../../app',
       'forbidden database abstraction|forbiddenDatabaseAbstraction|src/auth/domain/i_cootrafa_database.dart|abstract class ICootrafaDatabase {}',
       'generic CRUD abstraction|forbiddenDatabaseAbstraction|src/user/domain/i_user_crud.dart|abstract class IUserCrud {}',
       'final feature Drift type|featureDoesNotImportDrift|src/auth/domain/entities/bad_identity.dart|final CootrafaDatabase database;',
       "public barrel closure|publicBarrelLeaksPersistence|auth.dart|export 'src/auth/contracts.dart';|src/auth/contracts.dart|final QueryRow leakedRow;",
       "relative barrel closure|publicBarrelLeaksPersistence|auth.dart|export 'src/auth/api.dart';|src/auth/api.dart|export '../data/contracts.dart';|src/data/contracts.dart|final AddressesData exposedRow;",
-      "P7 obsolete persistence|finalFeatureHasInfrastructure|injectable.dart|void configureDependencies() {}|app/lib/config/injectable/injectable_dependency.dart|import 'package:features/injectable.dart';|src/database/cootrafa_database.g.dart|class _GeneratedDatabase {}",
+      "P7 obsolete persistence|finalFeatureHasInfrastructure|injectable.dart|void configureDependencies() {}|app/lib/config/injectable/injectable_dependency.dart|import 'package:feature_auth/injectable.module.dart';|src/database/cootrafa_database.g.dart|class _GeneratedDatabase {}",
     ];
     for (final String fixture in rejectedFixtures) {
       final List<String> parts = fixture.split('|');
@@ -287,23 +287,34 @@ BoundaryScanReport scanArchitectureTree(Directory featureLib) {
 }
 
 BoundaryScanReport scanArchitectureWorkspace(Directory workspace) {
-  final Directory feature = Directory(
-    '${workspace.path}/packages/features/cootrafa/lib',
-  );
+  const featureNames = <String>['auth', 'user', 'transfer'];
   final List<ArchitectureSource> sources = <ArchitectureSource>[
-    ..._readDartSources(feature, ''),
+    for (final feature in featureNames)
+      ..._readDartSources(
+        Directory('${workspace.path}/packages/features/$feature/lib'),
+        'features/$feature/lib/',
+      ),
     ..._readDartSources(
       Directory('${workspace.path}/apps/cootrafa-app/lib'),
       'app/lib/',
     ),
-    for (final String pair
-        in 'packages/features/cootrafa/pubspec.yaml|features/pubspec.yaml,apps/cootrafa-app/pubspec.yaml|app/pubspec.yaml'
-            .split(','))
-      _readSource(workspace, pair.split('|').first, pair.split('|').last),
+    for (final feature in featureNames)
+      _readSource(
+        workspace,
+        'packages/features/$feature/pubspec.yaml',
+        'features/$feature/pubspec.yaml',
+      ),
+    _readSource(
+      workspace,
+      'apps/cootrafa-app/pubspec.yaml',
+      'app/pubspec.yaml',
+    ),
   ];
-  final bool finalArchitecture =
-      File('${feature.path}/injectable.dart').existsSync() &&
-      File('${feature.path}/routes.dart').existsSync();
+  final bool finalArchitecture = featureNames.every((feature) {
+    final lib = '${workspace.path}/packages/features/$feature/lib';
+    return File('$lib/injectable.dart').existsSync() &&
+        File('$lib/routes.dart').existsSync();
+  });
   return scanArchitectureSources(
     sources,
     finalArchitecture: finalArchitecture,
@@ -357,7 +368,7 @@ BoundaryScanReport scanArchitectureSources(
     final bool featureSource =
         !appSource &&
         !RegExp(r'(?:pubspec\.yaml|\.freezed\.dart|\.g\.dart)$').hasMatch(path);
-    if (path == 'features/pubspec.yaml' &&
+    if (_isFeatureManifest(path) &&
         (source.content.contains('cootrafa_app:') ||
             source.content.contains('apps/cootrafa-app'))) {
       violations.add(
@@ -385,7 +396,7 @@ BoundaryScanReport scanArchitectureSources(
       );
     }
     if (enforceFinal &&
-        path == 'features/pubspec.yaml' &&
+        _isFeatureManifest(path) &&
         RegExp(r'^\s*drift:', multiLine: true).hasMatch(source.content)) {
       violations.add(
         _sourceViolation(BoundaryRule.featureDoesNotImportDrift, path),
@@ -485,7 +496,9 @@ BoundaryScanReport scanArchitectureSources(
     }
     if (appSource &&
         source.content.contains('cootrafa_database.dart') &&
-        source.content.contains('package:features/src/database/')) {
+        RegExp(
+          r'package:feature_(?:auth|user|transfer)/(?:src/)?database/',
+        ).hasMatch(source.content)) {
       violations.add(
         _sourceViolation(BoundaryRule.dualRuntimeDatabaseAuthority, path),
       );
@@ -594,20 +607,17 @@ bool _importsApplication(String importUri) =>
     importUri.contains('apps/cootrafa-app/') ||
     importUri.contains('apps/cootrafa_app/');
 
-bool _importsPrivateFeature(String path, String importUri) {
-  final isModuleEntry = RegExp(
-    r'^package:features/src/(?:auth/auth|user/user|transfer/transfer)\.dart$',
-  ).hasMatch(importUri);
-  if ((importUri.startsWith('package:features/src/') && !isModuleEntry) ||
-      importUri.contains('packages/features/cootrafa/lib/src/')) {
-    return true;
-  }
-  return path.startsWith('app/lib/config/database/adapters/') &&
-      importUri.startsWith('package:features/') &&
-      !RegExp(
-        r'^package:features/src/(?:auth/auth|user/user|transfer/transfer)\.dart$',
-      ).hasMatch(importUri);
-}
+bool _importsPrivateFeature(String path, String importUri) =>
+    RegExp(
+      r'^package:feature_(?:auth|user|transfer)/src/',
+    ).hasMatch(importUri) ||
+    RegExp(
+      r'packages/features/(?:auth|user|transfer)/lib/src/',
+    ).hasMatch(importUri);
+
+bool _isFeatureManifest(String path) =>
+    RegExp(r'^features/(?:auth|user|transfer)/pubspec\.yaml$').hasMatch(path) ||
+    path == 'features/pubspec.yaml';
 
 bool _importsPersistence(String importUri) =>
     importUri.startsWith('package:drift/') ||
@@ -627,20 +637,37 @@ bool _isDomainOrPresentation(String path) =>
 bool _isPersistenceOwner(String path) =>
     path.startsWith('app/lib/config/database/') ||
     path.startsWith('src/database/') ||
-    (path.contains('/data/datasources/') &&
+    ((path.startsWith('data/datasources/') ||
+            path.contains('/data/datasources/')) &&
         path.endsWith('_local_datasource.dart'));
 
 bool _isInvalidFinalFeaturePath(String path) {
-  final String normalized = path.replaceFirst('features/lib/', '');
-  if (!normalized.startsWith('src/')) {
-    return false;
+  if (path.startsWith('features/')) {
+    final match = RegExp(
+      r'^features/(?:auth|user|transfer)/lib/(.+)$',
+    ).firstMatch(path);
+    if (match == null) return false;
+    final relative = match.group(1)!;
+    final topLevel = relative.split('/').first;
+    return !<String>{
+      'data',
+      'domain',
+      'presentation',
+      'injectable.dart',
+      'injectable.module.dart',
+      'routes.dart',
+    }.contains(topLevel);
   }
-  final String topLevel = normalized.substring(4).split('/').first;
+  if (!path.startsWith('src/')) return false;
+  final String topLevel = path.substring(4).split('/').first;
   return !<String>{'auth', 'user', 'transfer'}.contains(topLevel);
 }
 
 bool _isPublicBarrel(String path) {
-  final normalized = path.replaceFirst('features/lib/', '');
+  final normalized = path.replaceFirst(
+    RegExp(r'^features/(?:auth|user|transfer)/lib/'),
+    '',
+  );
   return const <String>{
     'src/auth/auth.dart',
     'src/user/user.dart',
@@ -667,31 +694,22 @@ bool _leaksPersistenceContent(String content) => RegExp(
 ).hasMatch(content);
 
 String _resolveExport(String path, String uri) =>
-    uri.startsWith('package:features/')
+    RegExp(r'^package:feature_(auth|user|transfer)/').hasMatch(uri)
+    ? uri.replaceFirstMapped(
+        RegExp(r'^package:feature_(auth|user|transfer)/'),
+        (match) => 'features/${match.group(1)}/lib/',
+      )
+    : uri.startsWith('package:features/')
     ? uri.substring('package:features/'.length)
     : Uri.parse(path).resolve(uri).path;
 
 String _relativePath(Directory root, File file) =>
     file.path.substring(root.path.length + 1).replaceAll('\\', '/');
 
-Directory findFeatureLib() {
-  final List<Directory> candidates = <Directory>[
-    Directory('packages/features/cootrafa/lib'),
-    Directory('lib'),
-  ];
-
-  return candidates.firstWhere(
-    (Directory directory) => directory.existsSync(),
-    orElse: () =>
-        throw StateError('Unable to locate the features lib directory.'),
-  );
-}
-
 Directory findWorkspaceRoot() =>
-    File('pubspec.yaml').existsSync() &&
-        File('packages/features/cootrafa/pubspec.yaml').existsSync()
+    File('apps/cootrafa-app/pubspec.yaml').existsSync()
     ? Directory.current
-    : Directory.current.parent.parent.parent;
+    : Directory.current.parent.parent;
 
 Directory _temporaryFeatureTree({
   bool hasInjectable = true,
@@ -719,17 +737,17 @@ Directory _temporaryFeatureTree({
 
 List<ArchitectureSource> _finalArchitectureSources() => <ArchitectureSource>[
   ..._sources(
-    "injectable.dart|void configureDependencies() {}|src/auth/auth.dart|export 'data/datasources/i_auth_local_datasource.dart';|src/auth/presentation/auth/bloc/auth_event.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_event.freezed.dart';\n@freezed sealed class AuthEvent with _\$AuthEvent { const factory AuthEvent.restore() = Restore; }|src/auth/presentation/auth/bloc/auth_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_state.freezed.dart';\n@freezed abstract class AuthState with _\$AuthState { const factory AuthState() = _AuthState; }|src/auth/presentation/auth/bloc/auth_state.freezed.dart|class GeneratedAuthState {}",
+    "injectable.dart|void configureDependencies() {}|data/datasources/i_auth_local_datasource.dart|abstract interface class IAuthLocalDatasource {}|presentation/auth/bloc/auth_event.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_event.freezed.dart';\n@freezed sealed class AuthEvent with _\$AuthEvent { const factory AuthEvent.restore() = Restore; }|presentation/auth/bloc/auth_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_state.freezed.dart';\n@freezed abstract class AuthState with _\$AuthState { const factory AuthState() = _AuthState; }|presentation/auth/bloc/auth_state.freezed.dart|class GeneratedAuthState {}",
   ),
   for (final String path in _requiredAppPersistence.split(','))
     ArchitectureSource(
       path: path,
       content: path.contains('/adapters/')
           ? path.endsWith('auth_drift_adapter.dart')
-                ? "import 'package:drift/drift.dart'; import 'package:features/src/auth/auth.dart';"
+                ? "import 'package:drift/drift.dart'; import 'package:feature_auth/data/datasources/i_auth_local_datasource.dart';"
                 : "import 'package:drift/drift.dart';"
           : path.endsWith('injectable_dependency.dart')
-          ? "import 'package:features/injectable.dart';"
+          ? "import 'package:feature_auth/injectable.module.dart';"
           : "import 'package:drift/drift.dart'; class AppPersistenceConcept {}",
     ),
 ];

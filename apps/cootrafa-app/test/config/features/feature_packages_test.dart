@@ -13,9 +13,7 @@ void main() {
     ).readAsStringSync();
 
     expect(
-      File(
-        '${workspace.path}/packages/features/cootrafa/pubspec.yaml',
-      ).existsSync(),
+      Directory('${workspace.path}/packages/features/cootrafa').existsSync(),
       isFalse,
     );
 
