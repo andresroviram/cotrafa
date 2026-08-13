@@ -316,6 +316,7 @@ Iterable<ArchitectureSource> _readDartSources(Directory root, String prefix) =>
         .listSync(recursive: true)
         .whereType<File>()
         .where((File file) => file.path.endsWith('.dart'))
+        .where((File file) => !file.path.endsWith('.config.dart'))
         .map(
           (File file) => ArchitectureSource(
             path: '$prefix${_relativePath(root, file)}',
