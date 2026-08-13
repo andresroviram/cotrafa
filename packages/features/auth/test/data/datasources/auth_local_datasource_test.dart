@@ -1,3 +1,4 @@
+import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
@@ -35,14 +36,16 @@ void main() {
     'admin replaces a pending client code without persisting plaintext',
     () async {
       await _insertClient(database, 2, 'Client@Example.com');
-      final denied = await auth.issueActivationCode(2, 'client@example.com');
-      expect(denied.error, AuthError.unauthorized);
+      await expectLater(
+        auth.issueActivationCode(2, 'client@example.com'),
+        throwsA(isA<UnauthorizedException>()),
+      );
       await database.customStatement(
         "UPDATE users SET status='inactive' WHERE id=1",
       );
-      expect(
-        (await auth.issueActivationCode(1, 'client@example.com')).error,
-        AuthError.unauthorized,
+      await expectLater(
+        auth.issueActivationCode(1, 'client@example.com'),
+        throwsA(isA<UnauthorizedException>()),
       );
       await database.customStatement(
         "UPDATE users SET status='active' WHERE id=1",
@@ -51,7 +54,7 @@ void main() {
         _demoSeed.userId,
         ' CLIENT@EXAMPLE.COM ',
       );
-      expect(first.value, 'FIRST1');
+      expect(first, 'FIRST1');
       var row = await _client(database);
       expect(
         row.read<String>('activation_code_hash'),
@@ -62,15 +65,10 @@ void main() {
         _demoSeed.userId,
         'client@example.com',
       );
-      expect(second.value, 'SECOND2');
-      expect(
-        (await auth.activate(
-          'client@example.com',
-          'FIRST1',
-          'alice',
-          'secret',
-        )).error,
-        AuthError.invalidCredentials,
+      expect(second, 'SECOND2');
+      await expectLater(
+        auth.activate('client@example.com', 'FIRST1', 'alice', 'secret'),
+        throwsA(isA<AuthException>()),
       );
       expect(
         (await auth.activate(
@@ -78,15 +76,12 @@ void main() {
           'SECOND2',
           'alice',
           'secret',
-        )).value?.userId,
+        )).userId,
         2,
       );
-      expect(
-        (await auth.issueActivationCode(
-          _demoSeed.userId,
-          'client@example.com',
-        )).error,
-        AuthError.clientNotPending,
+      await expectLater(
+        auth.issueActivationCode(_demoSeed.userId, 'client@example.com'),
+        throwsA(isA<ValidationException>()),
       );
     },
   );
@@ -98,14 +93,16 @@ void main() {
       final code = (await auth.issueActivationCode(
         _demoSeed.userId,
         'client@example.com',
-      )).value!;
-      final collision = await auth.activate(
-        'CLIENT@example.com',
-        code,
-        ' ADMIN@COOTRAFA.LOCAL ',
-        'secret',
+      ));
+      await expectLater(
+        auth.activate(
+          'CLIENT@example.com',
+          code,
+          ' ADMIN@COOTRAFA.LOCAL ',
+          'secret',
+        ),
+        throwsA(isA<DuplicateException>()),
       );
-      expect(collision.error, AuthError.identifierTaken);
       var row = await _client(database);
       expect(row.read<String>('status'), 'pendingActivation');
       expect(row.read<String>('activation_code_hash'), isNotNull);
@@ -116,7 +113,7 @@ void main() {
         ' Alice ',
         'secret',
       );
-      expect(activated.value, const AuthIdentity(userId: 2, role: 'client'));
+      expect(activated, const AuthIdentity(userId: 2, role: 'client'));
       row = await _client(database);
       expect(row.read<String>('status'), 'active');
       expect(row.readNullable<String>('activation_code_hash'), isNull);
@@ -140,36 +137,33 @@ void main() {
       final code = (await auth.issueActivationCode(
         _demoSeed.userId,
         'client@example.com',
-      )).value!;
+      ));
       await auth.activate('client@example.com', code, 'Alice', 'secret');
 
-      expect(
-        (await auth.login('CLIENT@EXAMPLE.COM', 'secret')).value?.userId,
-        2,
-      );
+      expect((await auth.login('CLIENT@EXAMPLE.COM', 'secret')).userId, 2);
       await auth.logout();
-      expect((await auth.login(' alice ', 'secret')).value?.userId, 2);
-      expect((await auth.restore()).value?.role, 'client');
-      expect(
-        (await auth.login('alice', 'wrong')).error,
-        AuthError.invalidCredentials,
+      expect((await auth.login(' alice ', 'secret')).userId, 2);
+      expect((await auth.restore())?.role, 'client');
+      await expectLater(
+        auth.login('alice', 'wrong'),
+        throwsA(isA<AuthException>()),
       );
       expect(
-        (await auth.loginDemoAdmin()).value,
+        await auth.loginDemoAdmin(),
         AuthIdentity(userId: _demoSeed.userId, role: 'admin'),
       );
 
       await database.customStatement(
         "UPDATE users SET status='inactive' WHERE id=1",
       );
-      expect((await auth.restore()).value, isNull);
+      expect(await auth.restore(), isNull);
       expect(await database.currentSessionUserId(), isNull);
-      expect((await auth.loginDemoAdmin()).error, AuthError.invalidCredentials);
+      await expectLater(auth.loginDemoAdmin(), throwsA(isA<AuthException>()));
       await database.customStatement('PRAGMA foreign_keys=OFF');
       await database.customStatement(
         'INSERT INTO local_session VALUES (1,999)',
       );
-      expect((await auth.restore()).value, isNull);
+      expect(await auth.restore(), isNull);
       expect(await database.currentSessionUserId(), isNull);
       await auth.logout();
       expect(await database.currentSessionUserId(), isNull);

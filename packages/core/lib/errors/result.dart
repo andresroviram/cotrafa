@@ -73,3 +73,29 @@ extension ResultExtensions<T> on Result<T> {
     _ => null,
   };
 }
+
+extension FutureResultExtensions<T> on Future<T> {
+  Future<Result<T>> toResult({
+    Failure fallback = const UnknownFailure(),
+  }) async {
+    try {
+      return Success<T>(await this);
+    } on Object catch (error) {
+      return Error<T>(_failureFrom(error, fallback));
+    }
+  }
+}
+
+Failure _failureFrom(Object error, Failure fallback) => switch (error) {
+  Failure() => error,
+  AuthException() => const AuthFailure(),
+  UnauthorizedException() => const UnauthorizedFailure(),
+  ValidationException(message: final message) => ValidationFailure(
+    message: message,
+  ),
+  DuplicateException() => const DuplicateFailure(),
+  StorageException() => const StorageFailure(),
+  NetworkException() => const NetworkFailure(),
+  ServerException() => const ServerFailure(),
+  _ => fallback,
+};

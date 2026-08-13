@@ -1,3 +1,4 @@
+import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
@@ -11,23 +12,30 @@ class AuthRepositoryImpl implements IAuthRepository {
 
   @override
   Future<Result<String>> issueActivationCode(int actorUserId, String email) =>
-      _datasource.issueActivationCode(actorUserId, email).toDomainResult();
+      _datasource
+          .issueActivationCode(actorUserId, email)
+          .toResult(fallback: const StorageFailure());
   @override
   Future<Result<AuthIdentity>> activate(
     String email,
     String code,
     String username,
     String password,
-  ) => _datasource.activate(email, code, username, password).toDomainResult();
+  ) => _datasource
+      .activate(email, code, username, password)
+      .toResult(fallback: const StorageFailure());
   @override
   Future<Result<AuthIdentity>> login(String identifier, String password) =>
-      _datasource.login(identifier, password).toDomainResult();
+      _datasource
+          .login(identifier, password)
+          .toResult(fallback: const StorageFailure());
   @override
   Future<Result<AuthIdentity>> loginDemoAdmin() =>
-      _datasource.loginDemoAdmin().toDomainResult();
+      _datasource.loginDemoAdmin().toResult(fallback: const StorageFailure());
   @override
   Future<Result<AuthIdentity?>> restore() =>
-      _datasource.restore().toDomainResult();
+      _datasource.restore().toResult(fallback: const StorageFailure());
   @override
-  Future<Result<void>> logout() => _datasource.logout().toDomainResult();
+  Future<Result<void>> logout() =>
+      _datasource.logout().toResult(fallback: const StorageFailure());
 }
