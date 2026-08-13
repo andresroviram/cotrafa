@@ -102,7 +102,17 @@ class CootrafaDatabase extends _$CootrafaDatabase {
   ).map((QueryRow row) => row.read<int>('user_id')).getSingleOrNull();
 }
 
+@singleton
 class CootrafaDatabaseSeed {
+  @factoryMethod
+  const CootrafaDatabaseSeed.demo()
+    : this(
+        userId: 1,
+        email: 'admin@cootrafa.local',
+        fullName: 'Cootrafa Demo Admin',
+        password: 'CootrafaDemo2026!',
+      );
+
   const CootrafaDatabaseSeed({
     required this.userId,
     required this.email,

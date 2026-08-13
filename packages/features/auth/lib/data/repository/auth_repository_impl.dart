@@ -38,6 +38,9 @@ class AuthRepositoryImpl implements IAuthRepository {
   Future<Result<AuthIdentity>> login(String identifier, String password) =>
       _map(_datasource.login(identifier, password));
   @override
+  Future<Result<AuthIdentity>> loginDemoAdmin() =>
+      _map(_datasource.loginDemoAdmin());
+  @override
   Future<Result<AuthIdentity?>> restore() => _map(_datasource.restore());
   @override
   Future<Result<void>> logout() => _map(_datasource.logout());

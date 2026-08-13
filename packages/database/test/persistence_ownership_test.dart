@@ -3,16 +3,23 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('database package owns the Drift engine and tables', () {
+  test('database package owns persistence implementation and tests', () {
     final workspace = _workspaceRoot();
     final database = Directory('${workspace.path}/packages/database');
     final appDatabase = Directory(
       '${workspace.path}/apps/cootrafa-app/lib/config/database',
     );
+    final appDatabaseTests = Directory(
+      '${workspace.path}/apps/cootrafa-app/test/config/database',
+    );
 
     expect(File('${database.path}/pubspec.yaml').existsSync(), isTrue);
     expect(
       File('${database.path}/lib/cootrafa_database.dart').existsSync(),
+      isTrue,
+    );
+    expect(
+      File('${database.path}/test/demo_admin_seed_test.dart').existsSync(),
       isTrue,
     );
     for (final table in <String>[
@@ -28,6 +35,7 @@ void main() {
       );
     }
 
+    expect(appDatabaseTests.existsSync(), isFalse);
     expect(
       File('${appDatabase.path}/database_module.dart').existsSync(),
       isFalse,
@@ -38,38 +46,15 @@ void main() {
       File('${appDatabase.path}/cootrafa_database.dart').existsSync(),
       isFalse,
     );
+  });
 
-    for (final datasource in <String, String>{
-      'auth': 'auth_local_datasource.dart',
-      'user': 'user_local_datasource.dart',
-      'user/address': 'address_local_datasource.dart',
-      'transfer': 'transfer_local_datasource.dart',
-    }.entries) {
-      expect(
-        File(
-          '${workspace.path}/packages/features/${datasource.key.split('/').first}'
-          '/lib/data/datasources/${datasource.value}',
-        ).existsSync(),
-        isTrue,
-      );
-    }
-    expect(
-      File(
-        '${workspace.path}/packages/features/auth/lib/di/auth_module.dart',
-      ).existsSync(),
-      isFalse,
-    );
-    expect(
-      File(
-        '${workspace.path}/apps/cootrafa-app/lib/config/injectable/auth_module.dart',
-      ).existsSync(),
-      isFalse,
-    );
-
+  test('Auth owns its datasource but not database seed configuration', () {
+    final workspace = _workspaceRoot();
+    final authRoot = Directory('${workspace.path}/packages/features/auth');
     final authDatasource = File(
-      '${workspace.path}/packages/features/auth/lib/data/datasources/'
-      'auth_local_datasource.dart',
+      '${authRoot.path}/lib/data/datasources/auth_local_datasource.dart',
     ).readAsStringSync();
+
     expect(
       authDatasource,
       contains('abstract interface class IAuthLocalDatasource'),
@@ -78,17 +63,21 @@ void main() {
       authDatasource,
       contains('@LazySingleton(as: IAuthLocalDatasource)'),
     );
+    expect(authDatasource, contains('loginDemoAdmin'));
     expect(authDatasource, isNot(contains('@module')));
-    expect(authDatasource, contains('@Singleton(as: CootrafaDatabaseSeed)'));
+    expect(authDatasource, isNot(contains('DemoAdminDatabaseSeed')));
     expect(
       authDatasource,
-      contains('class DemoAdminDatabaseSeed extends CootrafaDatabaseSeed'),
+      isNot(contains('@Singleton(as: CootrafaDatabaseSeed)')),
     );
     expect(
       File(
-        '${workspace.path}/packages/features/auth/lib/data/datasources/'
-        'i_auth_local_datasource.dart',
+        '${authRoot.path}/lib/domain/entities/demo_credentials.dart',
       ).existsSync(),
+      isFalse,
+    );
+    expect(
+      File('${authRoot.path}/lib/di/auth_module.dart').existsSync(),
       isFalse,
     );
   });

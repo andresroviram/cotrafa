@@ -1,6 +1,5 @@
 import 'package:core/errors/result.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:feature_auth/domain/repository/i_auth_repository.dart';
 import 'package:injectable/injectable.dart';
 
@@ -38,10 +37,7 @@ class Login extends _AuthUseCase {
 class LoginDemoAdmin extends _AuthUseCase {
   const LoginDemoAdmin(super.repository);
 
-  Future<Result<AuthIdentity>> call() => _repository.login(
-    DemoAdmin.credentials.identifier,
-    DemoAdmin.credentials.password,
-  );
+  Future<Result<AuthIdentity>> call() => _repository.loginDemoAdmin();
 }
 
 @injectable

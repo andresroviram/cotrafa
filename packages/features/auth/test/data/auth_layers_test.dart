@@ -7,7 +7,6 @@ import 'package:core/security/activation_code_generator.dart';
 import 'package:drift/native.dart';
 import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:feature_auth/data/repository/auth_repository_impl.dart';
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:feature_auth/domain/usecases/auth_usecases.dart';
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,7 +27,12 @@ void main() {
       seed: _demoSeed,
     );
     repository = AuthRepositoryImpl(
-      AuthLocalDatasource(database, hasher, SecureActivationCodeGenerator()),
+      AuthLocalDatasource(
+        database,
+        hasher,
+        SecureActivationCodeGenerator(),
+        _demoSeed,
+      ),
     );
     await database.customStatement(
       "INSERT INTO users VALUES (2,'Client@Example.com','Client','client',"
@@ -60,10 +64,10 @@ void main() {
     expect((await RestoreSession(repository)()).valueOrNull, isNull);
   });
 
-  test('demo login use case owns the fixed admin credentials', () async {
+  test('demo login delegates fixed credentials to persistence', () async {
     final result = await LoginDemoAdmin(repository)();
 
-    expect(result.valueOrNull?.userId, DemoAdmin.userId);
+    expect(result.valueOrNull?.userId, _demoSeed.userId);
     expect(result.valueOrNull?.role, 'admin');
   });
 
@@ -103,9 +107,4 @@ void main() {
   });
 }
 
-const _demoSeed = CootrafaDatabaseSeed(
-  userId: DemoAdmin.userId,
-  email: DemoAdmin.email,
-  fullName: DemoAdmin.fullName,
-  password: DemoAdmin.password,
-);
+const _demoSeed = CootrafaDatabaseSeed.demo();

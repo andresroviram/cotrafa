@@ -10,8 +10,8 @@ import 'package:injectable/injectable.dart';
 @InjectableInit(
   externalPackageModulesBefore: [ExternalModule(CorePackageModule)],
   externalPackageModulesAfter: [
-    ExternalModule(FeatureAuthPackageModule),
     ExternalModule(CootrafaDatabasePackageModule),
+    ExternalModule(FeatureAuthPackageModule),
     ExternalModule(FeatureUserPackageModule),
     ExternalModule(FeatureTransferPackageModule),
   ],

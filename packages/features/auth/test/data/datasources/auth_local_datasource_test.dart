@@ -4,7 +4,6 @@ import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:cootrafa_database/cootrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -26,7 +25,7 @@ void main() {
       seed: _demoSeed,
     );
     codes = QueueCodeGenerator(<String>['FIRST1', 'SECOND2', 'THIRD3']);
-    auth = AuthLocalDatasource(database, hasher, codes);
+    auth = AuthLocalDatasource(database, hasher, codes, _demoSeed);
     await database.customSelect('SELECT 1').getSingle();
   });
 
@@ -49,7 +48,7 @@ void main() {
         "UPDATE users SET status='active' WHERE id=1",
       );
       final first = await auth.issueActivationCode(
-        DemoAdmin.userId,
+        _demoSeed.userId,
         ' CLIENT@EXAMPLE.COM ',
       );
       expect(first.value, 'FIRST1');
@@ -60,7 +59,7 @@ void main() {
       );
 
       final second = await auth.issueActivationCode(
-        DemoAdmin.userId,
+        _demoSeed.userId,
         'client@example.com',
       );
       expect(second.value, 'SECOND2');
@@ -84,7 +83,7 @@ void main() {
       );
       expect(
         (await auth.issueActivationCode(
-          DemoAdmin.userId,
+          _demoSeed.userId,
           'client@example.com',
         )).error,
         AuthError.clientNotPending,
@@ -97,7 +96,7 @@ void main() {
     () async {
       await _insertClient(database, 2, 'client@example.com');
       final code = (await auth.issueActivationCode(
-        DemoAdmin.userId,
+        _demoSeed.userId,
         'client@example.com',
       )).value!;
       final collision = await auth.activate(
@@ -139,7 +138,7 @@ void main() {
     () async {
       await _insertClient(database, 2, 'client@example.com');
       final code = (await auth.issueActivationCode(
-        DemoAdmin.userId,
+        _demoSeed.userId,
         'client@example.com',
       )).value!;
       await auth.activate('client@example.com', code, 'Alice', 'secret');
@@ -156,8 +155,8 @@ void main() {
         AuthError.invalidCredentials,
       );
       expect(
-        (await auth.login(DemoAdmin.email, DemoAdmin.password)).value,
-        const AuthIdentity(userId: DemoAdmin.userId, role: 'admin'),
+        (await auth.loginDemoAdmin()).value,
+        AuthIdentity(userId: _demoSeed.userId, role: 'admin'),
       );
 
       await database.customStatement(
@@ -165,10 +164,7 @@ void main() {
       );
       expect((await auth.restore()).value, isNull);
       expect(await database.currentSessionUserId(), isNull);
-      expect(
-        (await auth.login(DemoAdmin.email, DemoAdmin.password)).error,
-        AuthError.invalidCredentials,
-      );
+      expect((await auth.loginDemoAdmin()).error, AuthError.invalidCredentials);
       await database.customStatement('PRAGMA foreign_keys=OFF');
       await database.customStatement(
         'INSERT INTO local_session VALUES (1,999)',
@@ -205,9 +201,4 @@ final class QueueCodeGenerator implements ActivationCodeGenerator {
   String generate() => values.removeAt(0);
 }
 
-const _demoSeed = CootrafaDatabaseSeed(
-  userId: DemoAdmin.userId,
-  email: DemoAdmin.email,
-  fullName: DemoAdmin.fullName,
-  password: DemoAdmin.password,
-);
+const _demoSeed = CootrafaDatabaseSeed.demo();

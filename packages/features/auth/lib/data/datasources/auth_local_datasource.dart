@@ -3,7 +3,6 @@ import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
-import 'package:feature_auth/domain/entities/demo_credentials.dart';
 import 'package:injectable/injectable.dart';
 
 enum AuthError {
@@ -33,19 +32,9 @@ abstract interface class IAuthLocalDatasource {
   );
 
   Future<AuthResult<AuthIdentity>> login(String identifier, String password);
+  Future<AuthResult<AuthIdentity>> loginDemoAdmin();
   Future<AuthResult<AuthIdentity?>> restore();
   Future<AuthResult<void>> logout();
-}
-
-@Singleton(as: CootrafaDatabaseSeed)
-final class DemoAdminDatabaseSeed extends CootrafaDatabaseSeed {
-  const DemoAdminDatabaseSeed()
-    : super(
-        userId: DemoAdmin.userId,
-        email: DemoAdmin.email,
-        fullName: DemoAdmin.fullName,
-        password: DemoAdmin.password,
-      );
 }
 
 @LazySingleton(as: IAuthLocalDatasource)
@@ -54,11 +43,13 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
     this._database,
     this._credentialHasher,
     this._activationCodeGenerator,
+    this._databaseSeed,
   );
 
   final CootrafaDatabase _database;
   final CredentialHasher _credentialHasher;
   final ActivationCodeGenerator _activationCodeGenerator;
+  final CootrafaDatabaseSeed _databaseSeed;
 
   @override
   Future<AuthResult<String>> issueActivationCode(
@@ -147,6 +138,10 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
           return AuthResult.ok(identity);
         }),
       );
+
+  @override
+  Future<AuthResult<AuthIdentity>> loginDemoAdmin() =>
+      login(_databaseSeed.email, _databaseSeed.password);
 
   @override
   Future<AuthResult<AuthIdentity?>> restore() => _guard(() async {

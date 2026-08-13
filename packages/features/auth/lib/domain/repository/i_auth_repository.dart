@@ -10,6 +10,7 @@ abstract interface class IAuthRepository {
     String password,
   );
   Future<Result<AuthIdentity>> login(String identifier, String password);
+  Future<Result<AuthIdentity>> loginDemoAdmin();
   Future<Result<AuthIdentity?>> restore();
   Future<Result<void>> logout();
 }
