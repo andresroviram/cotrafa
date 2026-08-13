@@ -142,6 +142,8 @@ void main() {
       'feature reverse manifest dependency|featureManifestDependsOnApp|features/auth/pubspec.yaml|dependencies:\n  cootrafa_app:\n    path: ../../app',
       'forbidden database abstraction|forbiddenDatabaseAbstraction|src/auth/domain/i_cootrafa_database.dart|abstract class ICootrafaDatabase {}',
       'generic CRUD abstraction|forbiddenDatabaseAbstraction|src/user/domain/i_user_crud.dart|abstract class IUserCrud {}',
+      'feature Result policy|featureDefinesResultPolicy|features/auth/lib/data/datasources/auth_result.dart|sealed class AuthResult<T> {}',
+      'feature exception policy|featureDefinesExceptionPolicy|features/auth/lib/data/errors/auth_exception.dart|enum AuthException implements Exception { invalidCredentials }',
       'final feature Drift type|featureDoesNotImportDrift|src/auth/domain/entities/bad_identity.dart|final CootrafaDatabase database;',
       "public barrel closure|publicBarrelLeaksPersistence|auth.dart|export 'src/auth/contracts.dart';|src/auth/contracts.dart|final QueryRow leakedRow;",
       "relative barrel closure|publicBarrelLeaksPersistence|auth.dart|export 'src/auth/api.dart';|src/auth/api.dart|export '../data/contracts.dart';|src/data/contracts.dart|final AddressesData exposedRow;",
@@ -185,6 +187,8 @@ enum BoundaryRule {
   dualRuntimeDatabaseAuthority,
   featureDoesNotImportApp,
   featureDoesNotImportDrift,
+  featureDefinesExceptionPolicy,
+  featureDefinesResultPolicy,
   featureManifestDependsOnApp,
   finalFeatureHasInfrastructure,
   finalArchitectureHasActiveExceptions,
@@ -390,6 +394,24 @@ BoundaryScanReport scanArchitectureSources(
         RegExp(r'\b(?:GenericCrud|I\w*Crud)\b').hasMatch(source.content)) {
       violations.add(
         _sourceViolation(BoundaryRule.forbiddenDatabaseAbstraction, path),
+      );
+    }
+    if (featureSource &&
+        path.contains('/data/errors/') &&
+        RegExp(
+          r'\b(?:class|enum)\s+\w*Exception\b[^\{]*\b(?:implements|extends)\s+Exception\b',
+        ).hasMatch(source.content)) {
+      violations.add(
+        _sourceViolation(BoundaryRule.featureDefinesExceptionPolicy, path),
+      );
+    }
+    if (featureSource &&
+        path.endsWith('_result.dart') &&
+        RegExp(
+          r'\b(?:sealed\s+|abstract\s+|final\s+|base\s+)?class\s+\w*Result(?:\s*<|\s|\{)',
+        ).hasMatch(source.content)) {
+      violations.add(
+        _sourceViolation(BoundaryRule.featureDefinesResultPolicy, path),
       );
     }
     if (enforceFinal && !appSource && _isInvalidFinalFeaturePath(path)) {
