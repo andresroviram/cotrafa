@@ -1,95 +1,14 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:cryptography/cryptography.dart';
 import 'package:drift/drift.dart';
+import 'package:features/src/security/credential_hasher.dart';
+
+export 'package:features/src/security/credential_hasher.dart';
 
 part 'cootrafa_database.g.dart';
-
-class Users extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  TextColumn get email => text()();
-  TextColumn get fullName => text()();
-  TextColumn get role =>
-      text().customConstraint("NOT NULL CHECK (role IN ('admin', 'client'))")();
-  TextColumn get status => text().customConstraint(
-    "NOT NULL CHECK (status IN ('pendingActivation', 'active', 'inactive'))",
-  )();
-  TextColumn get passwordHash => text().nullable()();
-  TextColumn get activationCodeHash => text().nullable()();
-  IntColumn get balanceCop => integer().customConstraint(
-    'NOT NULL DEFAULT 0 CHECK (balance_cop >= 0)',
-  )();
-  IntColumn get createdAt => integer()();
-  IntColumn get updatedAt => integer()();
-}
-
-class LoginIdentifiers extends Table {
-  TextColumn get normalized => text()();
-  IntColumn get userId =>
-      integer().references(Users, #id, onDelete: KeyAction.cascade)();
-  TextColumn get kind => text().customConstraint(
-    "NOT NULL CHECK (kind IN ('email', 'username'))",
-  )();
-
-  @override
-  Set<Column<Object>> get primaryKey => <Column<Object>>{normalized};
-
-  @override
-  List<Set<Column<Object>>> get uniqueKeys => <Set<Column<Object>>>[
-    <Column<Object>>{userId, kind},
-  ];
-}
-
-class Addresses extends Table {
-  IntColumn get id => integer().autoIncrement()();
-  IntColumn get userId =>
-      integer().references(Users, #id, onDelete: KeyAction.cascade)();
-  TextColumn get line1 => text()();
-  TextColumn get line2 => text().nullable()();
-  TextColumn get city => text()();
-  TextColumn get state => text().nullable()();
-  TextColumn get postalCode => text().nullable()();
-  TextColumn get country => text().nullable()();
-  TextColumn get label => text()();
-  BoolColumn get isPrimary => boolean().withDefault(const Constant(false))();
-}
-
-class Transfers extends Table {
-  TextColumn get id => text()();
-  @ReferenceName('originTransfers')
-  IntColumn get originUserId =>
-      integer().references(Users, #id, onDelete: KeyAction.restrict)();
-  @ReferenceName('destinationTransfers')
-  IntColumn get destinationUserId =>
-      integer().references(Users, #id, onDelete: KeyAction.restrict)();
-  IntColumn get amountCop =>
-      integer().customConstraint('NOT NULL CHECK (amount_cop > 0)')();
-  TextColumn get status =>
-      text().customConstraint("NOT NULL CHECK (status = 'completed')")();
-  TextColumn get description => text().nullable()();
-  IntColumn get createdAt => integer()();
-  TextColumn get originSnapshot => text()();
-  TextColumn get destinationSnapshot => text()();
-
-  @override
-  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
-
-  @override
-  List<String> get customConstraints => <String>[
-    'CHECK (origin_user_id <> destination_user_id)',
-  ];
-}
-
-class LocalSession extends Table {
-  IntColumn get slot =>
-      integer().customConstraint('NOT NULL CHECK (slot = 1)')();
-  IntColumn get userId =>
-      integer().references(Users, #id, onDelete: KeyAction.restrict)();
-
-  @override
-  Set<Column<Object>> get primaryKey => <Column<Object>>{slot};
-}
+part 'tables/addresses.dart';
+part 'tables/local_session.dart';
+part 'tables/login_identifiers.dart';
+part 'tables/transfers.dart';
+part 'tables/users.dart';
 
 @DriftDatabase(
   tables: <Type>[Users, LoginIdentifiers, Addresses, Transfers, LocalSession],
@@ -182,74 +101,4 @@ abstract final class DemoAdmin {
   static const String email = 'admin@cootrafa.local';
   static const String fullName = 'Cootrafa Demo Admin';
   static const String password = 'CootrafaDemo2026!';
-}
-
-class CredentialHasher {
-  CredentialHasher({
-    this.memoryKiB = 19456,
-    this.iterations = 2,
-    this.parallelism = 1,
-    this.hashLength = 32,
-    List<int> Function()? saltFactory,
-  }) : _saltFactory = saltFactory ?? _secureSalt;
-
-  final int memoryKiB;
-  final int iterations;
-  final int parallelism;
-  final int hashLength;
-  final List<int> Function() _saltFactory;
-
-  Future<String> hash(String secret) async {
-    final List<int> salt = _saltFactory();
-    final List<int> bytes = await _derive(secret, salt);
-    return '\$argon2id\$v=19\$m=$memoryKiB,t=$iterations,p=$parallelism\$'
-        '${base64UrlEncode(salt)}\$${base64UrlEncode(bytes)}';
-  }
-
-  Future<bool> verify(String secret, String encoded) async {
-    final List<String> parts = encoded.split(r'$');
-    if (parts.length != 6 || parts[1] != 'argon2id' || parts[2] != 'v=19') {
-      return false;
-    }
-    final Map<String, int> parameters = <String, int>{
-      for (final String item in parts[3].split(','))
-        item.split('=').first: int.parse(item.split('=').last),
-    };
-    final CredentialHasher verifier = CredentialHasher(
-      memoryKiB: parameters['m']!,
-      iterations: parameters['t']!,
-      parallelism: parameters['p']!,
-      hashLength: base64Url.decode(parts[5]).length,
-      saltFactory: () => base64Url.decode(parts[4]),
-    );
-    final List<int> actual = await verifier._derive(
-      secret,
-      base64Url.decode(parts[4]),
-    );
-    final List<int> expected = base64Url.decode(parts[5]);
-    int difference = actual.length ^ expected.length;
-    for (
-      int index = 0;
-      index < actual.length && index < expected.length;
-      index++
-    ) {
-      difference |= actual[index] ^ expected[index];
-    }
-    return difference == 0;
-  }
-
-  Future<List<int>> _derive(String secret, List<int> salt) async {
-    final SecretKey key = await Argon2id(
-      parallelism: parallelism,
-      memory: memoryKiB,
-      iterations: iterations,
-      hashLength: hashLength,
-    ).deriveKey(secretKey: SecretKey(utf8.encode(secret)), nonce: salt);
-    return key.extractBytes();
-  }
-
-  static List<int> _secureSalt() {
-    final Random random = Random.secure();
-    return List<int>.generate(16, (_) => random.nextInt(256));
-  }
 }

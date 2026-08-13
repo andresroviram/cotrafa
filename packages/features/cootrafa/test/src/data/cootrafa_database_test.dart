@@ -1,8 +1,12 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:drift/drift.dart' show QueryRow, Variable;
 import 'package:drift/native.dart';
-import 'package:features/src/database/cootrafa_database.dart';
+import 'package:features/src/database/cootrafa_database.dart'
+    hide CredentialHasher;
+import 'package:features/src/security/activation_code_generator.dart';
+import 'package:features/src/security/credential_hasher.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -17,6 +21,47 @@ void main() {
     expect(await hasher.verify('temporary-password', encoded), isTrue);
     expect(await hasher.verify('wrong-password', encoded), isFalse);
     expect(stopwatch.elapsed, lessThan(const Duration(seconds: 5)));
+  });
+  test('generates deterministic numeric codes and secure variation', () {
+    final first = SecureActivationCodeGenerator(Random(7));
+    final second = SecureActivationCodeGenerator(Random(7));
+    expect(first.generate(), second.generate());
+
+    final secure = SecureActivationCodeGenerator();
+    final codes = List<String>.generate(24, (_) => secure.generate()).toSet();
+    expect(codes.length, greaterThan(1));
+    expect(codes, everyElement(matches(RegExp(r'^\d{6}$'))));
+  });
+  test('keeps Drift tables in dedicated source parts', () {
+    final packageRoot =
+        <Directory>[
+          Directory.current,
+          Directory('${Directory.current.path}/packages/features/cootrafa'),
+        ].firstWhere(
+          (root) => File(
+            '${root.path}/lib/src/database/cootrafa_database.dart',
+          ).existsSync(),
+        );
+    const tableNames = <String>[
+      'users',
+      'login_identifiers',
+      'addresses',
+      'transfers',
+      'local_session',
+    ];
+    final databaseSource = File(
+      '${packageRoot.path}/lib/src/database/cootrafa_database.dart',
+    ).readAsStringSync();
+    for (final name in tableNames) {
+      expect(
+        File(
+          '${packageRoot.path}/lib/src/database/tables/$name.dart',
+        ).existsSync(),
+        isTrue,
+      );
+      expect(databaseSource, contains("part 'tables/$name.dart';"));
+    }
+    expect(databaseSource, isNot(contains('class Users extends Table')));
   });
   group('schema v1', () {
     late CootrafaDatabase database;
