@@ -254,7 +254,7 @@ void main() {
     await gesture.up();
     await tester.pump();
 
-    await tester.tapAt(const Offset(10, 10));
+    await tester.tap(find.text('Sofia Rovira'));
     await tester.pump();
     expect(tester.testTextInput.isVisible, isFalse);
   });
