@@ -92,6 +92,67 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
+  integration:
+    name: Critical Android journey
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install workspace tooling
+        run: |
+          dart pub global activate fvm
+          dart pub global activate melos
+          env -u FLUTTER_ROOT fvm use "$FLUTTER_VERSION" --force
+          env -u FLUTTER_ROOT fvm flutter precache
+          test -f .fvm/flutter_sdk/bin/cache/pkg/sky_engine/pubspec.yaml
+          echo "FLUTTER_ROOT=" >> "$GITHUB_ENV"
+
+      - name: Create environment files
+        run: |
+          for flavor in dev qa prod; do
+            cp apps/cotrafa-app/.env.example "apps/cotrafa-app/.env.$flavor"
+          done
+
+      - name: Bootstrap workspace
+        run: fvm dart run melos bootstrap
+
+      - name: Generate code
+        run: fvm dart run melos run build:cotrafa-all
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run critical journey
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: true
+          script: cd apps/cotrafa-app && fvm flutter test integration_test/critical_journey_test.dart --dart-define=FLAVOR=dev
+
   android:
     name: Build Android APK
     needs: quality

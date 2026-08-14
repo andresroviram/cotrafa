@@ -35,10 +35,10 @@ El proyecto mantiene un umbral mínimo de cobertura del **60%** en el CI/CD. Los
 ### Estado actual
 
 ```text
-Total:                    80.43% ✅ (2675/3326 líneas)
-├─ features/              83.08% ✅ (2451/2950 líneas)
+Total:                    80.34% ✅ (2677/3332 líneas)
+├─ features/              83.00% ✅ (2451/2953 líneas)
 ├─ components/            85.71% ✅ (24/28 líneas)
-├─ apps/cotrafa-app/      78.63% ✅ (103/131 líneas)
+├─ apps/cotrafa-app/      78.36% ✅ (105/134 líneas)
 ├─ core/                  45.45% ⚠️ (40/88 líneas)
 └─ database/              44.19% ⚠️ (57/129 líneas)
 ```
@@ -48,10 +48,11 @@ El umbral se aplica al **total consolidado del workspace**. Core y Database qued
 ### Resumen de tests
 
 - **189 tests** ejecutándose exitosamente.
+- **1 prueba de integración móvil** para el recorrido crítico completo en Android.
 - **50 tests de widgets** para vistas, formularios, navegación y componentes.
 - **36 tests de BLoC** para eventos, estados y transiciones.
 - **103 tests adicionales** de dominio, datasources, repositorios, persistencia, DI y arquitectura.
-- **80.43% de cobertura total**, 20.43 puntos por encima del umbral del 60%.
+- **80.34% de cobertura total**, 20.34 puntos por encima del umbral del 60%.
 
 ### Scripts de cobertura
 
@@ -94,6 +95,7 @@ Además, el pipeline valida formato, análisis estático y builds reproducibles 
 - Dio, interceptores y manejo centralizado de errores en Core
 - `cryptography` para credenciales y códigos de activación
 - Pruebas unitarias, de widgets, arquitectura y cobertura LCOV
+- Prueba de integración del recorrido crítico sobre un emulador Android real
 
 ## Clean Architecture
 
@@ -124,6 +126,7 @@ cotrafa/
 │       │       ├── injectable/  # Composition root con GetIt
 │       │       ├── routes/      # go_router
 │       │       └── theme/       # Temas claro y oscuro
+│       ├── integration_test/    # Recorrido crítico móvil
 │       ├── screenshots/mobile/
 │       └── web/                 # SQLite WASM y Drift worker
 ├── packages/
@@ -221,6 +224,7 @@ fvm dart run melos run run:web
 | `fvm dart run melos run analyze` | Ejecuta análisis estático en todo el workspace. |
 | `fvm dart run melos run analyze:changed` | Analiza packages modificados frente a `origin/main`. |
 | `fvm dart run melos run test` | Ejecuta todas las pruebas. |
+| `fvm dart run melos run test:integration` | Ejecuta el recorrido crítico en un Android conectado. |
 | `fvm dart run melos run test:coverage` | Genera `coverage/lcov.info` por package. |
 | `fvm dart run melos run test:changed` | Prueba packages modificados frente a `origin/main`. |
 | `fvm dart run melos run coverage:check` | Exige al menos 60 % de cobertura de líneas. |
@@ -259,7 +263,8 @@ Cada entorno tiene su archivo local, excluido de Git:
 2. Bootstrap y generación de código.
 3. Formato y análisis estático.
 4. Pruebas con umbral de cobertura del 60 %.
-5. Artefactos QA para Android y Web.
+5. Recorrido crítico en un emulador Android: acceso de administrador, creación y activación de cliente, dirección y transferencia.
+6. Artefactos QA para Android y Web.
 
 El artefacto Web se compila para verificación; por ahora no se publica una demo en vivo.
 
