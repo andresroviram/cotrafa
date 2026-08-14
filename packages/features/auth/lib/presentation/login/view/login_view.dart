@@ -2,6 +2,7 @@ import 'package:core/get_it.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
+import 'package:feature_auth/presentation/activation/view/activation_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -220,6 +221,15 @@ class _LoginViewState extends State<LoginView> {
                                             loading: isLoading,
                                             text: 'Iniciar sesión',
                                           ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        TextButton(
+                                          onPressed: isLoading
+                                              ? null
+                                              : () => context.go(
+                                                  ActivationView.path,
+                                                ),
+                                          child: const Text('Activar cuenta'),
                                         ),
                                         const SizedBox(height: 12),
                                         OutlinedButton(

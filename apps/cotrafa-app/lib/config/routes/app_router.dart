@@ -6,6 +6,7 @@ import 'package:core/enum/navigation_item.dart';
 import 'package:core/errors/result.dart';
 import 'package:core/get_it.dart';
 import 'package:feature_auth/domain/usecases/auth_usecases.dart';
+import 'package:feature_auth/presentation/activation/view/activation_view.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
@@ -39,13 +40,20 @@ GoRouter createRouter(AuthBloc authBloc) {
         AuthStatus.authenticated || AuthStatus.activationSuccess => true,
         _ => false,
       };
-      final isLogin = state.matchedLocation == LoginView.path;
-      if (!isAuthenticated && !isLogin) return LoginView.path;
-      if (isAuthenticated && isLogin) return UsersView.path;
+      final isPublicAuth =
+          state.matchedLocation == LoginView.path ||
+          state.matchedLocation == ActivationView.path;
+      if (!isAuthenticated && !isPublicAuth) return LoginView.path;
+      if (isAuthenticated && isPublicAuth) return UsersView.path;
       return null;
     },
     routes: [
       loginRoute(
+        authenticatedLocation: UsersView.path,
+        logoAssetPath: 'assets/img/logo.png',
+        logoDarkAssetPath: 'assets/img/logo_dark.png',
+      ),
+      activationRoute(
         authenticatedLocation: UsersView.path,
         logoAssetPath: 'assets/img/logo.png',
         logoDarkAssetPath: 'assets/img/logo_dark.png',
