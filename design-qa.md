@@ -101,3 +101,65 @@ No actionable P0, P1, or P2 differences remain.
 - [x] Verify light and dark runtime states.
 
 final result: passed
+
+
+---
+
+# User Detail Design QA
+
+## Evidence
+
+- Source visual truth: `/Users/elkisrovira/Developer/code/TU TALENTO/flutter_interview_ssr/screenshots/Simulator Screenshot - iPhone 17 Pro Max - 2026-02-05 at 13.13.14.png`
+- Implementation: `/tmp/cotrafa-user-detail-light.png`
+- List/menu evidence: `/tmp/cotrafa-users-detail-list.png`, `/tmp/cotrafa-user-menu-offset.png`
+- Optional-profile editor: `/tmp/cotrafa-user-edit-optional.png`
+- Dark theme: `/tmp/cotrafa-user-detail-dark.png`
+- Combined full-view comparison: `/tmp/cotrafa-user-detail-comparison.png`
+- Combined focused comparison: `/tmp/cotrafa-user-detail-focused-comparison.png`
+- State: authenticated administrator viewing an existing client profile.
+
+## Normalization
+
+- Source: 1320 × 2868 px, iPhone simulator screenshot.
+- Implementation: 1080 × 2400 px, Android emulator screenshot.
+- The full-view comparison preserves each device aspect ratio and normalizes both captures to a 1200 px display height.
+- This is a cross-platform UX comparison, not a pixel-identical platform rendering comparison.
+
+## Full-view comparison
+
+The implementation preserves the source hierarchy: expanded profile header, centered identity, primary Edit action, secondary Addresses action, personal-information section, and contact section. Cotrafa semantic colors and Material 3 surfaces intentionally replace the reference app palette and flat rows. The Android status/navigation geometry is platform-native.
+
+## Focused comparison
+
+The focused comparison confirms the same information order, labels, leading icons, action placement, and section rhythm. Existing legacy users show safe `Sin registrar` placeholders until they fill the new optional profile fields. Age is derived from birth date rather than persisted.
+
+The User list evidence confirms that the overflow menu is aligned to the card's top-right corner. The popup uses `Offset(0, 40)` and opens below the trigger without obscuring it.
+
+## Required fidelity surfaces
+
+- **Typography:** Native Material typography preserves the source hierarchy and readable optical weights; platform-specific font metrics are intentionally retained.
+- **Spacing/layout:** Header, actions, sections, and row rhythm match the reference UX. Cards are an intentional Cotrafa/Material 3 adaptation.
+- **Colors/tokens:** Cotrafa semantic primary/secondary colors replace the reference purple palette and remain valid in light and dark modes.
+- **Image quality/assets:** The profile avatar is code-native in both source and implementation; no branded image asset was approximated or degraded.
+- **Copy/content:** Spanish labels are consistent with Cotrafa. Empty optional fields use explicit placeholders. Addresses clearly communicates its not-yet-implemented state.
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain. Visual differences are intentional product constraints: Cotrafa branding, semantic Material 3 surfaces, native Android chrome, and nullable post-activation data.
+
+## Interaction evidence
+
+- Card tap opens the full user-detail route.
+- Overflow menu opens below its icon and Edit opens the full edit route.
+- Edit returns to and refreshes the detail screen.
+- Addresses shows a temporary availability message without navigating to an unfinished flow.
+- Pull-to-refresh and vertical scrolling work on the detail screen.
+- Light and dark themes were visually checked on the emulator.
+
+## Comparison history
+
+One comparison pass was sufficient: no actionable P0/P1/P2 issue was found, so no visual correction iteration was required.
+
+## Final result
+
+final result: passed
