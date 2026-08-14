@@ -1,5 +1,5 @@
-name: cootrafa_database
-description: Cootrafa local Drift database package.
+name: cotrafa_database
+description: Cotrafa local Drift database package.
 publish_to: none
 resolution: workspace
 version: 0.0.1

@@ -1,14 +1,14 @@
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/native.dart';
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:feature_transfer/data/datasources/transfer_local_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  late CootrafaDatabase db;
+  late CotrafaDatabase db;
   late TransferLocalDatasource transfers;
   setUp(() async {
-    db = CootrafaDatabase.forTesting(
+    db = CotrafaDatabase.forTesting(
       NativeDatabase.memory(),
       CredentialHasher(
         memoryKiB: 64,
@@ -148,20 +148,20 @@ void main() {
   });
 }
 
-Future<void> _user(CootrafaDatabase db, int id, String name, int balance) =>
+Future<void> _user(CotrafaDatabase db, int id, String name, int balance) =>
     db.customStatement(
       "INSERT INTO users VALUES ($id,'user$id@example.com','$name','client',"
       "'active',NULL,NULL,$balance,1,1)",
     );
-Future<int> _balance(CootrafaDatabase db, int id) => db
+Future<int> _balance(CotrafaDatabase db, int id) => db
     .customSelect('SELECT balance_cop FROM users WHERE id=$id')
     .map((row) => row.read<int>('balance_cop'))
     .getSingle();
-Future<String> _status(CootrafaDatabase db, int id) => db
+Future<String> _status(CotrafaDatabase db, int id) => db
     .customSelect('SELECT status FROM users WHERE id=$id')
     .map((row) => row.read<String>('status'))
     .getSingle();
-Future<int> _count(CootrafaDatabase db, String table) => db
+Future<int> _count(CotrafaDatabase db, String table) => db
     .customSelect('SELECT COUNT(*) AS count FROM $table')
     .map((row) => row.read<int>('count'))
     .getSingle();

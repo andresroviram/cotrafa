@@ -16,7 +16,7 @@ class _Repository extends Mock implements IUserRepository {}
 void main() {
   const admin = UserProfile(
     id: 1,
-    email: 'admin@cootrafa.local',
+    email: 'admin@cotrafa.local',
     fullName: 'Admin',
     role: 'admin',
     status: 'active',

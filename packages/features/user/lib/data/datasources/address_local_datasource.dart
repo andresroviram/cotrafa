@@ -1,4 +1,4 @@
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:drift/drift.dart';
 import 'package:injectable/injectable.dart';
 
@@ -28,7 +28,7 @@ final class AddressInput {
 @lazySingleton
 final class AddressLocalDatasource {
   AddressLocalDatasource(this._database);
-  final CootrafaDatabase _database;
+  final CotrafaDatabase _database;
   Future<AddressResult<List<AddressesData>>> list(int actorId, int userId) =>
       _guard(() async {
         final denied = await _authorize(actorId, userId);

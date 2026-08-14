@@ -1,4 +1,4 @@
-part of '../cootrafa_database.dart';
+part of '../cotrafa_database.dart';
 
 class LoginIdentifiers extends Table {
   TextColumn get normalized => text()();

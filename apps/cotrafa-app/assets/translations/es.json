@@ -1,0 +1,10 @@
+{
+  "app_title": "Cotrafa",
+  "nav": {
+    "home": "Usuarios",
+    "transactions": "Transferencias"
+  },
+  "dashboard": "Menú",
+  "switch_to_dark": "Cambiar a modo oscuro",
+  "switch_to_light": "Cambiar a modo claro"
+}

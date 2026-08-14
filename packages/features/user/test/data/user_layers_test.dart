@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:core/security/credential_hasher.dart';
@@ -12,21 +12,21 @@ import 'package:feature_user/domain/usecases/user_usecases.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  late CootrafaDatabase database;
+  late CotrafaDatabase database;
   late UserRepositoryImpl repository;
 
   setUp(() async {
-    database = CootrafaDatabase.forTesting(
+    database = CotrafaDatabase.forTesting(
       NativeDatabase.memory(),
       CredentialHasher(
         memoryKiB: 64,
         iterations: 1,
         saltFactory: () => List<int>.filled(16, 7),
       ),
-      seed: CootrafaDatabaseSeed.test,
+      seed: CotrafaDatabaseSeed.test,
     );
     repository = UserRepositoryImpl(
-      UserLocalDatasource(database, CootrafaDatabaseSeed.test),
+      UserLocalDatasource(database, CotrafaDatabaseSeed.test),
     );
     await database.customSelect('SELECT 1').getSingle();
   });
@@ -89,7 +89,7 @@ void main() {
       '${root.path}/domain/usecases/user_usecases.dart',
     ).readAsStringSync();
 
-    expect(repositorySource, isNot(contains('cootrafa_database.dart')));
+    expect(repositorySource, isNot(contains('cotrafa_database.dart')));
     expect(useCaseSource, isNot(contains('/data/')));
   });
 }

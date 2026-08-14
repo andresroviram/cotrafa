@@ -11,7 +11,6 @@ class UserCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      color: theme.cardTheme.color ?? theme.colorScheme.surfaceContainerLow,
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -101,7 +100,7 @@ class _Label extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.secondaryContainer,
+        color: theme.colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Padding(
@@ -109,7 +108,7 @@ class _Label extends StatelessWidget {
         child: Text(
           text,
           style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSecondaryContainer,
+            color: theme.colorScheme.onPrimaryContainer,
           ),
         ),
       ),

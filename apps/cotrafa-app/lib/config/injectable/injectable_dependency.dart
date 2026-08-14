@@ -1,0 +1,19 @@
+import 'package:cotrafa_app/config/injectable/injectable_dependency.config.dart';
+import 'package:cotrafa_database/injectable.module.dart';
+import 'package:core/get_it.dart';
+import 'package:core/injectable.module.dart';
+import 'package:feature_auth/injectable.module.dart';
+import 'package:feature_transfer/injectable.module.dart';
+import 'package:feature_user/injectable.module.dart';
+import 'package:injectable/injectable.dart';
+
+@InjectableInit(
+  externalPackageModulesBefore: [ExternalModule(CorePackageModule)],
+  externalPackageModulesAfter: [
+    ExternalModule(CotrafaDatabasePackageModule),
+    ExternalModule(FeatureAuthPackageModule),
+    ExternalModule(FeatureUserPackageModule),
+    ExternalModule(FeatureTransferPackageModule),
+  ],
+)
+Future<void> configureDependencies() => getIt.init();

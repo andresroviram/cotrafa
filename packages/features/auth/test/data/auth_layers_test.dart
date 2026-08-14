@@ -8,11 +8,11 @@ import 'package:drift/native.dart';
 import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:feature_auth/data/repository/auth_repository_impl.dart';
 import 'package:feature_auth/domain/usecases/auth_usecases.dart';
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  late CootrafaDatabase database;
+  late CotrafaDatabase database;
   late AuthRepositoryImpl repository;
 
   setUp(() async {
@@ -21,7 +21,7 @@ void main() {
       iterations: 1,
       saltFactory: () => List<int>.filled(16, 7),
     );
-    database = CootrafaDatabase.forTesting(
+    database = CotrafaDatabase.forTesting(
       NativeDatabase.memory(),
       hasher,
       seed: _demoSeed,
@@ -79,7 +79,7 @@ void main() {
     final result = await ActivateClient(repository)(
       'client@example.com',
       code,
-      ' ADMIN@COOTRAFA.LOCAL ',
+      ' ADMIN@COTRAFA.LOCAL ',
       'secret',
     );
     expect(result.errorOrNull, isA<DuplicateFailure>());
@@ -102,9 +102,9 @@ void main() {
     final useCaseSource = File(
       '${root.path}/domain/usecases/auth_usecases.dart',
     ).readAsStringSync();
-    expect(repositorySource, isNot(contains('cootrafa_database.dart')));
+    expect(repositorySource, isNot(contains('cotrafa_database.dart')));
     expect(useCaseSource, isNot(contains('/data/')));
   });
 }
 
-const _demoSeed = CootrafaDatabaseSeed.demo();
+const _demoSeed = CotrafaDatabaseSeed.demo();

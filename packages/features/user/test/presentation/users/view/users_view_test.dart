@@ -38,14 +38,20 @@ void main() {
     final colors = brightness == Brightness.light
         ? generatedColors.copyWith(surface: Colors.white)
         : generatedColors;
+    final theme = ThemeData.from(colorScheme: colors, useMaterial3: true)
+        .copyWith(
+          scaffoldBackgroundColor: colors.surfaceContainerLow,
+          cardTheme: CardThemeData(color: colors.surface),
+          inputDecorationTheme: InputDecorationThemeData(
+            filled: true,
+            fillColor: brightness == Brightness.light
+                ? colors.surface
+                : colors.surfaceContainerHighest,
+          ),
+        );
     return MaterialApp(
       key: key,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: colors,
-        scaffoldBackgroundColor: colors.surfaceContainerLow,
-        cardTheme: CardThemeData(color: colors.surface),
-      ),
+      theme: theme,
       builder: (_, child) => ResponsiveBreakpoints.builder(
         child: child!,
         breakpoints: const [
@@ -88,7 +94,7 @@ void main() {
     verify(() => bloc.add(const UserEvent.profileRequested(8, 8))).called(1);
   });
 
-  testWidgets('renders Cootrafa data using the reference card hierarchy', (
+  testWidgets('renders Cotrafa data using the reference card hierarchy', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -99,7 +105,7 @@ void main() {
           users: [
             UserProfile(
               id: 2,
-              email: 'client@cootrafa.test',
+              email: 'client@cotrafa.test',
               fullName: 'Sofia Rovira',
               role: 'client',
               status: 'pendingActivation',
@@ -107,7 +113,7 @@ void main() {
             ),
             UserProfile(
               id: 3,
-              email: 'andres@cootrafa.test',
+              email: 'andres@cotrafa.test',
               fullName: 'Andres Perez',
               role: 'client',
               status: 'active',
@@ -119,13 +125,29 @@ void main() {
     );
 
     expect(find.text('Lista de usuarios'), findsOneWidget);
-    expect(tester.widget<Card>(find.byType(Card)).color, Colors.white);
+    expect(tester.widget<Card>(find.byType(Card)).color, isNull);
+    expect(
+      Theme.of(tester.element(find.byType(Card))).cardTheme.color,
+      Colors.white,
+    );
     expect(find.text('SR'), findsOneWidget);
     expect(find.text('Sofia Rovira'), findsOneWidget);
     expect(find.text('Andres Perez'), findsNothing);
-    expect(find.text('client@cootrafa.test'), findsOneWidget);
+    expect(find.text('client@cotrafa.test'), findsOneWidget);
     expect(find.text('Pendiente de activación'), findsOneWidget);
     expect(find.textContaining('250.000'), findsOneWidget);
+    final statusLabel = tester.widget<DecoratedBox>(
+      find
+          .ancestor(
+            of: find.text('Pendiente de activación'),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
+    );
+    expect(
+      (statusLabel.decoration as BoxDecoration).color,
+      Theme.of(tester.element(find.byType(Card))).colorScheme.primaryContainer,
+    );
 
     final searchField = tester.widget<TextField>(
       find.byKey(const Key('user-search-field')),
@@ -159,7 +181,7 @@ void main() {
       users: [
         UserProfile(
           id: 2,
-          email: 'client@cootrafa.test',
+          email: 'client@cotrafa.test',
           fullName: 'Sofia Rovira',
           role: 'client',
           status: 'active',
@@ -172,11 +194,16 @@ void main() {
 
     final context = tester.element(find.byType(Card));
     final colors = Theme.of(context).colorScheme;
-    expect(tester.widget<Card>(find.byType(Card)).color, colors.surface);
+    expect(tester.widget<Card>(find.byType(Card)).color, isNull);
+    expect(Theme.of(context).cardTheme.color, colors.surface);
     final search = tester.widget<TextField>(
       find.byKey(const Key('user-search-field')),
     );
-    expect(search.decoration?.fillColor, colors.surfaceContainerHighest);
+    expect(search.decoration?.fillColor, isNull);
+    expect(
+      Theme.of(context).inputDecorationTheme.fillColor,
+      colors.surfaceContainerHighest,
+    );
   });
 
   testWidgets('dismisses search keyboard on tap but not sustained scroll', (
@@ -194,7 +221,7 @@ void main() {
           users: [
             UserProfile(
               id: 2,
-              email: 'client@cootrafa.test',
+              email: 'client@cotrafa.test',
               fullName: 'Sofia Rovira',
               role: 'client',
               status: 'active',

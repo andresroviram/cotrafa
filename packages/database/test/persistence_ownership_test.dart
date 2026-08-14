@@ -7,15 +7,15 @@ void main() {
     final workspace = _workspaceRoot();
     final database = Directory('${workspace.path}/packages/database');
     final appDatabase = Directory(
-      '${workspace.path}/apps/cootrafa-app/lib/config/database',
+      '${workspace.path}/apps/cotrafa-app/lib/config/database',
     );
     final appDatabaseTests = Directory(
-      '${workspace.path}/apps/cootrafa-app/test/config/database',
+      '${workspace.path}/apps/cotrafa-app/test/config/database',
     );
 
     expect(File('${database.path}/pubspec.yaml').existsSync(), isTrue);
     expect(
-      File('${database.path}/lib/cootrafa_database.dart').existsSync(),
+      File('${database.path}/lib/cotrafa_database.dart').existsSync(),
       isTrue,
     );
     expect(
@@ -43,7 +43,7 @@ void main() {
     expect(Directory('${appDatabase.path}/adapters').existsSync(), isFalse);
     expect(Directory('${appDatabase.path}/tables').existsSync(), isFalse);
     expect(
-      File('${appDatabase.path}/cootrafa_database.dart').existsSync(),
+      File('${appDatabase.path}/cotrafa_database.dart').existsSync(),
       isFalse,
     );
   });
@@ -68,7 +68,7 @@ void main() {
     expect(authDatasource, isNot(contains('DemoAdminDatabaseSeed')));
     expect(
       authDatasource,
-      isNot(contains('@Singleton(as: CootrafaDatabaseSeed)')),
+      isNot(contains('@Singleton(as: CotrafaDatabaseSeed)')),
     );
     expect(
       File(

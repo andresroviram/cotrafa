@@ -1,4 +1,4 @@
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
 import 'package:feature_user/domain/entities/delete_outcome.dart';
@@ -24,9 +24,9 @@ abstract interface class IUserLocalDatasource {
 
 @LazySingleton(as: IUserLocalDatasource)
 final class UserLocalDatasource implements IUserLocalDatasource {
-  UserLocalDatasource(this._database, CootrafaDatabaseSeed seed)
+  UserLocalDatasource(this._database, CotrafaDatabaseSeed seed)
     : protectedAdminUserId = seed.userId;
-  final CootrafaDatabase _database;
+  final CotrafaDatabase _database;
   final int protectedAdminUserId;
 
   @override

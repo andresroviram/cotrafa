@@ -37,19 +37,10 @@ class ThemeModeButton extends StatelessWidget {
         onPressed: action,
         icon: Icon(iconData),
         label: Text(actionLabel),
-        style: brightness == Brightness.dark
-            ? OutlinedButton.styleFrom(
-                backgroundColor: colorScheme.surfaceContainerHighest,
-                side: BorderSide(
-                  color: colorScheme.secondary.withValues(alpha: 0.5),
-                ),
-              )
-            : OutlinedButton.styleFrom(
-                backgroundColor: colorScheme.surfaceContainerHighest,
-                side: BorderSide(
-                  color: colorScheme.secondary.withValues(alpha: 0.5),
-                ),
-              ),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: colorScheme.surfaceContainerHighest,
+          side: BorderSide(color: colorScheme.secondary.withValues(alpha: 0.5)),
+        ),
       ),
     };
   }

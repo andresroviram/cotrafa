@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
@@ -8,20 +8,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('database owns the canonical demo administrator seed', () {
-    const seed = CootrafaDatabaseSeed.demo();
+    const seed = CotrafaDatabaseSeed.demo();
 
     expect(seed.userId, 1);
-    expect(seed.email, 'admin@cootrafa.local');
-    expect(seed.fullName, 'Cootrafa Demo Admin');
-    expect(seed.password, 'CootrafaDemo2026!');
+    expect(seed.email, 'admin@cotrafa.local');
+    expect(seed.username, 'admin');
+    expect(seed.fullName, 'Cotrafa Demo Admin');
+    expect(seed.password, 'CotrafaDemo2026!');
   });
 
   test('database hashes the demo password and seeds idempotently', () async {
     final directory = await Directory.systemTemp.createTemp('demo-admin-');
-    final file = File('${directory.path}/cootrafa.sqlite');
+    final file = File('${directory.path}/cotrafa.sqlite');
     final hasher = _fastHasher();
-    const seed = CootrafaDatabaseSeed.demo();
-    final first = CootrafaDatabase.forTesting(
+    const seed = CotrafaDatabaseSeed.demo();
+    final first = CotrafaDatabase.forTesting(
       NativeDatabase(file),
       hasher,
       seed: seed,
@@ -38,7 +39,7 @@ void main() {
     expect(await hasher.verify('wrong-password', encoded), isFalse);
     await first.close();
 
-    final reopened = CootrafaDatabase.forTesting(
+    final reopened = CotrafaDatabase.forTesting(
       NativeDatabase(file),
       hasher,
       seed: seed,
@@ -48,12 +49,26 @@ void main() {
         .get();
     expect(rows, hasLength(1));
     expect(rows.single.read<String>('password_hash'), encoded);
-    final identifier = await reopened
+    final identifiers = await reopened
         .customSelect(
-          'SELECT normalized FROM login_identifiers WHERE user_id = 1',
+          'SELECT normalized,kind FROM login_identifiers '
+          'WHERE user_id = 1 ORDER BY kind',
         )
-        .getSingle();
-    expect(identifier.read<String>('normalized'), seed.email);
+        .get();
+    expect(
+      identifiers
+          .map(
+            (row) => (
+              normalized: row.read<String>('normalized'),
+              kind: row.read<String>('kind'),
+            ),
+          )
+          .toList(),
+      [
+        (normalized: seed.email, kind: 'email'),
+        (normalized: seed.username, kind: 'username'),
+      ],
+    );
     await reopened.close();
     await directory.delete(recursive: true);
   });
@@ -65,7 +80,7 @@ CredentialHasher _fastHasher() => CredentialHasher(
   saltFactory: () => List<int>.filled(16, 7),
 );
 
-Future<QueryRow> _admin(CootrafaDatabase database) => database
+Future<QueryRow> _admin(CotrafaDatabase database) => database
     .customSelect(
       'SELECT id,email,full_name,password_hash FROM users WHERE id = 1',
     )

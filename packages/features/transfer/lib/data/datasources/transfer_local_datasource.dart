@@ -1,4 +1,4 @@
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:drift/drift.dart';
 import 'package:injectable/injectable.dart';
 
@@ -91,7 +91,7 @@ final class TransferLocalDatasource {
     DateTime Function()? clock,
     this.afterRead,
   }) : _clock = clock ?? DateTime.now;
-  final CootrafaDatabase _database;
+  final CotrafaDatabase _database;
   final String Function() idGenerator;
   final DateTime Function() _clock;
   final Future<void> Function()? afterRead;

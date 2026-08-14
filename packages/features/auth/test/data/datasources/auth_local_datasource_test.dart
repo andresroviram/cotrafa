@@ -5,11 +5,11 @@ import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  late CootrafaDatabase database;
+  late CotrafaDatabase database;
   late CredentialHasher hasher;
   late QueueCodeGenerator codes;
   late AuthLocalDatasource auth;
@@ -20,7 +20,7 @@ void main() {
       iterations: 1,
       saltFactory: () => List<int>.filled(16, 7),
     );
-    database = CootrafaDatabase.forTesting(
+    database = CotrafaDatabase.forTesting(
       NativeDatabase.memory(),
       hasher,
       seed: _demoSeed,
@@ -98,7 +98,7 @@ void main() {
         auth.activate(
           'CLIENT@example.com',
           code,
-          ' ADMIN@COOTRAFA.LOCAL ',
+          ' ADMIN@COTRAFA.LOCAL ',
           'secret',
         ),
         throwsA(isA<DuplicateException>()),
@@ -121,7 +121,8 @@ void main() {
       expect(
         await database
             .customSelect(
-              "SELECT normalized FROM login_identifiers WHERE kind='username'",
+              "SELECT normalized FROM login_identifiers "
+              "WHERE kind='username' AND user_id=2",
             )
             .map((row) => row.read<String>('normalized'))
             .getSingle(),
@@ -172,7 +173,7 @@ void main() {
 }
 
 Future<void> _insertClient(
-  CootrafaDatabase database,
+  CotrafaDatabase database,
   int id,
   String email,
 ) async {
@@ -185,7 +186,7 @@ Future<void> _insertClient(
   );
 }
 
-Future<QueryRow> _client(CootrafaDatabase database) =>
+Future<QueryRow> _client(CotrafaDatabase database) =>
     database.customSelect('SELECT * FROM users WHERE id=2').getSingle();
 
 final class QueueCodeGenerator implements ActivationCodeGenerator {
@@ -195,4 +196,4 @@ final class QueueCodeGenerator implements ActivationCodeGenerator {
   String generate() => values.removeAt(0);
 }
 
-const _demoSeed = CootrafaDatabaseSeed.demo();
+const _demoSeed = CotrafaDatabaseSeed.demo();

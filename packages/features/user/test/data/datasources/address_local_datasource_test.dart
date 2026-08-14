@@ -3,15 +3,15 @@ import 'dart:io';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:feature_user/data/datasources/address_local_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  late CootrafaDatabase database;
+  late CotrafaDatabase database;
   late AddressLocalDatasource addresses;
   setUp(() async {
-    database = CootrafaDatabase.forTesting(
+    database = CotrafaDatabase.forTesting(
       NativeDatabase.memory(),
       CredentialHasher(
         memoryKiB: 64,
@@ -128,9 +128,9 @@ void main() {
     },
   );
   test('migrates v1 addresses without data loss', () async {
-    final directory = await Directory.systemTemp.createTemp('cootrafa-v1-');
+    final directory = await Directory.systemTemp.createTemp('cotrafa-v1-');
     final file = File('${directory.path}/legacy.sqlite');
-    final legacy = CootrafaDatabase.forTesting(
+    final legacy = CotrafaDatabase.forTesting(
       NativeDatabase(file),
       _fastHasher(),
     );
@@ -145,7 +145,7 @@ void main() {
     }
     await legacy.customStatement('PRAGMA user_version = 1');
     await legacy.close();
-    final migrated = CootrafaDatabase.forTesting(
+    final migrated = CotrafaDatabase.forTesting(
       NativeDatabase(file),
       _fastHasher(),
     );
@@ -177,11 +177,7 @@ CredentialHasher _fastHasher() => CredentialHasher(
   iterations: 1,
   saltFactory: () => List<int>.filled(16, 7),
 );
-Future<void> _activeUser(
-  CootrafaDatabase database,
-  int id,
-  String email,
-) async {
+Future<void> _activeUser(CotrafaDatabase database, int id, String email) async {
   await database.customStatement(
     "INSERT INTO users VALUES ($id,'$email','Client','client','active',NULL,NULL,100,1,1)",
   );
@@ -190,6 +186,6 @@ Future<void> _activeUser(
   );
 }
 
-Future<QueryRow> _receipt(CootrafaDatabase database) => database
+Future<QueryRow> _receipt(CotrafaDatabase database) => database
     .customSelect("SELECT * FROM transfers WHERE id='receipt'")
     .getSingle();

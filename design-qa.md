@@ -3,8 +3,8 @@
 ## Evidence
 
 - Source visual truth: `/var/folders/ln/qbl138m51b78phv64b8cw2_00000gn/T/codex-clipboard-ff85e060-de64-4b32-bb4d-b0015aa515ce.png`
-- Implementation: `/tmp/cootrafa-minimal-login.png`
-- Combined comparison: `/tmp/cootrafa-login-comparison.png`
+- Implementation: `/tmp/cotrafa-minimal-login.png`
+- Combined comparison: `/tmp/cotrafa-login-comparison.png`
 - State: unauthenticated, light theme, keyboard closed.
 - Runtime viewport: Android emulator, 360 × 800 logical pixels at 3.0 DPR; capture 1080 × 2400 pixels.
 - Source: 353 × 699 pixels including device frame. The app-owned screen was cropped to 277 × 637 pixels.

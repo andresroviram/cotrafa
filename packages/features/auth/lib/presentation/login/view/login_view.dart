@@ -102,7 +102,7 @@ class _LoginViewState extends State<LoginView> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Semantics(
-                                label: 'Logo de Cootrafa',
+                                label: 'Logo de Cotrafa',
                                 image: true,
                                 child: Image.asset(
                                   logoPath,

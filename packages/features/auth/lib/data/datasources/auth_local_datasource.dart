@@ -1,4 +1,4 @@
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
@@ -31,10 +31,10 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
     this._databaseSeed,
   );
 
-  final CootrafaDatabase _database;
+  final CotrafaDatabase _database;
   final CredentialHasher _credentialHasher;
   final ActivationCodeGenerator _activationCodeGenerator;
-  final CootrafaDatabaseSeed _databaseSeed;
+  final CotrafaDatabaseSeed _databaseSeed;
 
   @override
   Future<String> issueActivationCode(int actorUserId, String clientEmail) =>

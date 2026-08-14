@@ -1,5 +1,5 @@
 name: feature_auth
-description: Cootrafa authentication feature package.
+description: Cotrafa authentication feature package.
 publish_to: none
 resolution: workspace
 version: 0.0.1
@@ -15,7 +15,7 @@ dependencies:
     path: ../../core
   components:
     path: ../../components
-  cootrafa_database:
+  cotrafa_database:
     path: ../../database
   drift: ^2.24.0
   bloc: ^9.2.0

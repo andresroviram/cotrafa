@@ -2,17 +2,17 @@ import 'package:core/errors/error.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:cootrafa_database/cootrafa_database.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
 import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  late CootrafaDatabase database;
+  late CotrafaDatabase database;
   late UserLocalDatasource users;
   setUp(() async {
-    database = CootrafaDatabase.forTesting(
+    database = CotrafaDatabase.forTesting(
       NativeDatabase.memory(),
       CredentialHasher(
         memoryKiB: 64,
@@ -21,7 +21,7 @@ void main() {
       ),
       seed: _demoSeed,
     );
-    users = UserLocalDatasource(database, CootrafaDatabaseSeed.test);
+    users = UserLocalDatasource(database, CotrafaDatabaseSeed.test);
     await database.customSelect('SELECT 1').getSingle();
   });
   tearDown(() => database.close());
@@ -40,7 +40,7 @@ void main() {
       'Edited',
     );
     await expectLater(
-      _create(users, CootrafaDatabaseSeed.test.email.toUpperCase(), 0),
+      _create(users, CotrafaDatabaseSeed.test.email.toUpperCase(), 0),
       throwsA(isA<DuplicateException>()),
     );
     await database.customStatement(
@@ -166,7 +166,7 @@ void main() {
 
 Future<UserProfile> _activeClient(
   UserLocalDatasource users,
-  CootrafaDatabase database,
+  CotrafaDatabase database,
   String email,
   int balance,
 ) async {
@@ -188,10 +188,10 @@ Future<UserProfile> _create(
   initialBalanceCop: balance,
 );
 
-Future<QueryRow> _user(CootrafaDatabase database, int id) =>
+Future<QueryRow> _user(CotrafaDatabase database, int id) =>
     database.customSelect('SELECT * FROM users WHERE id=$id').getSingle();
 
-Future<int> _count(CootrafaDatabase database, String table, String where) =>
+Future<int> _count(CotrafaDatabase database, String table, String where) =>
     database
         .customSelect('SELECT COUNT(*) AS count FROM $table WHERE $where')
         .map((row) => row.read<int>('count'))
@@ -200,4 +200,4 @@ Future<int> _count(CootrafaDatabase database, String table, String where) =>
 String _transferSql(int origin, int destination) =>
     "INSERT INTO transfers VALUES ('history',$origin,$destination,10,'completed',NULL,1,'Origin','Destination')";
 
-const _demoSeed = CootrafaDatabaseSeed.test;
+const _demoSeed = CotrafaDatabaseSeed.test;

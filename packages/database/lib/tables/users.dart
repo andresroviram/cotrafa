@@ -1,4 +1,4 @@
-part of '../cootrafa_database.dart';
+part of '../cotrafa_database.dart';
 
 class Users extends Table {
   IntColumn get id => integer().autoIncrement()();
