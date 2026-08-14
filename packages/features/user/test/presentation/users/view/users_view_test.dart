@@ -178,6 +178,14 @@ void main() {
     );
     searchField.onChanged?.call('client');
     verify(() => bloc.add(const UserEvent.searchChanged('client'))).called(1);
+
+    final cardRect = tester.getRect(find.byType(Card));
+    final menu = find.byKey(const Key('user-actions-2'));
+    final menuRect = tester.getRect(menu);
+    expect((menuRect.top - cardRect.top).abs(), lessThanOrEqualTo(4));
+    expect((menuRect.right - cardRect.right).abs(), lessThanOrEqualTo(4));
+    final menuButton = tester.widget<PopupMenuButton<Object?>>(menu);
+    expect(menuButton.offset, const Offset(0, 40));
   });
 
   testWidgets('exposes empty, failure, and retry states', (tester) async {
