@@ -39,6 +39,7 @@ class UserEditView extends StatelessWidget {
             actorUserId: actorUserId,
             user: user,
             showHeading: false,
+            topPadding: 24,
           );
         }
         if (state.status == UserStatus.failure) {

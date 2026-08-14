@@ -14,6 +14,7 @@ class UserForm extends StatefulWidget {
     required this.actorUserId,
     required ActivationCodeIssuer this.issueActivationCode,
     this.showHeading = true,
+    this.topPadding = 8,
     super.key,
   }) : user = null;
 
@@ -21,6 +22,7 @@ class UserForm extends StatefulWidget {
     required this.actorUserId,
     required UserProfile this.user,
     this.showHeading = true,
+    this.topPadding = 8,
     super.key,
   }) : issueActivationCode = null;
 
@@ -28,6 +30,7 @@ class UserForm extends StatefulWidget {
   final UserProfile? user;
   final ActivationCodeIssuer? issueActivationCode;
   final bool showHeading;
+  final double topPadding;
 
   bool get isEditing => user != null;
 
@@ -80,7 +83,7 @@ class _UserFormState extends State<UserForm> {
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
         padding: EdgeInsets.fromLTRB(
           24,
-          8,
+          widget.topPadding,
           24,
           24 + MediaQuery.viewInsetsOf(context).bottom,
         ),

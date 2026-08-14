@@ -70,6 +70,12 @@ void main() {
 
     expect(find.byType(Scaffold), findsOneWidget);
     expect(find.text('Editar usuario'), findsOneWidget);
+    expect(
+      tester
+          .widget<SingleChildScrollView>(find.byType(SingleChildScrollView))
+          .padding,
+      const EdgeInsets.fromLTRB(24, 24, 24, 24),
+    );
     final email = tester.widget<TextField>(
       find.descendant(
         of: find.byKey(const Key('edit-user-email')),
