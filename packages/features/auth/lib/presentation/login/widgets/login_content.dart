@@ -171,21 +171,21 @@ class _LoginContentState extends State<LoginContent> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  TextButton(
-                                    onPressed: widget.isLoading
-                                        ? null
-                                        : widget.onActivation,
-                                    child: const Text('Activar cuenta'),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  OutlinedButton(
-                                    style: _buttonStyle(),
+                                  FilledButton(
+                                    style: _secondaryButtonStyle(context),
                                     onPressed: widget.isLoading
                                         ? null
                                         : () => context.read<AuthBloc>().add(
                                             const AuthEvent.demoAdminLoginRequested(),
                                           ),
                                     child: const Text('Iniciar como Admin'),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  TextButton(
+                                    onPressed: widget.isLoading
+                                        ? null
+                                        : widget.onActivation,
+                                    child: const Text('Activar cuenta'),
                                   ),
                                 ],
                               ),
@@ -235,6 +235,14 @@ class _LoginContentState extends State<LoginContent> {
     minimumSize: const WidgetStatePropertyAll(Size.fromHeight(52)),
     shape: const WidgetStatePropertyAll(StadiumBorder()),
   );
+
+  ButtonStyle _secondaryButtonStyle(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return _buttonStyle().copyWith(
+      backgroundColor: WidgetStatePropertyAll(colors.secondary),
+      foregroundColor: WidgetStatePropertyAll(colors.onSecondary),
+    );
+  }
 
   void _submitClient() {
     if (!_formKey.currentState!.validate()) return;

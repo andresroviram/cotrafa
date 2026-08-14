@@ -69,6 +69,28 @@ void main() {
     expect(find.textContaining('credencial configurada'), findsNothing);
     expect(find.textContaining('Remember me'), findsNothing);
     expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+
+    final loginButton = find.widgetWithText(FilledButton, 'Iniciar sesión');
+    final adminButton = find.widgetWithText(FilledButton, 'Iniciar como Admin');
+    final activationButton = find.widgetWithText(TextButton, 'Activar cuenta');
+    expect(loginButton, findsOneWidget);
+    expect(adminButton, findsOneWidget);
+    expect(activationButton, findsOneWidget);
+    expect(
+      tester.getTopLeft(loginButton).dy,
+      lessThan(tester.getTopLeft(adminButton).dy),
+    );
+    expect(
+      tester.getTopLeft(adminButton).dy,
+      lessThan(tester.getTopLeft(activationButton).dy),
+    );
+
+    final context = tester.element(adminButton);
+    final button = tester.widget<FilledButton>(adminButton);
+    expect(
+      button.style?.backgroundColor?.resolve(<WidgetState>{}),
+      Theme.of(context).colorScheme.secondary,
+    );
   });
 
   testWidgets('opens the first-access activation route', (tester) async {
