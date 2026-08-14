@@ -105,6 +105,7 @@ GoRouter createRouter(AuthBloc authBloc) {
             },
           ),
           transferRoutes(
+            parentNavigatorKey: rootKey,
             actorUserId: () => authBloc.state.identity!.userId,
             isAdmin: () => authBloc.state.identity!.role == 'admin',
           ),

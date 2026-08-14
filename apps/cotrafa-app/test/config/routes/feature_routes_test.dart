@@ -36,7 +36,11 @@ void main() {
       UsersView.path,
     );
     expect(
-      (transferRoutes(actorUserId: () => 1, isAdmin: () => true).routes.single
+      (transferRoutes(
+                parentNavigatorKey: GlobalKey<NavigatorState>(),
+                actorUserId: () => 1,
+                isAdmin: () => true,
+              ).routes.single
               as GoRoute)
           .path,
       TransferView.path,

@@ -2,15 +2,14 @@ import 'package:feature_transfer/domain/entities/transfer_party.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state_x.dart';
-import 'package:feature_transfer/presentation/transfer/widgets/transfer_receipt_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 typedef TransferSubmit = void Function(TransferEvent event);
 
-class TransferContent extends StatefulWidget {
-  const TransferContent({
+class TransferCreateContent extends StatefulWidget {
+  const TransferCreateContent({
     required this.actorUserId,
     required this.isAdmin,
     required this.state,
@@ -28,10 +27,10 @@ class TransferContent extends StatefulWidget {
   final TransferSubmit onSubmit;
 
   @override
-  State<TransferContent> createState() => _TransferContentState();
+  State<TransferCreateContent> createState() => _TransferCreateContentState();
 }
 
-class _TransferContentState extends State<TransferContent> {
+class _TransferCreateContentState extends State<TransferCreateContent> {
   final _formKey = GlobalKey<FormState>();
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -51,7 +50,7 @@ class _TransferContentState extends State<TransferContent> {
   }
 
   @override
-  void didUpdateWidget(covariant TransferContent oldWidget) {
+  void didUpdateWidget(covariant TransferCreateContent oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_hasParty(_originId)) _originId = _initialOriginId();
     if (!_hasParty(_destinationId) || _destinationId == _originId) {
@@ -75,7 +74,7 @@ class _TransferContentState extends State<TransferContent> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Transferencias')),
+    appBar: AppBar(title: const Text('Nueva transferencia')),
     body: SafeArea(
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -93,10 +92,6 @@ class _TransferContentState extends State<TransferContent> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _transferForm(context),
-                    if (widget.state.receipt != null) ...[
-                      const SizedBox(height: 24),
-                      TransferReceiptCard(receipt: widget.state.receipt!),
-                    ],
                     const SizedBox(height: 64),
                   ],
                 ),

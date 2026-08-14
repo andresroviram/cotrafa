@@ -1,49 +1,49 @@
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_state_x.dart';
-import 'package:feature_transfer/presentation/transfer/widgets/transfer_content.dart';
+import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_bloc.dart';
+import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_event.dart';
+import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_state.dart';
+import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_state_x.dart';
+import 'package:feature_transfer/presentation/transfer/view/transfer_create_view.dart';
+import 'package:feature_transfer/presentation/transfer/widgets/transfer_history_content.dart';
 import 'package:feature_transfer/presentation/transfer/widgets/transfer_load_failure.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 class TransferMobile extends StatelessWidget {
-  const TransferMobile({
-    required this.actorUserId,
-    required this.isAdmin,
-    super.key,
-  });
+  const TransferMobile({required this.actorUserId, super.key});
 
   final int actorUserId;
-  final bool isAdmin;
 
   @override
   Widget build(BuildContext context) =>
-      BlocBuilder<TransferBloc, TransferState>(
+      BlocBuilder<TransferHistoryBloc, TransferHistoryState>(
         builder: (context, state) => state.resolve(
           loading: () => const _Loading(),
           failure: (message) => TransferLoadFailure(
             message: message,
             onRetry: () => _reload(context),
           ),
-          empty: () => TransferLoadFailure(
-            message: 'No hay usuarios disponibles para transferir.',
-            onRetry: () => _reload(context),
-          ),
-          data: (resolved) => TransferContent(
-            key: const Key('transfer-content'),
-            actorUserId: actorUserId,
-            isAdmin: isAdmin,
-            state: resolved,
-            maxWidth: 600,
-            onReload: () => _reload(context),
-            onSubmit: (event) => context.read<TransferBloc>().add(event),
-          ),
+          empty: () => _content(context, state),
+          data: (resolved) => _content(context, resolved),
         ),
       );
 
-  void _reload(BuildContext context) => context.read<TransferBloc>().add(
-    TransferEvent.loadRequested(actorUserId),
+  Widget _content(BuildContext context, TransferHistoryState state) =>
+      TransferHistoryContent(
+        actorUserId: actorUserId,
+        transfers: state.transfers,
+        maxWidth: 600,
+        onReload: () async => _reload(context),
+        onCreate: () => _create(context),
+      );
+
+  Future<void> _create(BuildContext context) async {
+    await context.pushNamed<bool>(TransferCreateView.name);
+    if (context.mounted) _reload(context);
+  }
+
+  void _reload(BuildContext context) => context.read<TransferHistoryBloc>().add(
+    TransferHistoryEvent.loadRequested(actorUserId),
   );
 }
 

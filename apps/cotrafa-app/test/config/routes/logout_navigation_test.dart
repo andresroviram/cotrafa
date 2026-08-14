@@ -8,9 +8,9 @@ import 'package:feature_auth/domain/entities/auth_identity.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
+import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_bloc.dart';
+import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_event.dart';
+import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_state.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
@@ -26,14 +26,15 @@ final class MockAuthBloc extends Mock implements AuthBloc {}
 
 final class MockUserBloc extends Mock implements UserBloc {}
 
-final class MockTransferBloc extends Mock implements TransferBloc {}
+final class MockTransferHistoryBloc extends Mock
+    implements TransferHistoryBloc {}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
     registerFallbackValue(const UserEvent.listRequested(0));
-    registerFallbackValue(const TransferEvent.loadRequested(0));
+    registerFallbackValue(const TransferHistoryEvent.loadRequested(0));
     SharedPreferences.setMockInitialValues({});
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
@@ -66,13 +67,13 @@ void main() {
     ).thenAnswer((_) => const Stream<UserState>.empty());
     when(() => userBloc.add(any())).thenReturn(null);
     when(() => userBloc.close()).thenAnswer((_) async {});
-    final transferBloc = MockTransferBloc();
-    when(
-      () => transferBloc.state,
-    ).thenReturn(const TransferState(status: TransferStatus.loaded));
+    final transferBloc = MockTransferHistoryBloc();
+    when(() => transferBloc.state).thenReturn(
+      const TransferHistoryState(status: TransferHistoryStatus.loaded),
+    );
     when(
       () => transferBloc.stream,
-    ).thenAnswer((_) => const Stream<TransferState>.empty());
+    ).thenAnswer((_) => const Stream<TransferHistoryState>.empty());
     when(() => transferBloc.add(any())).thenReturn(null);
     when(() => transferBloc.close()).thenAnswer((_) async {});
 
@@ -80,7 +81,7 @@ void main() {
     getIt
       ..registerSingleton<AuthBloc>(authBloc)
       ..registerFactory<UserBloc>(() => userBloc)
-      ..registerFactory<TransferBloc>(() => transferBloc)
+      ..registerFactory<TransferHistoryBloc>(() => transferBloc)
       ..registerSingleton<GoRouter>(router);
     addTearDown(() async {
       await states.close();

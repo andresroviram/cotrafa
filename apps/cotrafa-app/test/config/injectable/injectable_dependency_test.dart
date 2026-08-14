@@ -6,6 +6,7 @@ import 'package:feature_transfer/data/datasources/transfer_local_datasource.dart
 import 'package:feature_transfer/domain/repository/i_transfer_repository.dart';
 import 'package:feature_transfer/domain/usecases/transfer_usecases.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
+import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_bloc.dart';
 import 'package:feature_user/data/datasources/address_local_datasource.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
 import 'package:feature_user/domain/repository/i_user_repository.dart';
@@ -36,7 +37,9 @@ void main() {
     expect(getIt<ITransferLocalDatasource>(), isA<TransferLocalDatasource>());
     expect(getIt.isRegistered<ITransferRepository>(), isTrue);
     expect(getIt.isRegistered<ListTransferParties>(), isTrue);
+    expect(getIt.isRegistered<ListTransfers>(), isTrue);
     expect(getIt.isRegistered<CreateTransfer>(), isTrue);
     expect(getIt.isRegistered<TransferBloc>(), isTrue);
+    expect(getIt.isRegistered<TransferHistoryBloc>(), isTrue);
   });
 }
