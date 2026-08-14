@@ -1,4 +1,5 @@
 import 'package:cotrafa_app/main.dart' as app;
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -10,6 +11,11 @@ void main() {
     'admin creates a client who activates, adds an address, and transfers',
     (tester) async {
       await app.main();
+      await _waitFor(tester, find.byType(MaterialApp));
+      await tester
+          .element(find.byType(MaterialApp))
+          .setLocale(const Locale('es'));
+      await tester.pumpAndSettle();
       await _waitForAny(tester, [
         find.text('Bienvenido'),
         find.byTooltip('Cerrar sesión'),
@@ -110,9 +116,9 @@ void main() {
 
       await _waitFor(tester, find.text('Calle 10 # 20-30'));
       expect(find.text('Principal'), findsOneWidget);
-      await _tap(tester, find.byTooltip('Back'));
+      await _goBack(tester);
       await _waitFor(tester, find.byKey(const Key('user-available-balance')));
-      await _tap(tester, find.byTooltip('Back'));
+      await _goBack(tester);
       await _waitFor(tester, find.text('Lista de usuarios'));
 
       await _tap(tester, find.byIcon(Icons.receipt_long_outlined));
@@ -185,6 +191,11 @@ Future<void> _tap(WidgetTester tester, Finder finder) async {
   final tappable = finder.hitTestable();
   await _waitFor(tester, tappable);
   await tester.tap(tappable.last);
+  await tester.pump(const Duration(milliseconds: 250));
+}
+
+Future<void> _goBack(WidgetTester tester) async {
+  await tester.binding.handlePopRoute();
   await tester.pump(const Duration(milliseconds: 250));
 }
 
