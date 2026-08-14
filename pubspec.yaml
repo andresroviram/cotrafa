@@ -107,6 +107,10 @@ melos:
         diff: origin/main
       description: Test packages changed from origin/main.
 
+    test:integration:
+      run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm flutter test integration_test/critical_journey_test.dart --dart-define=FLAVOR=dev
+      description: Run the critical mobile journey on a connected Android device or emulator.
+
     format:check:
       run: git ls-files --cached --others --exclude-standard -z -- "*.dart" | xargs -0 fvm dart format --output=none --set-exit-if-changed
       description: Check tracked and intended untracked Dart files without formatting ignored generated outputs.

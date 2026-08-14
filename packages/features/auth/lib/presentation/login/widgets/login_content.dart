@@ -172,6 +172,7 @@ class _LoginContentState extends State<LoginContent> {
                                   ),
                                   const SizedBox(height: 8),
                                   FilledButton(
+                                    key: const Key('admin-login-action'),
                                     style: _secondaryButtonStyle(context),
                                     onPressed: widget.isLoading
                                         ? null
