@@ -23,7 +23,12 @@ void main() {
       ).path,
       LoginView.path,
     );
-    expect((usersRoutes.routes.single as GoRoute).path, UsersView.path);
+    expect(
+      (usersRoutes(actorUserId: () => 1, isAdmin: () => true).routes.single
+              as GoRoute)
+          .path,
+      UsersView.path,
+    );
     expect((transferRoutes.routes.single as GoRoute).path, TransferView.path);
   });
 }

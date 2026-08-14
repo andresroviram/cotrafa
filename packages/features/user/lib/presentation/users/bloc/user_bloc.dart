@@ -7,7 +7,7 @@ import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
-final class UserBloc extends Bloc<UserEvent, UserState> {
+class UserBloc extends Bloc<UserEvent, UserState> {
   UserBloc(
     this._listUsers,
     this._getUser,

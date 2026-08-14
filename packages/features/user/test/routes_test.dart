@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 
 void main() {
   test('owns the users shell branch', () {
-    final route = usersRoutes.routes.single as GoRoute;
+    final route =
+        usersRoutes(actorUserId: () => 1, isAdmin: () => true).routes.single
+            as GoRoute;
 
     expect(route.path, UsersView.path);
     expect(route.name, UsersView.name);

@@ -6,14 +6,19 @@ final GlobalKey<NavigatorState> usersNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'users',
 );
 
-StatefulShellBranch get usersRoutes => StatefulShellBranch(
+StatefulShellBranch usersRoutes({
+  required int Function() actorUserId,
+  required bool Function() isAdmin,
+}) => StatefulShellBranch(
   navigatorKey: usersNavigatorKey,
   routes: [
     GoRoute(
       path: UsersView.path,
       name: UsersView.name,
-      pageBuilder: (_, state) =>
-          NoTransitionPage(key: state.pageKey, child: UsersView.create()),
+      pageBuilder: (_, state) => NoTransitionPage(
+        key: state.pageKey,
+        child: UsersView.create(actorUserId: actorUserId(), isAdmin: isAdmin()),
+      ),
     ),
   ],
 );

@@ -80,7 +80,13 @@ GoRouter createRouter(AuthBloc authBloc) {
             ),
           ),
         ),
-        branches: [usersRoutes, transferRoutes],
+        branches: [
+          usersRoutes(
+            actorUserId: () => authBloc.state.identity!.userId,
+            isAdmin: () => authBloc.state.identity!.role == 'admin',
+          ),
+          transferRoutes,
+        ],
       ),
     ],
   );
