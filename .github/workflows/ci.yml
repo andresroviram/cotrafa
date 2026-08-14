@@ -43,7 +43,8 @@ jobs:
         run: |
           dart pub global activate fvm
           dart pub global activate melos
-          fvm use "$FLUTTER_VERSION" --force
+          env -u FLUTTER_ROOT fvm use "$FLUTTER_VERSION" --force
+          echo "FLUTTER_ROOT=" >> "$GITHUB_ENV"
 
       - name: Create environment files
         run: |
@@ -114,7 +115,8 @@ jobs:
         run: |
           dart pub global activate fvm
           dart pub global activate melos
-          fvm use "$FLUTTER_VERSION" --force
+          env -u FLUTTER_ROOT fvm use "$FLUTTER_VERSION" --force
+          echo "FLUTTER_ROOT=" >> "$GITHUB_ENV"
 
       - name: Create environment files
         run: |
@@ -157,7 +159,8 @@ jobs:
         run: |
           dart pub global activate fvm
           dart pub global activate melos
-          fvm use "$FLUTTER_VERSION" --force
+          env -u FLUTTER_ROOT fvm use "$FLUTTER_VERSION" --force
+          echo "FLUTTER_ROOT=" >> "$GITHUB_ENV"
 
       - name: Create environment files
         run: |
