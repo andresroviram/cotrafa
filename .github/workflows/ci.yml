@@ -44,6 +44,8 @@ jobs:
           dart pub global activate fvm
           dart pub global activate melos
           env -u FLUTTER_ROOT fvm use "$FLUTTER_VERSION" --force
+          env -u FLUTTER_ROOT fvm flutter precache
+          test -f .fvm/flutter_sdk/bin/cache/pkg/sky_engine/pubspec.yaml
           echo "FLUTTER_ROOT=" >> "$GITHUB_ENV"
 
       - name: Create environment files
@@ -116,6 +118,8 @@ jobs:
           dart pub global activate fvm
           dart pub global activate melos
           env -u FLUTTER_ROOT fvm use "$FLUTTER_VERSION" --force
+          env -u FLUTTER_ROOT fvm flutter precache
+          test -f .fvm/flutter_sdk/bin/cache/pkg/sky_engine/pubspec.yaml
           echo "FLUTTER_ROOT=" >> "$GITHUB_ENV"
 
       - name: Create environment files
@@ -160,6 +164,8 @@ jobs:
           dart pub global activate fvm
           dart pub global activate melos
           env -u FLUTTER_ROOT fvm use "$FLUTTER_VERSION" --force
+          env -u FLUTTER_ROOT fvm flutter precache
+          test -f .fvm/flutter_sdk/bin/cache/pkg/sky_engine/pubspec.yaml
           echo "FLUTTER_ROOT=" >> "$GITHUB_ENV"
 
       - name: Create environment files
