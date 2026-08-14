@@ -1,4 +1,4 @@
-# Cotrafa
+# Prueba Tecnica Cotrafa
 
 Prueba técnica de banca local construida con Flutter 3.44.9, BLoC, Drift y Clean Architecture. La aplicación cubre autenticación, gestión de usuarios, direcciones y transferencias con persistencia transaccional.
 
