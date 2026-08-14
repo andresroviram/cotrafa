@@ -1,0 +1,350 @@
+definitions:
+  steps:
+    install_tools: &install_tools
+      name: Install FVM and Melos
+      script: |
+        dart pub global activate fvm
+        dart pub global activate melos
+        fvm use 3.44.9 --force
+
+    bootstrap: &bootstrap
+      name: Bootstrap workspace
+      script: fvm dart run melos bootstrap
+
+    generate: &generate
+      name: Generate code
+      script: fvm dart run melos run build:cotrafa-all
+
+    test: &test
+      name: Run tests
+      script: fvm dart run melos run test
+
+    create_env_dev: &create_env_dev
+      name: Create DEV environment files
+      script: |
+        for flavor in dev qa prod; do
+          cp apps/cotrafa-app/.env.example "apps/cotrafa-app/.env.$flavor"
+        done
+        cat > apps/cotrafa-app/.env.dev <<EOF
+        BASE_URL=${DEV_BASE_URL:-http://localhost:3000}
+        API_KEY=${DEV_API_KEY:-}
+        EOF
+
+    create_env_qa: &create_env_qa
+      name: Create QA environment files
+      script: |
+        for flavor in dev qa prod; do
+          cp apps/cotrafa-app/.env.example "apps/cotrafa-app/.env.$flavor"
+        done
+        cat > apps/cotrafa-app/.env.qa <<EOF
+        BASE_URL=${QA_BASE_URL:-http://localhost:3000}
+        API_KEY=${QA_API_KEY:-}
+        EOF
+
+    create_env_prod: &create_env_prod
+      name: Create PROD environment files
+      script: |
+        for flavor in dev qa prod; do
+          cp apps/cotrafa-app/.env.example "apps/cotrafa-app/.env.$flavor"
+        done
+        cat > apps/cotrafa-app/.env.prod <<EOF
+        BASE_URL=${PROD_BASE_URL:-http://localhost:3000}
+        API_KEY=${PROD_API_KEY:-}
+        EOF
+
+    decode_android_signing: &decode_android_signing
+      name: Configure Android signing
+      script: |
+        echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > apps/cotrafa-app/android/app/upload-keystore.jks
+        cat > apps/cotrafa-app/android/key.properties <<EOF
+        storePassword=$KEYSTORE_PASSWORD
+        keyPassword=$KEY_PASSWORD
+        keyAlias=$KEY_ALIAS
+        storeFile=upload-keystore.jks
+        EOF
+
+workflows:
+  ci:
+    name: CI - Analyze, format, test and coverage
+    max_build_duration: 35
+    instance_type: mac_mini_m2
+    triggering:
+      events: [push, pull_request]
+      branch_patterns:
+        - pattern: "**"
+          include: true
+      cancel_previous_builds: true
+    environment:
+      flutter: 3.44.9
+      groups: [env_dev, codecov]
+    scripts:
+      - *install_tools
+      - *create_env_dev
+      - *bootstrap
+      - *generate
+      - name: Verify formatting
+        script: fvm dart run melos run format:check
+      - name: Analyze workspace
+        script: fvm dart run melos run analyze
+      - name: Test with coverage
+        script: ./scripts/check_coverage.sh 60
+      - name: Upload coverage to Codecov
+        script: |
+          curl -Os https://uploader.codecov.io/latest/macos/codecov
+          chmod +x codecov
+          ./codecov -t "$CODECOV_TOKEN" -f coverage/lcov.info || true
+    artifacts:
+      - coverage/**
+
+  android-dev:
+    name: Android DEV - Google Play internal
+    max_build_duration: 45
+    instance_type: mac_mini_m2
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: develop
+          include: true
+    environment:
+      flutter: 3.44.9
+      java: 17
+      groups: [env_dev, android_signing, google_play]
+    scripts:
+      - *install_tools
+      - *create_env_dev
+      - *bootstrap
+      - *generate
+      - *test
+      - *decode_android_signing
+      - name: Build DEV AAB
+        script: cd apps/cotrafa-app && fvm flutter build appbundle --release --dart-define=FLAVOR=dev --build-number="$BUILD_NUMBER"
+    artifacts:
+      - apps/cotrafa-app/build/app/outputs/bundle/release/app-release.aab
+    publishing:
+      google_play:
+        credentials: $PLAY_STORE_SERVICE_ACCOUNT_JSON
+        track: internal
+        submit_as_draft: true
+
+  android-qa:
+    name: Android QA - Google Play alpha
+    max_build_duration: 45
+    instance_type: mac_mini_m2
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: main
+          include: true
+    environment:
+      flutter: 3.44.9
+      java: 17
+      groups: [env_qa, android_signing, google_play]
+    scripts:
+      - *install_tools
+      - *create_env_qa
+      - *bootstrap
+      - *generate
+      - *test
+      - *decode_android_signing
+      - name: Build QA AAB
+        script: cd apps/cotrafa-app && fvm flutter build appbundle --release --dart-define=FLAVOR=qa --build-number="$BUILD_NUMBER"
+    artifacts:
+      - apps/cotrafa-app/build/app/outputs/bundle/release/app-release.aab
+    publishing:
+      google_play:
+        credentials: $PLAY_STORE_SERVICE_ACCOUNT_JSON
+        track: alpha
+        submit_as_draft: true
+
+  android-prod:
+    name: Android PROD - Google Play production
+    max_build_duration: 45
+    instance_type: mac_mini_m2
+    triggering:
+      events: [push, tag]
+      branch_patterns:
+        - pattern: "release/*"
+          include: true
+      tag_patterns:
+        - pattern: "v*"
+          include: true
+    environment:
+      flutter: 3.44.9
+      java: 17
+      groups: [env_prod, android_signing, google_play]
+    scripts:
+      - *install_tools
+      - *create_env_prod
+      - *bootstrap
+      - *generate
+      - *test
+      - *decode_android_signing
+      - name: Build PROD AAB
+        script: cd apps/cotrafa-app && fvm flutter build appbundle --release --dart-define=FLAVOR=prod --build-number="$BUILD_NUMBER"
+    artifacts:
+      - apps/cotrafa-app/build/app/outputs/bundle/release/app-release.aab
+    publishing:
+      google_play:
+        credentials: $PLAY_STORE_SERVICE_ACCOUNT_JSON
+        track: production
+        submit_as_draft: false
+
+  ios-dev:
+    name: iOS DEV - TestFlight internal
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: develop
+          include: true
+    environment:
+      flutter: 3.44.9
+      xcode: latest
+      groups: [env_dev, ios_signing]
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.example.cotrafaApp
+    scripts:
+      - *install_tools
+      - *create_env_dev
+      - *bootstrap
+      - *generate
+      - *test
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+      - name: Build DEV IPA
+        script: cd apps/cotrafa-app && fvm flutter build ipa --release --dart-define=FLAVOR=dev --build-number="$BUILD_NUMBER" --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - apps/cotrafa-app/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_API_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        beta_groups: [Internal Testers]
+
+  ios-qa:
+    name: iOS QA - TestFlight external
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: main
+          include: true
+    environment:
+      flutter: 3.44.9
+      xcode: latest
+      groups: [env_qa, ios_signing]
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.example.cotrafaApp
+    scripts:
+      - *install_tools
+      - *create_env_qa
+      - *bootstrap
+      - *generate
+      - *test
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+      - name: Build QA IPA
+        script: cd apps/cotrafa-app && fvm flutter build ipa --release --dart-define=FLAVOR=qa --build-number="$BUILD_NUMBER" --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - apps/cotrafa-app/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_API_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        beta_groups: [External Testers]
+
+  ios-prod:
+    name: iOS PROD - App Store
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    triggering:
+      events: [push, tag]
+      branch_patterns:
+        - pattern: "release/*"
+          include: true
+      tag_patterns:
+        - pattern: "v*"
+          include: true
+    environment:
+      flutter: 3.44.9
+      xcode: latest
+      groups: [env_prod, ios_signing]
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.example.cotrafaApp
+    scripts:
+      - *install_tools
+      - *create_env_prod
+      - *bootstrap
+      - *generate
+      - *test
+      - name: Apply signing profiles
+        script: xcode-project use-profiles
+      - name: Build PROD IPA
+        script: cd apps/cotrafa-app && fvm flutter build ipa --release --dart-define=FLAVOR=prod --build-number="$BUILD_NUMBER" --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - apps/cotrafa-app/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_API_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: false
+        submit_to_app_store: true
+
+  web-dev:
+    name: Web DEV artifact
+    max_build_duration: 25
+    instance_type: mac_mini_m2
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: develop
+          include: true
+    environment:
+      flutter: 3.44.9
+      groups: [env_dev]
+    scripts:
+      - *install_tools
+      - *create_env_dev
+      - *bootstrap
+      - *generate
+      - *test
+      - name: Build DEV web artifact
+        script: cd apps/cotrafa-app && fvm flutter build web --release --dart-define=FLAVOR=dev
+    artifacts:
+      - apps/cotrafa-app/build/web/**
+
+  web-prod:
+    name: Web PROD artifact
+    max_build_duration: 25
+    instance_type: mac_mini_m2
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: "release/*"
+          include: true
+    environment:
+      flutter: 3.44.9
+      groups: [env_prod]
+    scripts:
+      - *install_tools
+      - *create_env_prod
+      - *bootstrap
+      - *generate
+      - *test
+      - name: Build PROD web artifact
+        script: cd apps/cotrafa-app && fvm flutter build web --release --dart-define=FLAVOR=prod
+    artifacts:
+      - apps/cotrafa-app/build/web/**
