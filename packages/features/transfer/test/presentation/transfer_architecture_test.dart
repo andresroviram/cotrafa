@@ -12,9 +12,10 @@ void main() {
         bloc: 'TransferHistoryBloc',
       ),
       (
-        view: 'lib/presentation/transfer/view/transfer_create_view.dart',
-        mobile: 'lib/presentation/transfer/view/transfer_create_mobile.dart',
-        web: 'lib/presentation/transfer/view/transfer_create_web.dart',
+        view: 'lib/presentation/transfer_create/view/transfer_create_view.dart',
+        mobile:
+            'lib/presentation/transfer_create/view/transfer_create_mobile.dart',
+        web: 'lib/presentation/transfer_create/view/transfer_create_web.dart',
         bloc: 'TransferBloc',
       ),
     ];
@@ -39,11 +40,12 @@ void main() {
     }
   });
 
-  test('keeps listener side effects outside Transfer widgets', () {
-    final widgets = Directory('lib/presentation/transfer/widgets')
+  test('keeps listener side effects outside Transfer views', () {
+    final widgets = Directory('lib/presentation')
         .listSync(recursive: true)
         .whereType<File>()
-        .where((file) => file.path.endsWith('.dart'));
+        .where((file) => file.path.endsWith('.dart'))
+        .where((file) => !file.path.endsWith('_view.dart'));
 
     for (final file in widgets) {
       final source = file.readAsStringSync();

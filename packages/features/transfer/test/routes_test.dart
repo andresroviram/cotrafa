@@ -1,5 +1,5 @@
-import 'package:feature_transfer/presentation/transfer/view/transfer_create_view.dart';
-import 'package:feature_transfer/presentation/transfer/view/transfer_result_view.dart';
+import 'package:feature_transfer/presentation/transfer_create/view/transfer_create_view.dart';
+import 'package:feature_transfer/presentation/transfer_result/view/transfer_result_view.dart';
 import 'package:feature_transfer/presentation/transfer/view/transfer_view.dart';
 import 'package:feature_transfer/routes.dart';
 import 'package:flutter/material.dart';

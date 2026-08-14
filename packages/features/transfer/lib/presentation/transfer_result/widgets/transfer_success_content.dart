@@ -1,5 +1,5 @@
 import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
-import 'package:feature_transfer/presentation/transfer/widgets/transfer_receipt_card.dart';
+import 'package:feature_transfer/presentation/transfer_result/widgets/transfer_receipt_card.dart';
 import 'package:flutter/material.dart';
 
 class TransferSuccessContent extends StatelessWidget {

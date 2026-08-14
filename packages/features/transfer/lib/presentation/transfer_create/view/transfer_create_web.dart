@@ -2,8 +2,8 @@ import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state_x.dart';
-import 'package:feature_transfer/presentation/transfer/widgets/transfer_create_content.dart';
-import 'package:feature_transfer/presentation/transfer/widgets/transfer_load_failure.dart';
+import 'package:feature_transfer/presentation/transfer_create/widgets/transfer_create_content.dart';
+import 'package:feature_transfer/presentation/shared/widgets/transfer_load_failure.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

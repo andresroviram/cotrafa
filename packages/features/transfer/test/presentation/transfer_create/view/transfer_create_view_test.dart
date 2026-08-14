@@ -2,7 +2,7 @@ import 'package:feature_transfer/domain/entities/transfer_party.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
-import 'package:feature_transfer/presentation/transfer/view/transfer_create_view.dart';
+import 'package:feature_transfer/presentation/transfer_create/view/transfer_create_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

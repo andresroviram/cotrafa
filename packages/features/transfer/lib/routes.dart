@@ -1,5 +1,6 @@
-import 'package:feature_transfer/presentation/transfer/view/transfer_create_view.dart';
-import 'package:feature_transfer/presentation/transfer/view/transfer_result_view.dart';
+import 'package:feature_transfer/presentation/transfer_create/view/transfer_create_view.dart';
+import 'package:feature_transfer/presentation/transfer_result/transfer_outcome.dart';
+import 'package:feature_transfer/presentation/transfer_result/view/transfer_result_view.dart';
 import 'package:feature_transfer/presentation/transfer/view/transfer_view.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';

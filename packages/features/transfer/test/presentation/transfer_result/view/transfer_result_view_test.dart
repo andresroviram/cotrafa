@@ -1,5 +1,6 @@
 import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
-import 'package:feature_transfer/presentation/transfer/view/transfer_result_view.dart';
+import 'package:feature_transfer/presentation/transfer_result/transfer_outcome.dart';
+import 'package:feature_transfer/presentation/transfer_result/view/transfer_result_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:responsive_framework/responsive_framework.dart';

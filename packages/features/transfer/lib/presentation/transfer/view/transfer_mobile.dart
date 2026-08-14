@@ -2,9 +2,9 @@ import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_blo
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_state.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_state_x.dart';
-import 'package:feature_transfer/presentation/transfer/view/transfer_create_view.dart';
+import 'package:feature_transfer/presentation/transfer_create/view/transfer_create_view.dart';
 import 'package:feature_transfer/presentation/transfer/widgets/transfer_history_content.dart';
-import 'package:feature_transfer/presentation/transfer/widgets/transfer_load_failure.dart';
+import 'package:feature_transfer/presentation/shared/widgets/transfer_load_failure.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
