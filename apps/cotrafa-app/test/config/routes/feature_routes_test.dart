@@ -24,7 +24,11 @@ void main() {
       LoginView.path,
     );
     expect(
-      (usersRoutes(actorUserId: () => 1, isAdmin: () => true).routes.single
+      (usersRoutes(
+                actorUserId: () => 1,
+                isAdmin: () => true,
+                issueActivationCode: (_, _) async => null,
+              ).routes.single
               as GoRoute)
           .path,
       UsersView.path,

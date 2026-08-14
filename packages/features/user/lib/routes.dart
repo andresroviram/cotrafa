@@ -1,3 +1,4 @@
+import 'package:feature_user/presentation/users/activation_code_issuer.dart';
 import 'package:feature_user/presentation/users/view/users_view.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,7 @@ final GlobalKey<NavigatorState> usersNavigatorKey = GlobalKey<NavigatorState>(
 StatefulShellBranch usersRoutes({
   required int Function() actorUserId,
   required bool Function() isAdmin,
+  required ActivationCodeIssuer issueActivationCode,
 }) => StatefulShellBranch(
   navigatorKey: usersNavigatorKey,
   routes: [
@@ -17,7 +19,11 @@ StatefulShellBranch usersRoutes({
       name: UsersView.name,
       pageBuilder: (_, state) => NoTransitionPage(
         key: state.pageKey,
-        child: UsersView.create(actorUserId: actorUserId(), isAdmin: isAdmin()),
+        child: UsersView.create(
+          actorUserId: actorUserId(),
+          isAdmin: isAdmin(),
+          issueActivationCode: issueActivationCode,
+        ),
       ),
     ),
   ],

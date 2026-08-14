@@ -63,12 +63,21 @@ void main() {
     );
   }
 
-  Widget subject(UserState state, {Brightness brightness = Brightness.light}) {
+  Widget subject(
+    UserState state, {
+    Brightness brightness = Brightness.light,
+    bool isAdmin = true,
+    Future<String?> Function(int, String)? issueActivationCode,
+  }) {
     when(() => bloc.state).thenReturn(state);
     return app(
       BlocProvider<UserBloc>.value(
         value: bloc,
-        child: const UsersView(actorUserId: 1, isAdmin: true),
+        child: UsersView(
+          actorUserId: 1,
+          isAdmin: isAdmin,
+          issueActivationCode: issueActivationCode,
+        ),
       ),
       key: ValueKey((state, brightness)),
       brightness: brightness,
@@ -246,5 +255,64 @@ void main() {
     await tester.tapAt(const Offset(10, 10));
     await tester.pump();
     expect(tester.testTextInput.isVisible, isFalse);
+  });
+
+  testWidgets('admin regenerates the code for a pending client', (
+    tester,
+  ) async {
+    var issuedForActor = 0;
+    var issuedForEmail = '';
+    await tester.pumpWidget(
+      subject(
+        const UserState(
+          status: UserStatus.loaded,
+          users: [
+            UserProfile(
+              id: 2,
+              email: 'sofia@cotrafa.local',
+              fullName: 'Sofia Rovira',
+              role: 'client',
+              status: 'pendingActivation',
+              balanceCop: 250000,
+            ),
+          ],
+        ),
+        issueActivationCode: (actorUserId, email) async {
+          issuedForActor = actorUserId;
+          issuedForEmail = email;
+          return '654321';
+        },
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('regenerate-code-2')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('654321'), findsOneWidget);
+    expect(issuedForActor, 1);
+    expect(issuedForEmail, 'sofia@cotrafa.local');
+  });
+
+  testWidgets('client cannot regenerate activation codes', (tester) async {
+    await tester.pumpWidget(
+      subject(
+        const UserState(
+          status: UserStatus.loaded,
+          users: [
+            UserProfile(
+              id: 2,
+              email: 'sofia@cotrafa.local',
+              fullName: 'Sofia Rovira',
+              role: 'client',
+              status: 'pendingActivation',
+              balanceCop: 250000,
+            ),
+          ],
+        ),
+        isAdmin: false,
+      ),
+    );
+
+    expect(find.byKey(const Key('regenerate-code-2')), findsNothing);
   });
 }

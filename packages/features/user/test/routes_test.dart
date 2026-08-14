@@ -6,7 +6,11 @@ import 'package:go_router/go_router.dart';
 void main() {
   test('owns the users shell branch', () {
     final route =
-        usersRoutes(actorUserId: () => 1, isAdmin: () => true).routes.single
+        usersRoutes(
+              actorUserId: () => 1,
+              isAdmin: () => true,
+              issueActivationCode: (_, _) async => null,
+            ).routes.single
             as GoRoute;
 
     expect(route.path, UsersView.path);

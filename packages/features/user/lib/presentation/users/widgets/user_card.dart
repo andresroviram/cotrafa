@@ -3,9 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class UserCard extends StatelessWidget {
-  const UserCard({super.key, required this.user});
+  const UserCard({
+    super.key,
+    required this.user,
+    this.onGenerateActivationCode,
+  });
 
   final UserProfile user;
+  final VoidCallback? onGenerateActivationCode;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +67,13 @@ class UserCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (onGenerateActivationCode != null)
+              IconButton(
+                key: Key('regenerate-code-${user.id}'),
+                tooltip: 'Generar nuevo código',
+                onPressed: onGenerateActivationCode,
+                icon: const Icon(Icons.key_outlined),
+              ),
           ],
         ),
       ),

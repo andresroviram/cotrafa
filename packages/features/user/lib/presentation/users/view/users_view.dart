@@ -1,11 +1,13 @@
 import 'package:core/get_it.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
+import 'package:feature_user/presentation/users/activation_code_issuer.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/users/view/users_mobile.dart';
 import 'package:feature_user/presentation/users/view/users_web.dart';
 import 'package:feature_user/presentation/users/widgets/user_card.dart';
+import 'package:feature_user/presentation/users/widgets/activation_code_dialog.dart';
 import 'package:feature_user/presentation/users/widgets/user_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,21 +18,31 @@ class UsersView extends StatelessWidget {
     super.key,
     required this.actorUserId,
     required this.isAdmin,
+    this.issueActivationCode,
   });
 
   final int actorUserId;
   final bool isAdmin;
+  final ActivationCodeIssuer? issueActivationCode;
 
   static const String path = '/users';
   static const String name = 'users';
 
-  static Widget create({required int actorUserId, required bool isAdmin}) {
+  static Widget create({
+    required int actorUserId,
+    required bool isAdmin,
+    ActivationCodeIssuer? issueActivationCode,
+  }) {
     final event = isAdmin
         ? UserEvent.listRequested(actorUserId)
         : UserEvent.profileRequested(actorUserId, actorUserId);
     return BlocProvider(
       create: (_) => getIt<UserBloc>()..add(event),
-      child: UsersView(actorUserId: actorUserId, isAdmin: isAdmin),
+      child: UsersView(
+        actorUserId: actorUserId,
+        isAdmin: isAdmin,
+        issueActivationCode: issueActivationCode,
+      ),
     );
   }
 
@@ -77,6 +89,23 @@ class UsersView extends StatelessWidget {
         : UserEvent.profileRequested(actorUserId, actorUserId),
   );
 
+  Future<void> _generateActivationCode(
+    BuildContext context,
+    UserProfile user,
+  ) async {
+    final issuer = issueActivationCode;
+    if (issuer == null) return;
+    final code = await issuer(actorUserId, user.email);
+    if (!context.mounted) return;
+    if (code == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No pudimos generar el código')),
+      );
+      return;
+    }
+    await showActivationCodeDialog(context, code: code);
+  }
+
   List<UserProfile> _visibleUsers(UserState state) {
     if (state.searchQuery.isEmpty) return state.users;
     return state.users.where((user) {
@@ -101,7 +130,20 @@ class UsersView extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
       itemCount: users.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (_, index) => UserCard(user: users[index]),
+      itemBuilder: (_, index) {
+        final user = users[index];
+        final canGenerateCode =
+            isAdmin &&
+            user.role == 'client' &&
+            user.status == 'pendingActivation' &&
+            issueActivationCode != null;
+        return UserCard(
+          user: user,
+          onGenerateActivationCode: canGenerateCode
+              ? () => _generateActivationCode(context, user)
+              : null,
+        );
+      },
     );
   }
 }
