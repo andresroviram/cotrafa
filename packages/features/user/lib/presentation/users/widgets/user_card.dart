@@ -98,7 +98,7 @@ class UserCard extends StatelessWidget {
                     PopupMenuItem(
                       key: Key('edit-user-${user.id}'),
                       value: _UserCardAction.edit,
-                      onTap: () => _afterMenuCloses(onEdit),
+                      onTap: onEdit,
                       child: const _MenuItem(
                         icon: Icons.edit_outlined,
                         label: 'Editar',
@@ -108,7 +108,7 @@ class UserCard extends StatelessWidget {
                     PopupMenuItem(
                       key: Key('regenerate-code-${user.id}'),
                       value: _UserCardAction.regenerateCode,
-                      onTap: () => _afterMenuCloses(onGenerateActivationCode),
+                      onTap: onGenerateActivationCode,
                       child: const _MenuItem(
                         icon: Icons.key_outlined,
                         label: 'Generar nuevo código',
@@ -118,7 +118,7 @@ class UserCard extends StatelessWidget {
                     PopupMenuItem(
                       key: Key('delete-user-${user.id}'),
                       value: _UserCardAction.delete,
-                      onTap: () => _afterMenuCloses(onDelete),
+                      onTap: onDelete,
                       child: _MenuItem(
                         icon: Icons.delete_outline,
                         label: 'Eliminar',
@@ -135,10 +135,6 @@ class UserCard extends StatelessWidget {
 }
 
 enum _UserCardAction { edit, regenerateCode, delete }
-
-void _afterMenuCloses(VoidCallback? callback) {
-  WidgetsBinding.instance.addPostFrameCallback((_) => callback?.call());
-}
 
 class _MenuItem extends StatelessWidget {
   const _MenuItem({required this.icon, required this.label, this.color});

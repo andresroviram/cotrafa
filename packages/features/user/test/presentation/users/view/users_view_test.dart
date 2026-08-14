@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bot_toast/bot_toast.dart';
 import 'package:core/get_it.dart';
 import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
@@ -57,12 +58,16 @@ void main() {
     return MaterialApp(
       key: key,
       theme: theme,
-      builder: (_, child) => ResponsiveBreakpoints.builder(
-        child: child!,
-        breakpoints: const [
-          Breakpoint(start: 0, end: 450, name: MOBILE),
-          Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
-        ],
+      navigatorObservers: [BotToastNavigatorObserver()],
+      builder: (context, child) => BotToastInit()(
+        context,
+        ResponsiveBreakpoints.builder(
+          child: child!,
+          breakpoints: const [
+            Breakpoint(start: 0, end: 450, name: MOBILE),
+            Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+          ],
+        ),
       ),
       home: home,
     );
@@ -92,12 +97,15 @@ void main() {
 
   Widget routedApp(GoRouter router) => MaterialApp.router(
     routerConfig: router,
-    builder: (_, child) => ResponsiveBreakpoints.builder(
-      child: child!,
-      breakpoints: const [
-        Breakpoint(start: 0, end: 450, name: MOBILE),
-        Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
-      ],
+    builder: (context, child) => BotToastInit()(
+      context,
+      ResponsiveBreakpoints.builder(
+        child: child!,
+        breakpoints: const [
+          Breakpoint(start: 0, end: 450, name: MOBILE),
+          Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+        ],
+      ),
     ),
   );
 
@@ -534,6 +542,41 @@ void main() {
     expect(find.text('654321'), findsOneWidget);
     expect(issuedForActor, 1);
     expect(issuedForEmail, 'sofia@cotrafa.local');
+  });
+
+  testWidgets('activation-code failures are delegated to the view listener', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      subject(
+        const UserState(
+          status: UserStatus.loaded,
+          users: [
+            UserProfile(
+              id: 2,
+              email: 'sofia@cotrafa.local',
+              fullName: 'Sofia Rovira',
+              role: 'client',
+              status: 'pendingActivation',
+              balanceCop: 250000,
+            ),
+          ],
+        ),
+        issueActivationCode: (_, _) async => null,
+      ),
+    );
+    clearInteractions(bloc);
+
+    await tester.tap(find.byKey(const Key('user-actions-2')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Generar nuevo código'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => bloc.add(
+        const UserEvent.notificationRequested('No pudimos generar el código'),
+      ),
+    ).called(1);
   });
 
   testWidgets('admin confirms user deletion from the action menu', (

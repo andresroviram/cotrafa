@@ -8,6 +8,8 @@ sealed class UserEvent with _$UserEvent {
   const factory UserEvent.profileRequested(int actorUserId, int userId) =
       UserProfileRequested;
   const factory UserEvent.searchChanged(String query) = UserSearchChanged;
+  const factory UserEvent.notificationRequested(String message) =
+      UserNotificationRequested;
   const factory UserEvent.createRequested(
     int actorUserId, {
     required String email,

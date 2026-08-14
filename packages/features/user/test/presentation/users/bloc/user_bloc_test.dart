@@ -119,6 +119,27 @@ void main() {
   );
 
   blocTest<UserBloc, UserState>(
+    'publishes repeated presentation notifications through state',
+    build: build,
+    seed: () => const UserState(
+      status: UserStatus.loaded,
+      users: [admin, client],
+      message: 'No pudimos generar el código',
+    ),
+    act: (bloc) => bloc.add(
+      const UserEvent.notificationRequested('No pudimos generar el código'),
+    ),
+    expect: () => const <UserState>[
+      UserState(status: UserStatus.loaded, users: [admin, client]),
+      UserState(
+        status: UserStatus.loaded,
+        users: [admin, client],
+        message: 'No pudimos generar el código',
+      ),
+    ],
+  );
+
+  blocTest<UserBloc, UserState>(
     'creates and updates a client without losing the loaded list',
     setUp: () {
       when(

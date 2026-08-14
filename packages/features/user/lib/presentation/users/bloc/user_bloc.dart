@@ -18,6 +18,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<UserListRequested>(_list);
     on<UserProfileRequested>(_profile);
     on<UserSearchChanged>(_search);
+    on<UserNotificationRequested>(_notification);
     on<UserCreateRequested>(_create);
     on<UserUpdateRequested>(_update);
     on<UserDeleteRequested>(_delete);
@@ -43,6 +44,13 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
   void _search(UserSearchChanged event, Emitter<UserState> emit) =>
       emit(state.copyWith(searchQuery: event.query.trim().toLowerCase()));
+
+  void _notification(UserNotificationRequested event, Emitter<UserState> emit) {
+    if (state.message == event.message) {
+      emit(state.copyWith(message: null));
+    }
+    emit(state.copyWith(message: event.message));
+  }
 
   Future<void> _list(UserListRequested event, Emitter<UserState> emit) async {
     emit(_loading());
