@@ -6,6 +6,7 @@ import 'package:feature_user/presentation/addresses/bloc/address_state.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_state_x.dart';
 import 'package:feature_user/presentation/addresses/widgets/address_delete_dialog.dart';
 import 'package:feature_user/presentation/addresses/widgets/address_list_content.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -26,7 +27,7 @@ class AddressesWeb extends StatelessWidget {
     final router = GoRouter.maybeOf(context);
     final navigatorContext = Navigator.of(context, rootNavigator: true).context;
     return Scaffold(
-      appBar: AppBar(title: const Text('Direcciones')),
+      appBar: AppBar(title: Text('address.title'.tr())),
       body: Center(
         child: SizedBox(
           width: 760,
@@ -55,7 +56,7 @@ class AddressesWeb extends StatelessWidget {
         key: const Key('create-address-action'),
         onPressed: () => _create(context),
         icon: const Icon(Icons.add_location_alt_outlined),
-        label: const Text('Nueva dirección'),
+        label: Text('address.new'.tr()),
       ),
     );
   }

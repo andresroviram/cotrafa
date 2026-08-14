@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:flutter/material.dart';
 
@@ -8,21 +9,23 @@ Future<bool> showAddressDeleteDialog(
     await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Eliminar dirección'),
+        title: Text('address.delete.title'.tr()),
         content: Text(
           address.isPrimary
-              ? 'Esta es la dirección principal. Si existen otras, la siguiente se marcará como principal.'
-              : '¿Deseas eliminar ${address.line1}?',
+              ? 'address.delete.primary_confirmation'.tr()
+              : 'address.delete.confirmation'.tr(
+                  namedArgs: {'address': address.line1},
+                ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancelar'),
+            child: Text('common.cancel'.tr()),
           ),
           FilledButton(
             key: const Key('confirm-delete-address'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Eliminar'),
+            child: Text('common.delete'.tr()),
           ),
         ],
       ),

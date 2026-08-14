@@ -11,6 +11,7 @@ import 'package:feature_user/presentation/user_detail/view/user_detail_view.dart
 import 'package:feature_user/presentation/users/view/users_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -56,6 +57,9 @@ void main() {
           ),
         );
     return MaterialApp(
+      locale: const Locale('es'),
+      supportedLocales: const [Locale('es'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       key: key,
       theme: theme,
       navigatorObservers: [BotToastNavigatorObserver()],
@@ -96,6 +100,9 @@ void main() {
   }
 
   Widget routedApp(GoRouter router) => MaterialApp.router(
+    locale: const Locale('es'),
+    supportedLocales: const [Locale('es'), Locale('en')],
+    localizationsDelegates: GlobalMaterialLocalizations.delegates,
     routerConfig: router,
     builder: (context, child) => BotToastInit()(
       context,
@@ -327,7 +334,7 @@ void main() {
       subject(
         const UserState(
           status: UserStatus.failure,
-          message: 'Unable to load users.',
+          message: 'user.errors.load_list',
         ),
       ),
     );
@@ -651,7 +658,7 @@ void main() {
 
     verify(
       () => bloc.add(
-        const UserEvent.notificationRequested('No pudimos generar el código'),
+        const UserEvent.notificationRequested('user.notifications.code_error'),
       ),
     ).called(1);
   });

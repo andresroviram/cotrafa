@@ -1,5 +1,6 @@
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_bloc.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_event.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_state.dart';
@@ -43,16 +44,19 @@ class AddressesView extends StatelessWidget {
 
   void _onStateChanged(BuildContext context, AddressState state) {
     if (state.status == AddressStatus.actionFailure && state.message != null) {
-      AppNotification.showNotificationError(context, title: state.message!);
+      AppNotification.showNotificationError(
+        context,
+        title: state.message!.tr(),
+      );
       return;
     }
     final message = switch (state.status) {
-      AddressStatus.primaryUpdated => 'Dirección principal actualizada',
-      AddressStatus.deleted => 'Dirección eliminada',
+      AddressStatus.primaryUpdated => 'address.notifications.primary_updated',
+      AddressStatus.deleted => 'address.notifications.deleted',
       _ => null,
     };
     if (message != null) {
-      AppNotification.showNotification(context, title: message);
+      AppNotification.showNotification(context, title: message.tr());
     }
   }
 }

@@ -1,6 +1,7 @@
+import 'package:components/localized_formatters.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class UserDetailContent extends StatelessWidget {
   const UserDetailContent({
@@ -78,7 +79,7 @@ class UserDetailContent extends StatelessWidget {
                           child: FilledButton.icon(
                             onPressed: onEdit,
                             icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Editar'),
+                            label: Text('common.edit'.tr()),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -86,65 +87,65 @@ class UserDetailContent extends StatelessWidget {
                           child: FilledButton.tonalIcon(
                             onPressed: onAddresses,
                             icon: const Icon(Icons.location_on_outlined),
-                            label: const Text('Direcciones'),
+                            label: Text('user.detail.addresses'.tr()),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 32),
-                    const _SectionHeader(
+                    _SectionHeader(
                       icon: Icons.person_outline,
-                      title: 'Información personal',
+                      title: 'user.detail.personal_information'.tr(),
                     ),
                     const SizedBox(height: 16),
                     _InfoCard(
                       items: [
                         _InfoItem(
                           icon: Icons.badge_outlined,
-                          label: 'Nombre',
-                          value: _optional(user.firstName),
+                          label: 'user.detail.first_name'.tr(),
+                          value: _optional(context, user.firstName),
                         ),
                         _InfoItem(
                           icon: Icons.badge,
-                          label: 'Apellido',
-                          value: _optional(user.lastName),
+                          label: 'user.detail.last_name'.tr(),
+                          value: _optional(context, user.lastName),
                         ),
                         _InfoItem(
                           icon: Icons.cake_outlined,
-                          label: 'Fecha de nacimiento',
+                          label: 'user.detail.birth_date'.tr(),
                           value: user.birthDate == null
-                              ? 'Sin registrar'
-                              : DateFormat(
-                                  'dd/MM/yyyy',
-                                ).format(user.birthDate!),
+                              ? 'common.not_registered'.tr()
+                              : localizedDate(context, user.birthDate!),
                         ),
                         _InfoItem(
                           icon: Icons.calendar_today_outlined,
-                          label: 'Edad',
+                          label: 'user.detail.age'.tr(),
                           value: switch (user.ageAt(DateTime.now())) {
-                            final age? => '$age años',
-                            null => 'Sin registrar',
+                            final age? => 'user.detail.age_value'.tr(
+                              namedArgs: {'age': '$age'},
+                            ),
+                            null => 'common.not_registered'.tr(),
                           },
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
-                    const _SectionHeader(
+                    _SectionHeader(
                       icon: Icons.contact_mail_outlined,
-                      title: 'Contacto',
+                      title: 'user.detail.contact'.tr(),
                     ),
                     const SizedBox(height: 16),
                     _InfoCard(
                       items: [
                         _InfoItem(
                           icon: Icons.email_outlined,
-                          label: 'Correo electrónico',
+                          label: 'user.detail.email'.tr(),
                           value: user.email,
                         ),
                         _InfoItem(
                           icon: Icons.phone_outlined,
-                          label: 'Teléfono',
-                          value: _formatPhone(user.phone),
+                          label: 'user.detail.phone'.tr(),
+                          value: _formatPhone(context, user.phone),
                         ),
                       ],
                     ),
@@ -185,14 +186,14 @@ class _BalanceCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Saldo disponible',
+                    'user.detail.available_balance'.tr(),
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: colors.onPrimaryContainer,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    _currency.format(balanceCop),
+                    localizedCop(context, balanceCop),
                     style: theme.textTheme.titleLarge?.copyWith(
                       color: colors.onPrimaryContainer,
                       fontWeight: FontWeight.bold,
@@ -319,24 +320,20 @@ class _InfoItemRow extends StatelessWidget {
   }
 }
 
-String _optional(String? value) {
+String _optional(BuildContext context, String? value) {
   final normalized = value?.trim();
   return normalized == null || normalized.isEmpty
-      ? 'Sin registrar'
+      ? 'common.not_registered'.tr()
       : normalized;
 }
 
-String _formatPhone(String? value) {
+String _formatPhone(BuildContext context, String? value) {
   final normalized = value?.trim();
-  if (normalized == null || normalized.isEmpty) return 'Sin registrar';
+  if (normalized == null || normalized.isEmpty) {
+    return 'common.not_registered'.tr();
+  }
   final digits = normalized.replaceAll(RegExp(r'\D'), '');
   if (digits.length != 10) return normalized;
   return '${digits.substring(0, 3)} ${digits.substring(3, 6)} '
       '${digits.substring(6)}';
 }
-
-final NumberFormat _currency = NumberFormat.currency(
-  locale: 'es_CO',
-  symbol: r'$',
-  decimalDigits: 0,
-);

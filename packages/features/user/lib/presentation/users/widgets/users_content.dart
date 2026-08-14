@@ -5,6 +5,7 @@ import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/users/widgets/user_card.dart';
 import 'package:feature_user/presentation/users/widgets/user_search_field.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -175,13 +176,13 @@ class _EmptyUsers extends StatelessWidget {
   const _EmptyUsers();
 
   @override
-  Widget build(BuildContext context) => const Center(
+  Widget build(BuildContext context) => Center(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.group_outlined, size: 52),
-        SizedBox(height: 12),
-        Text('Aún no hay usuarios'),
+        const Icon(Icons.group_outlined, size: 52),
+        const SizedBox(height: 12),
+        Text('user.list.empty'.tr()),
       ],
     ),
   );
@@ -199,9 +200,9 @@ class _UsersFailure extends StatelessWidget {
       children: [
         const Icon(Icons.error_outline, size: 52),
         const SizedBox(height: 12),
-        const Text('No pudimos cargar los usuarios'),
+        Text('user.list.load_error'.tr()),
         const SizedBox(height: 16),
-        FilledButton(onPressed: onRetry, child: const Text('Reintentar')),
+        FilledButton(onPressed: onRetry, child: Text('common.retry'.tr())),
       ],
     ),
   );

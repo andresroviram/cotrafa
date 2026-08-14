@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -8,12 +9,12 @@ Future<void> showActivationCodeDialog(
 }) => showDialog<void>(
   context: context,
   builder: (dialogContext) => AlertDialog(
-    title: const Text('Código de activación'),
+    title: Text('user.activation_code.title'.tr()),
     content: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Comparte este código con el usuario de forma segura.'),
+        Text('user.activation_code.instructions'.tr()),
         const SizedBox(height: 20),
         Center(
           child: SelectableText(
@@ -36,11 +37,11 @@ Future<void> showActivationCodeDialog(
           onCopied();
         },
         icon: const Icon(Icons.copy_outlined),
-        label: const Text('Copiar'),
+        label: Text('common.copy'.tr()),
       ),
       FilledButton(
         onPressed: () => Navigator.of(dialogContext).pop(),
-        child: const Text('Entendido'),
+        child: Text('common.done'.tr()),
       ),
     ],
   ),

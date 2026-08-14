@@ -1,6 +1,7 @@
+import 'package:components/localized_formatters.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class UserCard extends StatelessWidget {
   const UserCard({
@@ -76,7 +77,9 @@ class UserCard extends StatelessWidget {
                             runSpacing: 6,
                             children: [
                               _Label(text: _status(user.status)),
-                              _Label(text: _currency.format(user.balanceCop)),
+                              _Label(
+                                text: localizedCop(context, user.balanceCop),
+                              ),
                             ],
                           ),
                         ],
@@ -91,7 +94,7 @@ class UserCard extends StatelessWidget {
                 onDelete != null)
               PopupMenuButton<_UserCardAction>(
                 key: Key('user-actions-${user.id}'),
-                tooltip: 'Acciones del usuario',
+                tooltip: 'user.actions.tooltip'.tr(),
                 offset: const Offset(0, 40),
                 itemBuilder: (_) => [
                   if (onEdit != null)
@@ -99,9 +102,9 @@ class UserCard extends StatelessWidget {
                       key: Key('edit-user-${user.id}'),
                       value: _UserCardAction.edit,
                       onTap: onEdit,
-                      child: const _MenuItem(
+                      child: _MenuItem(
                         icon: Icons.edit_outlined,
-                        label: 'Editar',
+                        label: 'common.edit'.tr(),
                       ),
                     ),
                   if (onGenerateActivationCode != null)
@@ -109,9 +112,9 @@ class UserCard extends StatelessWidget {
                       key: Key('regenerate-code-${user.id}'),
                       value: _UserCardAction.regenerateCode,
                       onTap: onGenerateActivationCode,
-                      child: const _MenuItem(
+                      child: _MenuItem(
                         icon: Icons.key_outlined,
-                        label: 'Generar nuevo código',
+                        label: 'user.actions.regenerate_code'.tr(),
                       ),
                     ),
                   if (onDelete != null)
@@ -121,7 +124,7 @@ class UserCard extends StatelessWidget {
                       onTap: onDelete,
                       child: _MenuItem(
                         icon: Icons.delete_outline,
-                        label: 'Eliminar',
+                        label: 'common.delete'.tr(),
                         color: theme.colorScheme.error,
                       ),
                     ),
@@ -155,16 +158,10 @@ class _MenuItem extends StatelessWidget {
   );
 }
 
-final NumberFormat _currency = NumberFormat.currency(
-  locale: 'es_CO',
-  symbol: r'$',
-  decimalDigits: 0,
-);
-
 String _status(String value) => switch (value) {
-  'pendingActivation' => 'Pendiente de activación',
-  'active' => 'Activo',
-  'inactive' => 'Inactivo',
+  'pendingActivation' => 'user.status.pending'.tr(),
+  'active' => 'user.status.active'.tr(),
+  'inactive' => 'user.status.inactive'.tr(),
   _ => value,
 };
 

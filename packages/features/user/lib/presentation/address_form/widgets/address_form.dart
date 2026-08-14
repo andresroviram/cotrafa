@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_bloc.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_event.dart';
@@ -43,7 +44,7 @@ class _AddressFormState extends State<AddressForm> {
     _stateController = TextEditingController(text: address?.state);
     _postalCodeController = TextEditingController(text: address?.postalCode);
     _countryController = TextEditingController(
-      text: address?.country ?? 'Colombia',
+      text: address?.country ?? 'address.default_country'.tr(),
     );
     _label = _supportedLabel(address?.label);
   }
@@ -79,14 +80,23 @@ class _AddressFormState extends State<AddressForm> {
             DropdownButtonFormField<String>(
               key: const Key('address-label'),
               initialValue: _label,
-              decoration: const InputDecoration(
-                labelText: 'Tipo de dirección',
-                prefixIcon: Icon(Icons.label_outline),
+              decoration: InputDecoration(
+                labelText: 'address.type'.tr(),
+                prefixIcon: const Icon(Icons.label_outline),
               ),
-              items: const [
-                DropdownMenuItem(value: 'Casa', child: Text('Casa')),
-                DropdownMenuItem(value: 'Trabajo', child: Text('Trabajo')),
-                DropdownMenuItem(value: 'Otra', child: Text('Otra')),
+              items: [
+                DropdownMenuItem(
+                  value: 'Casa',
+                  child: Text('address.types.home'.tr()),
+                ),
+                DropdownMenuItem(
+                  value: 'Trabajo',
+                  child: Text('address.types.work'.tr()),
+                ),
+                DropdownMenuItem(
+                  value: 'Otra',
+                  child: Text('address.types.other'.tr()),
+                ),
               ],
               onChanged: widget.isSaving
                   ? null
@@ -99,12 +109,12 @@ class _AddressFormState extends State<AddressForm> {
               enabled: !widget.isSaving,
               textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Dirección',
-                hintText: 'Ej: Calle 10 # 20-30',
-                prefixIcon: Icon(Icons.home_outlined),
+              decoration: InputDecoration(
+                labelText: 'address.line1'.tr(),
+                hintText: 'address.line1_hint'.tr(),
+                prefixIcon: const Icon(Icons.home_outlined),
               ),
-              validator: (value) => _required(value, 'Ingresa la dirección'),
+              validator: (value) => _required(value, 'address.line1_required'),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -113,9 +123,9 @@ class _AddressFormState extends State<AddressForm> {
               enabled: !widget.isSaving,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Barrio o complemento',
-                prefixIcon: Icon(Icons.location_city_outlined),
+              decoration: InputDecoration(
+                labelText: 'address.line2'.tr(),
+                prefixIcon: const Icon(Icons.location_city_outlined),
               ),
             ),
             const SizedBox(height: 16),
@@ -125,11 +135,11 @@ class _AddressFormState extends State<AddressForm> {
               enabled: !widget.isSaving,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Ciudad',
-                prefixIcon: Icon(Icons.location_city),
+              decoration: InputDecoration(
+                labelText: 'address.city'.tr(),
+                prefixIcon: const Icon(Icons.location_city),
               ),
-              validator: (value) => _required(value, 'Ingresa la ciudad'),
+              validator: (value) => _required(value, 'address.city_required'),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -138,9 +148,9 @@ class _AddressFormState extends State<AddressForm> {
               enabled: !widget.isSaving,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Departamento',
-                prefixIcon: Icon(Icons.map_outlined),
+              decoration: InputDecoration(
+                labelText: 'address.state'.tr(),
+                prefixIcon: const Icon(Icons.map_outlined),
               ),
             ),
             const SizedBox(height: 16),
@@ -152,9 +162,9 @@ class _AddressFormState extends State<AddressForm> {
               textInputAction: TextInputAction.next,
               maxLength: 6,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'Código postal',
-                prefixIcon: Icon(Icons.markunread_mailbox_outlined),
+              decoration: InputDecoration(
+                labelText: 'address.postal_code'.tr(),
+                prefixIcon: const Icon(Icons.markunread_mailbox_outlined),
               ),
             ),
             const SizedBox(height: 16),
@@ -164,11 +174,12 @@ class _AddressFormState extends State<AddressForm> {
               enabled: !widget.isSaving,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.done,
-              decoration: const InputDecoration(
-                labelText: 'País',
-                prefixIcon: Icon(Icons.public),
+              decoration: InputDecoration(
+                labelText: 'address.country'.tr(),
+                prefixIcon: const Icon(Icons.public),
               ),
-              validator: (value) => _required(value, 'Ingresa el país'),
+              validator: (value) =>
+                  _required(value, 'address.country_required'),
               onFieldSubmitted: (_) => _submit(),
             ),
             const SizedBox(height: 24),
@@ -182,8 +193,8 @@ class _AddressFormState extends State<AddressForm> {
                     )
                   : Text(
                       widget.address == null
-                          ? 'Crear dirección'
-                          : 'Guardar cambios',
+                          ? 'address.create'.tr()
+                          : 'address.save'.tr(),
                     ),
             ),
           ],
@@ -192,8 +203,8 @@ class _AddressFormState extends State<AddressForm> {
     ),
   );
 
-  String? _required(String? value, String message) =>
-      value == null || value.trim().isEmpty ? message : null;
+  String? _required(String? value, String messageKey) =>
+      value == null || value.trim().isEmpty ? messageKey.tr() : null;
 
   String? _optional(String value) {
     final normalized = value.trim();

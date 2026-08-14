@@ -3,6 +3,7 @@ import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/users/bloc/user_state_x.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/presentation/shared/widgets/user_form.dart';
 import 'package:feature_user/presentation/shared/widgets/user_load_failure.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +21,7 @@ class UserEditMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Editar usuario')),
+    appBar: AppBar(title: Text('user.form.edit_title'.tr())),
     body: BlocBuilder<UserBloc, UserState>(
       builder: (context, state) => state.resolve(
         loading: () => const Center(child: CircularProgressIndicator()),

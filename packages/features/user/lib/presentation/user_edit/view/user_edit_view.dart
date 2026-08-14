@@ -1,5 +1,6 @@
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
@@ -46,14 +47,17 @@ class UserEditView extends StatelessWidget {
     final message = state.message;
     if (message != null) {
       if (state.notificationType == UserNotificationType.info) {
-        AppNotification.showNotification(context, title: message);
+        AppNotification.showNotification(context, title: message.tr());
       } else {
-        AppNotification.showNotificationError(context, title: message);
+        AppNotification.showNotificationError(context, title: message.tr());
       }
       return;
     }
     if (state.status == UserStatus.updated) {
-      AppNotification.showNotification(context, title: 'Usuario actualizado');
+      AppNotification.showNotification(
+        context,
+        title: 'user.notifications.updated'.tr(),
+      );
       final navigator = Navigator.of(context);
       if (navigator.canPop()) navigator.pop(true);
     }

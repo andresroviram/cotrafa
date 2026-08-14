@@ -205,7 +205,7 @@ void main() {
       AddressState(
         status: AddressStatus.actionFailure,
         addresses: [first, second],
-        message: 'No pudimos eliminar la dirección.',
+        message: 'address.errors.delete',
       ),
     ],
   );

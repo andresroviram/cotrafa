@@ -1,5 +1,6 @@
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/presentation/address_form/view/address_form_mobile.dart';
 import 'package:feature_user/presentation/address_form/view/address_form_web.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_bloc.dart';
@@ -63,16 +64,19 @@ class AddressFormView extends StatelessWidget {
 
   void _onStateChanged(BuildContext context, AddressState state) {
     if (state.status == AddressStatus.actionFailure && state.message != null) {
-      AppNotification.showNotificationError(context, title: state.message!);
+      AppNotification.showNotificationError(
+        context,
+        title: state.message!.tr(),
+      );
       return;
     }
     final message = switch (state.status) {
-      AddressStatus.created => 'Dirección creada',
-      AddressStatus.updated => 'Dirección actualizada',
+      AddressStatus.created => 'address.notifications.created',
+      AddressStatus.updated => 'address.notifications.updated',
       _ => null,
     };
     if (message == null) return;
-    AppNotification.showNotification(context, title: message);
+    AppNotification.showNotification(context, title: message.tr());
     final navigator = Navigator.of(context);
     if (navigator.canPop()) navigator.pop(true);
   }

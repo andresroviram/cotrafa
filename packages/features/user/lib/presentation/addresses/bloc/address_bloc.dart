@@ -47,7 +47,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
             AddressState(status: AddressStatus.loaded, addresses: addresses),
         onFailure: (_) => const AddressState(
           status: AddressStatus.loadFailure,
-          message: 'No pudimos cargar las direcciones.',
+          message: 'address.errors.load_list',
         ),
       ),
     );
@@ -71,7 +71,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
           return selected == null
               ? const AddressState(
                   status: AddressStatus.loadFailure,
-                  message: 'No encontramos la dirección.',
+                  message: 'address.errors.not_found',
                 )
               : AddressState(
                   status: AddressStatus.ready,
@@ -81,7 +81,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
         },
         onFailure: (_) => const AddressState(
           status: AddressStatus.loadFailure,
-          message: 'No pudimos cargar la dirección.',
+          message: 'address.errors.load',
         ),
       ),
     );
@@ -105,7 +105,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
           selectedAddress: address,
           message: null,
         ),
-        onFailure: (_) => _actionFailure('No pudimos crear la dirección.'),
+        onFailure: (_) => _actionFailure('address.errors.create'),
       ),
     );
   }
@@ -131,7 +131,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
           selectedAddress: updated,
           message: null,
         ),
-        onFailure: (_) => _actionFailure('No pudimos actualizar la dirección.'),
+        onFailure: (_) => _actionFailure('address.errors.update'),
       ),
     );
   }
@@ -159,8 +159,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
               .toList(),
           message: null,
         ),
-        onFailure: (_) =>
-            _actionFailure('No pudimos cambiar la dirección principal.'),
+        onFailure: (_) => _actionFailure('address.errors.set_primary'),
       ),
     );
   }
@@ -176,7 +175,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
       event.addressId,
     );
     if (deletion case Error()) {
-      emit(_actionFailure('No pudimos eliminar la dirección.'));
+      emit(_actionFailure('address.errors.delete'));
       return;
     }
     final refreshed = await _listAddresses(event.actorUserId, event.userId);
@@ -184,9 +183,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
       refreshed.fold(
         onSuccess: (addresses) =>
             AddressState(status: AddressStatus.deleted, addresses: addresses),
-        onFailure: (_) => _actionFailure(
-          'La dirección se eliminó, pero no pudimos actualizar la lista.',
-        ),
+        onFailure: (_) => _actionFailure('address.errors.reload_after_delete'),
       ),
     );
   }

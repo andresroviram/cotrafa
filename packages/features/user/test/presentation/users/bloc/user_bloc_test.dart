@@ -124,12 +124,12 @@ void main() {
     seed: () => const UserState(
       status: UserStatus.loaded,
       users: [admin, client],
-      message: 'No pudimos generar el código',
+      message: 'user.notifications.code_error',
       notificationType: UserNotificationType.info,
     ),
     act: (bloc) => bloc.add(
       const UserEvent.notificationRequested(
-        'No pudimos generar el código',
+        'user.notifications.code_error',
         type: UserNotificationType.info,
       ),
     ),
@@ -142,7 +142,7 @@ void main() {
       UserState(
         status: UserStatus.loaded,
         users: [admin, client],
-        message: 'No pudimos generar el código',
+        message: 'user.notifications.code_error',
         notificationType: UserNotificationType.info,
       ),
     ],
@@ -240,7 +240,7 @@ void main() {
     act: (bloc) => bloc.add(const UserEvent.listRequested(1)),
     expect: () => const <UserState>[
       UserState(status: UserStatus.loading),
-      UserState(status: UserStatus.failure, message: 'Unable to load users.'),
+      UserState(status: UserStatus.failure, message: 'user.errors.load_list'),
     ],
   );
 }

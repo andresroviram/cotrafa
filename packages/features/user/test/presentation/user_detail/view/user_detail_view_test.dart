@@ -8,6 +8,7 @@ import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/user_detail/view/user_detail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -31,6 +32,9 @@ void main() {
       () => bloc.state,
     ).thenReturn(UserState(status: UserStatus.loaded, users: [user]));
     return MaterialApp(
+      locale: const Locale('es'),
+      supportedLocales: const [Locale('es'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       theme: ThemeData(
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF004183),
@@ -93,7 +97,7 @@ void main() {
     expect(find.text('Apellido'), findsOneWidget);
     expect(find.text('Rovira'), findsOneWidget);
     expect(find.text('Fecha de nacimiento'), findsOneWidget);
-    expect(find.text('14/08/2000'), findsOneWidget);
+    expect(find.text('14/8/2000'), findsOneWidget);
     expect(find.text('Edad'), findsOneWidget);
     expect(find.textContaining('años'), findsOneWidget);
     expect(find.text('Contacto'), findsOneWidget);

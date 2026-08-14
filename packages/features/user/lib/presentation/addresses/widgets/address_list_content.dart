@@ -1,5 +1,6 @@
 import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:feature_user/presentation/addresses/widgets/address_card.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class AddressListContent extends StatelessWidget {
@@ -102,11 +103,11 @@ class _EmptyAddresses extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'No hay direcciones registradas',
+          'address.empty'.tr(),
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 6),
-        const Text('Agrega la primera dirección'),
+        Text('address.empty_action'.tr()),
       ],
     ),
   );
@@ -124,9 +125,9 @@ class _AddressFailure extends StatelessWidget {
       children: [
         const Icon(Icons.error_outline, size: 52),
         const SizedBox(height: 12),
-        const Text('No pudimos cargar las direcciones'),
+        Text('address.load_error'.tr()),
         const SizedBox(height: 16),
-        FilledButton(onPressed: onRetry, child: const Text('Reintentar')),
+        FilledButton(onPressed: onRetry, child: Text('common.retry'.tr())),
       ],
     ),
   );

@@ -10,6 +10,7 @@ import 'package:feature_user/presentation/users/widgets/activation_code_dialog.d
 import 'package:feature_user/presentation/users/widgets/user_delete_dialog.dart';
 import 'package:feature_user/presentation/shared/widgets/user_form_modal.dart';
 import 'package:feature_user/presentation/users/widgets/users_content.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -32,10 +33,7 @@ class UsersMobile extends StatelessWidget {
     final router = GoRouter.maybeOf(context);
     final navigatorContext = Navigator.of(context, rootNavigator: true).context;
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: false,
-        title: const Text('Lista de usuarios'),
-      ),
+      appBar: AppBar(centerTitle: false, title: Text('user.list.title'.tr())),
       body: BlocBuilder<UserBloc, UserState>(
         buildWhen: _buildWhen,
         builder: (context, state) => state.resolve(
@@ -72,7 +70,7 @@ class UsersMobile extends StatelessWidget {
               key: const Key('create-user-action'),
               onPressed: () => _openCreate(context),
               icon: const Icon(Icons.person_add_outlined),
-              label: const Text('Nuevo usuario'),
+              label: Text('user.list.new'.tr()),
             )
           : null,
     );
@@ -130,7 +128,7 @@ class UsersMobile extends StatelessWidget {
     if (!context.mounted) return;
     if (code == null) {
       bloc.add(
-        const UserEvent.notificationRequested('No pudimos generar el código'),
+        const UserEvent.notificationRequested('user.notifications.code_error'),
       );
       return;
     }
@@ -139,7 +137,7 @@ class UsersMobile extends StatelessWidget {
       code: code,
       onCopied: () => bloc.add(
         const UserEvent.notificationRequested(
-          'Código copiado',
+          'user.notifications.code_copied',
           type: UserNotificationType.info,
         ),
       ),

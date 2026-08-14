@@ -60,7 +60,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       result.fold(
         onSuccess: (users) =>
             UserState(status: UserStatus.loaded, users: users),
-        onFailure: (_) => _failure('Unable to load users.'),
+        onFailure: (_) => _failure('user.errors.load_list'),
       ),
     );
   }
@@ -75,7 +75,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       result.fold(
         onSuccess: (user) =>
             UserState(status: UserStatus.loaded, users: <UserProfile>[user]),
-        onFailure: (_) => _failure('Unable to load user profile.'),
+        onFailure: (_) => _failure('user.errors.load_profile'),
       ),
     );
   }
@@ -100,7 +100,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           status: UserStatus.created,
           users: <UserProfile>[...state.users, user],
         ),
-        onFailure: (_) => _failure('Unable to create user.'),
+        onFailure: (_) => _failure('user.errors.create'),
       ),
     );
   }
@@ -126,7 +126,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
               .map((user) => user.id == updated.id ? updated : user)
               .toList(),
         ),
-        onFailure: (_) => _failure('Unable to update user.'),
+        onFailure: (_) => _failure('user.errors.update'),
       ),
     );
   }
@@ -139,7 +139,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     final deletion = await _deleteUser(event.actorUserId, event.userId);
     switch (deletion) {
       case Error():
-        emit(_failure('Unable to delete user.'));
+        emit(_failure('user.errors.delete'));
       case Success(value: final outcome):
         final refreshed = await _listUsers(event.actorUserId);
         emit(
@@ -149,7 +149,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
               users: users,
               deleteOutcome: outcome,
             ),
-            onFailure: (_) => _failure('Unable to reload users.'),
+            onFailure: (_) => _failure('user.errors.reload'),
           ),
         );
     }

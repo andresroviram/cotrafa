@@ -1,5 +1,6 @@
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/presentation/users/activation_code_issuer.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
@@ -120,25 +121,27 @@ class _UsersViewState extends State<UsersView> {
     if (!context.mounted) return;
     if (state.message != null) {
       if (state.notificationType == UserNotificationType.info) {
-        AppNotification.showNotification(context, title: state.message!);
+        AppNotification.showNotification(context, title: state.message!.tr());
       } else {
-        AppNotification.showNotificationError(context, title: state.message!);
+        AppNotification.showNotificationError(
+          context,
+          title: state.message!.tr(),
+        );
       }
       return;
     }
     final message = switch (state.status) {
-      UserStatus.created => 'Usuario creado',
-      UserStatus.updated => 'Usuario actualizado',
+      UserStatus.created => 'user.notifications.created',
+      UserStatus.updated => 'user.notifications.updated',
       UserStatus.deleted => switch (state.deleteOutcome) {
-        DeleteOutcome.deleted => 'Usuario eliminado',
-        DeleteOutcome.deactivated =>
-          'Usuario desactivado para conservar el historial',
+        DeleteOutcome.deleted => 'user.notifications.deleted',
+        DeleteOutcome.deactivated => 'user.notifications.deactivated',
         null => null,
       },
       _ => null,
     };
     if (message != null) {
-      AppNotification.showNotification(context, title: message);
+      AppNotification.showNotification(context, title: message.tr());
     }
     if (state.status == UserStatus.created) {
       await _completeCreation(context, state);
@@ -156,7 +159,7 @@ class _UsersViewState extends State<UsersView> {
     if (code == null) {
       bloc.add(
         const UserEvent.notificationRequested(
-          'Usuario creado. Genera su código desde la lista de usuarios.',
+          'user.notifications.created_code_pending',
           type: UserNotificationType.info,
         ),
       );
@@ -166,7 +169,7 @@ class _UsersViewState extends State<UsersView> {
         code: code,
         onCopied: () => bloc.add(
           const UserEvent.notificationRequested(
-            'Código copiado',
+            'user.notifications.code_copied',
             type: UserNotificationType.info,
           ),
         ),

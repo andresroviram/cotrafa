@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:flutter/material.dart';
 
@@ -8,23 +9,21 @@ Future<bool> showUserDeleteDialog(
     await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Eliminar usuario'),
+        title: Text('user.delete.title'.tr()),
         content: Text(
-          '¿Eliminar a ${user.displayName}? Si no tiene transferencias, '
-          'se eliminará definitivamente. Si tiene, se desactivará para '
-          'conservar el historial.',
+          'user.delete.confirmation'.tr(namedArgs: {'name': user.displayName}),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancelar'),
+            child: Text('common.cancel'.tr()),
           ),
           TextButton(
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(dialogContext).colorScheme.error,
             ),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Eliminar'),
+            child: Text('common.delete'.tr()),
           ),
         ],
       ),

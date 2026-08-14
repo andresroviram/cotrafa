@@ -1,3 +1,5 @@
+import 'package:components/localized_formatters.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
@@ -5,7 +7,6 @@ import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 
 class UserForm extends StatefulWidget {
   const UserForm.create({
@@ -86,7 +87,10 @@ class _UserFormState extends State<UserForm> {
           children: [
             if (widget.showHeading) ...[
               Text(
-                widget.isEditing ? 'Editar usuario' : 'Nuevo usuario',
+                (widget.isEditing
+                        ? 'user.form.edit_title'
+                        : 'user.form.create_title')
+                    .tr(),
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 24),
@@ -96,11 +100,12 @@ class _UserFormState extends State<UserForm> {
               controller: _firstNameController,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Nombre',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                labelText: 'user.form.first_name'.tr(),
+                prefixIcon: const Icon(Icons.person_outline),
               ),
-              validator: (value) => _validateName(value, 'nombre'),
+              validator: (value) =>
+                  _validateRequired(value, 'user.form.first_name_required'),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -108,11 +113,12 @@ class _UserFormState extends State<UserForm> {
               controller: _lastNameController,
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Apellido',
-                prefixIcon: Icon(Icons.badge_outlined),
+              decoration: InputDecoration(
+                labelText: 'user.form.last_name'.tr(),
+                prefixIcon: const Icon(Icons.badge_outlined),
               ),
-              validator: (value) => _validateName(value, 'apellido'),
+              validator: (value) =>
+                  _validateRequired(value, 'user.form.last_name_required'),
             ),
             const SizedBox(height: 16),
             InkWell(
@@ -120,20 +126,20 @@ class _UserFormState extends State<UserForm> {
               onTap: _selectBirthDate,
               child: InputDecorator(
                 decoration: InputDecoration(
-                  labelText: 'Fecha de nacimiento',
+                  labelText: 'user.form.birth_date'.tr(),
                   prefixIcon: const Icon(Icons.cake_outlined),
                   suffixIcon: _birthDate == null
                       ? const Icon(Icons.calendar_today_outlined)
                       : IconButton(
-                          tooltip: 'Borrar fecha',
+                          tooltip: 'user.form.clear_birth_date'.tr(),
                           onPressed: () => setState(() => _birthDate = null),
                           icon: const Icon(Icons.clear),
                         ),
                 ),
                 child: Text(
                   _birthDate == null
-                      ? 'Sin registrar'
-                      : DateFormat('dd/MM/yyyy').format(_birthDate!),
+                      ? 'common.not_registered'.tr()
+                      : localizedDate(context, _birthDate!),
                 ),
               ),
             ),
@@ -143,9 +149,9 @@ class _UserFormState extends State<UserForm> {
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Teléfono',
-                prefixIcon: Icon(Icons.phone_outlined),
+              decoration: InputDecoration(
+                labelText: 'user.form.phone'.tr(),
+                prefixIcon: const Icon(Icons.phone_outlined),
               ),
             ),
             const SizedBox(height: 16),
@@ -159,10 +165,10 @@ class _UserFormState extends State<UserForm> {
                   : TextInputAction.next,
               autocorrect: false,
               decoration: InputDecoration(
-                labelText: 'Correo electrónico',
+                labelText: 'user.form.email'.tr(),
                 prefixIcon: const Icon(Icons.email_outlined),
                 helperText: widget.isEditing
-                    ? 'El correo no se puede modificar'
+                    ? 'user.form.email_locked'.tr()
                     : null,
               ),
               validator: _validateEmail,
@@ -176,10 +182,10 @@ class _UserFormState extends State<UserForm> {
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.done,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  labelText: 'Saldo inicial',
+                decoration: InputDecoration(
+                  labelText: 'user.form.initial_balance'.tr(),
                   prefixText: r'$ ',
-                  helperText: 'Valor en pesos colombianos',
+                  helperText: 'user.form.balance_helper'.tr(),
                 ),
                 validator: _validateBalance,
                 onFieldSubmitted: (_) => _submit(),
@@ -198,7 +204,10 @@ class _UserFormState extends State<UserForm> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(
-                        widget.isEditing ? 'Guardar cambios' : 'Crear usuario',
+                        (widget.isEditing
+                                ? 'user.form.save'
+                                : 'user.form.create')
+                            .tr(),
                       ),
               ),
             ),
@@ -220,21 +229,23 @@ class _UserFormState extends State<UserForm> {
     if (selected != null && mounted) setState(() => _birthDate = selected);
   }
 
-  String? _validateName(String? value, String field) =>
-      value == null || value.trim().isEmpty ? 'Ingresa el $field' : null;
+  String? _validateRequired(String? value, String messageKey) =>
+      value == null || value.trim().isEmpty ? messageKey.tr() : null;
 
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';
-    if (email.isEmpty) return 'Ingresa el correo electrónico';
+    if (email.isEmpty) return 'user.form.email_required'.tr();
     if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
-      return 'Ingresa un correo válido';
+      return 'user.form.email_invalid'.tr();
     }
     return null;
   }
 
   String? _validateBalance(String? value) {
     final balance = int.tryParse(value ?? '');
-    return balance == null || balance < 0 ? 'Ingresa un saldo válido' : null;
+    return balance == null || balance < 0
+        ? 'user.form.balance_invalid'.tr()
+        : null;
   }
 
   String? _optional(String value) {

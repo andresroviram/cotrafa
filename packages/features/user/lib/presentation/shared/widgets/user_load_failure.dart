@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class UserLoadFailure extends StatelessWidget {
@@ -10,9 +11,9 @@ class UserLoadFailure extends StatelessWidget {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('No pudimos cargar el usuario'),
+        Text('user.load_error'.tr()),
         const SizedBox(height: 12),
-        OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
+        OutlinedButton(onPressed: onRetry, child: Text('common.retry'.tr())),
       ],
     ),
   );

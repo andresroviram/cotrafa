@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:flutter/material.dart';
 
@@ -43,7 +44,7 @@ class AddressCard extends StatelessWidget {
                       runSpacing: 6,
                       children: [
                         Text(
-                          address.label,
+                          _localizedLabel(address.label),
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.w700,
@@ -55,24 +56,24 @@ class AddressCard extends StatelessWidget {
                   ),
                   PopupMenuButton<_AddressAction>(
                     key: Key('address-actions-${address.id}'),
-                    tooltip: 'Acciones de la dirección',
+                    tooltip: 'address.actions_tooltip'.tr(),
                     offset: const Offset(0, 40),
                     itemBuilder: (_) => [
                       PopupMenuItem(
                         value: _AddressAction.edit,
                         onTap: onEdit,
-                        child: const _MenuItem(
+                        child: _MenuItem(
                           icon: Icons.edit_outlined,
-                          label: 'Editar',
+                          label: 'common.edit'.tr(),
                         ),
                       ),
                       if (!address.isPrimary)
                         PopupMenuItem(
                           value: _AddressAction.primary,
                           onTap: onSetPrimary,
-                          child: const _MenuItem(
+                          child: _MenuItem(
                             icon: Icons.star_outline,
-                            label: 'Marcar como principal',
+                            label: 'address.set_primary'.tr(),
                           ),
                         ),
                       PopupMenuItem(
@@ -80,7 +81,7 @@ class AddressCard extends StatelessWidget {
                         onTap: onDelete,
                         child: _MenuItem(
                           icon: Icons.delete_outline,
-                          label: 'Eliminar',
+                          label: 'common.delete'.tr(),
                           color: theme.colorScheme.error,
                         ),
                       ),
@@ -117,7 +118,9 @@ class AddressCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'CP: $postalCode',
+                            'address.postal_code_short'.tr(
+                              namedArgs: {'code': postalCode},
+                            ),
                             style: _secondaryStyle(theme),
                           ),
                         ],
@@ -153,7 +156,7 @@ class _PrimaryLabel extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
         child: Text(
-          'Principal',
+          'address.primary'.tr(),
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: colors.onPrimaryContainer,
             fontWeight: FontWeight.w700,
@@ -187,4 +190,11 @@ IconData _labelIcon(String label) => switch (label.trim().toLowerCase()) {
   'casa' || 'home' => Icons.home_outlined,
   'trabajo' || 'work' => Icons.work_outline,
   _ => Icons.location_on_outlined,
+};
+
+String _localizedLabel(String label) => switch (label.trim().toLowerCase()) {
+  'casa' || 'home' => 'address.types.home'.tr(),
+  'trabajo' || 'work' => 'address.types.work'.tr(),
+  'otra' || 'other' => 'address.types.other'.tr(),
+  _ => label,
 };

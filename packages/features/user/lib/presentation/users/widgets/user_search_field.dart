@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class UserSearchField extends StatelessWidget {
@@ -10,9 +11,9 @@ class UserSearchField extends StatelessWidget {
     key: const Key('user-search-field'),
     onChanged: onChanged,
     textInputAction: TextInputAction.search,
-    decoration: const InputDecoration(
-      hintText: 'Buscar por nombre o correo...',
-      prefixIcon: Icon(Icons.search),
+    decoration: InputDecoration(
+      hintText: 'user.list.search_hint'.tr(),
+      prefixIcon: const Icon(Icons.search),
     ),
   );
 }
