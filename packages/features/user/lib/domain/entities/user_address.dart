@@ -23,6 +23,19 @@ final class UserAddress {
   final String label;
   final bool isPrimary;
 
+  UserAddress copyWith({bool? isPrimary}) => UserAddress(
+    id: id,
+    userId: userId,
+    line1: line1,
+    line2: line2,
+    city: city,
+    state: state,
+    postalCode: postalCode,
+    country: country,
+    label: label,
+    isPrimary: isPrimary ?? this.isPrimary,
+  );
+
   String get location => <String?>[city, state, country]
       .whereType<String>()
       .map((part) => part.trim())
