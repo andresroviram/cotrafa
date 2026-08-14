@@ -100,17 +100,6 @@ void main() {
     expect(find.text('300 123 4567'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Editar'), findsOneWidget);
     expect(find.text('Direcciones'), findsOneWidget);
-
-    await tester.tap(find.text('Direcciones'));
-    await tester.pump();
-    verify(
-      () => bloc.add(
-        const UserEvent.notificationRequested(
-          'La gestión de direcciones estará disponible próximamente',
-          type: UserNotificationType.info,
-        ),
-      ),
-    ).called(1);
   });
 
   testWidgets('shows safe placeholders for missing optional data', (

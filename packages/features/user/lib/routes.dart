@@ -1,4 +1,6 @@
 import 'package:feature_user/presentation/users/activation_code_issuer.dart';
+import 'package:feature_user/presentation/address_form/view/address_form_view.dart';
+import 'package:feature_user/presentation/addresses/view/addresses_view.dart';
 import 'package:feature_user/presentation/user_detail/view/user_detail_view.dart';
 import 'package:feature_user/presentation/user_edit/view/user_edit_view.dart';
 import 'package:feature_user/presentation/users/view/users_view.dart';
@@ -37,6 +39,45 @@ StatefulShellBranch usersRoutes({
             actorUserId: actorUserId(),
             userId: int.tryParse(state.pathParameters['userId'] ?? '') ?? -1,
           ),
+          routes: [
+            GoRoute(
+              path: AddressesView.path,
+              name: AddressesView.name,
+              parentNavigatorKey: parentNavigatorKey,
+              builder: (_, state) => AddressesView.create(
+                actorUserId: actorUserId(),
+                userId:
+                    int.tryParse(state.pathParameters['userId'] ?? '') ?? -1,
+              ),
+              routes: [
+                GoRoute(
+                  path: AddressFormView.createPath,
+                  name: AddressFormView.createName,
+                  parentNavigatorKey: parentNavigatorKey,
+                  builder: (_, state) => AddressFormView.create(
+                    actorUserId: actorUserId(),
+                    userId:
+                        int.tryParse(state.pathParameters['userId'] ?? '') ??
+                        -1,
+                  ),
+                ),
+                GoRoute(
+                  path: AddressFormView.editPath,
+                  name: AddressFormView.editName,
+                  parentNavigatorKey: parentNavigatorKey,
+                  builder: (_, state) => AddressFormView.create(
+                    actorUserId: actorUserId(),
+                    userId:
+                        int.tryParse(state.pathParameters['userId'] ?? '') ??
+                        -1,
+                    addressId:
+                        int.tryParse(state.pathParameters['addressId'] ?? '') ??
+                        -1,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
           path: UserEditView.path,

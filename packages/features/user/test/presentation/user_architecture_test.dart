@@ -28,7 +28,12 @@ void main() {
   });
 
   test('keeps detail and edit views on the same presentation contract', () {
-    for (final feature in ['user_detail', 'user_edit']) {
+    for (final feature in [
+      'user_detail',
+      'user_edit',
+      'addresses',
+      'address_form',
+    ]) {
       final view = File(
         'lib/presentation/$feature/view/${feature}_view.dart',
       ).readAsStringSync();
@@ -39,13 +44,16 @@ void main() {
         'lib/presentation/$feature/view/${feature}_web.dart',
       ).readAsStringSync();
 
-      expect(view, contains('BlocListener<UserBloc, UserState>'));
+      final blocContract = feature.startsWith('address')
+          ? 'AddressBloc, AddressState'
+          : 'UserBloc, UserState';
+      expect(view, contains('BlocListener<$blocContract>'));
       expect(view, contains('ResponsiveBreakpoints.of(context)'));
       expect(view, isNot(contains('BlocBuilder<UserBloc, UserState>')));
       expect(view, isNot(contains('ScaffoldMessenger')));
 
       for (final responsiveView in [mobile, web]) {
-        expect(responsiveView, contains('BlocBuilder<UserBloc, UserState>'));
+        expect(responsiveView, contains('BlocBuilder<$blocContract>'));
         expect(responsiveView, contains('state.resolve('));
         expect(responsiveView, isNot(contains('AppNotification')));
         expect(responsiveView, isNot(contains('ScaffoldMessenger')));
