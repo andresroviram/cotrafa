@@ -23,6 +23,12 @@ void main() {
       () => bloc.state,
     ).thenReturn(UserState(status: UserStatus.loaded, users: [user]));
     return MaterialApp(
+      theme: ThemeData(
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF004183),
+          foregroundColor: Colors.white,
+        ),
+      ),
       home: BlocProvider<UserBloc>.value(
         value: bloc,
         child: UserDetailView(actorUserId: 1, userId: user.id),
@@ -50,6 +56,17 @@ void main() {
 
     expect(find.byType(CustomScrollView), findsOneWidget);
     expect(find.byType(SliverAppBar), findsOneWidget);
+    final appBar = tester.widget<SliverAppBar>(find.byType(SliverAppBar));
+    expect(appBar.backgroundColor, const Color(0xFF004183));
+    final header = tester.widget<DecoratedBox>(
+      find
+          .descendant(
+            of: find.byType(FlexibleSpaceBar),
+            matching: find.byType(DecoratedBox),
+          )
+          .first,
+    );
+    expect((header.decoration as BoxDecoration).color, const Color(0xFF004183));
     expect(find.text('Sofia Rovira'), findsOneWidget);
     expect(find.text('Información personal'), findsOneWidget);
     expect(find.text('Nombre'), findsOneWidget);

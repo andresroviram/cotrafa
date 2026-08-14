@@ -89,6 +89,7 @@ class _UserDetailContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final appBarColor = theme.appBarTheme.backgroundColor ?? colors.primary;
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async => onRefresh(),
@@ -97,18 +98,13 @@ class _UserDetailContent extends StatelessWidget {
             SliverAppBar(
               expandedHeight: 200,
               pinned: true,
+              backgroundColor: appBarColor,
+              foregroundColor:
+                  theme.appBarTheme.foregroundColor ?? colors.onPrimary,
+              surfaceTintColor: Colors.transparent,
               flexibleSpace: FlexibleSpaceBar(
                 background: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        colors.primaryContainer,
-                        colors.tertiaryContainer,
-                      ],
-                    ),
-                  ),
+                  decoration: BoxDecoration(color: appBarColor),
                   child: Center(
                     child: Hero(
                       tag: 'user-avatar-${user.id}',
