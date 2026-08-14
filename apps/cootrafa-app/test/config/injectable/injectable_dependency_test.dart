@@ -7,6 +7,7 @@ import 'package:feature_user/data/datasources/address_local_datasource.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
 import 'package:feature_user/domain/repository/i_user_repository.dart';
 import 'package:feature_user/domain/usecases/user_usecases.dart';
+import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -27,6 +28,7 @@ void main() {
     expect(getIt.isRegistered<IUserRepository>(), isTrue);
     expect(getIt.isRegistered<ListUsers>(), isTrue);
     expect(getIt.isRegistered<CreateClient>(), isTrue);
+    expect(getIt.isRegistered<UserBloc>(), isTrue);
     expect(getIt<AddressLocalDatasource>(), isA<AddressLocalDatasource>());
     expect(getIt<TransferLocalDatasource>(), isA<TransferLocalDatasource>());
   });
