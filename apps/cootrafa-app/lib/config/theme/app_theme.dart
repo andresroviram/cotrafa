@@ -25,19 +25,19 @@ abstract final class AppTheme {
   static final light = ThemeData(
     colorScheme: lightColorScheme,
     useMaterial3: true,
+    scaffoldBackgroundColor: lightColorScheme.surfaceContainerLow,
     cardTheme: _cardTheme(lightColorScheme),
   );
 
   static final dark = ThemeData(
     colorScheme: darkColorScheme,
     useMaterial3: true,
+    scaffoldBackgroundColor: darkColorScheme.surfaceContainerLow,
     cardTheme: _cardTheme(darkColorScheme),
   );
 
   static CardThemeData _cardTheme(ColorScheme colors) => CardThemeData(
-    color: colors.brightness == Brightness.light
-        ? Colors.white
-        : colors.surfaceContainerLow,
+    color: colors.surface,
     elevation: 2,
     surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(

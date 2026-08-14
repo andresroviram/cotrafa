@@ -13,10 +13,15 @@ void main() {
     expect(colors.onSurface, Colors.black);
   });
 
-  test('uses white cards in light mode and native surfaces in dark mode', () {
-    expect(AppTheme.light.cardTheme.color, Colors.white);
+  test('inverts card and screen surfaces in both modes', () {
+    expect(AppTheme.light.cardTheme.color, AppTheme.light.colorScheme.surface);
+    expect(AppTheme.dark.cardTheme.color, AppTheme.dark.colorScheme.surface);
     expect(
-      AppTheme.dark.cardTheme.color,
+      AppTheme.light.scaffoldBackgroundColor,
+      AppTheme.light.colorScheme.surfaceContainerLow,
+    );
+    expect(
+      AppTheme.dark.scaffoldBackgroundColor,
       AppTheme.dark.colorScheme.surfaceContainerLow,
     );
   });

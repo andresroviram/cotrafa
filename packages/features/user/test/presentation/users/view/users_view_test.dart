@@ -43,11 +43,8 @@ void main() {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: colors,
-        cardTheme: CardThemeData(
-          color: brightness == Brightness.light
-              ? colors.surface
-              : colors.surfaceContainerLow,
-        ),
+        scaffoldBackgroundColor: colors.surfaceContainerLow,
+        cardTheme: CardThemeData(color: colors.surface),
       ),
       builder: (_, child) => ResponsiveBreakpoints.builder(
         child: child!,
@@ -156,7 +153,7 @@ void main() {
     verify(() => bloc.add(const UserEvent.listRequested(1))).called(1);
   });
 
-  testWidgets('uses native dark colors for cards and search', (tester) async {
+  testWidgets('uses native dark surfaces for cards and search', (tester) async {
     const state = UserState(
       status: UserStatus.loaded,
       users: [
@@ -175,10 +172,7 @@ void main() {
 
     final context = tester.element(find.byType(Card));
     final colors = Theme.of(context).colorScheme;
-    expect(
-      tester.widget<Card>(find.byType(Card)).color,
-      colors.surfaceContainerLow,
-    );
+    expect(tester.widget<Card>(find.byType(Card)).color, colors.surface);
     final search = tester.widget<TextField>(
       find.byKey(const Key('user-search-field')),
     );
