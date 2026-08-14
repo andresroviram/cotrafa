@@ -9,8 +9,11 @@ import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_bloc.dart';
 import 'package:feature_user/data/datasources/address_local_datasource.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
+import 'package:feature_user/domain/repository/i_address_repository.dart';
 import 'package:feature_user/domain/repository/i_user_repository.dart';
+import 'package:feature_user/domain/usecases/address_usecases.dart';
 import 'package:feature_user/domain/usecases/user_usecases.dart';
+import 'package:feature_user/presentation/addresses/bloc/address_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -33,7 +36,14 @@ void main() {
     expect(getIt.isRegistered<ListUsers>(), isTrue);
     expect(getIt.isRegistered<CreateClient>(), isTrue);
     expect(getIt.isRegistered<UserBloc>(), isTrue);
-    expect(getIt<AddressLocalDatasource>(), isA<AddressLocalDatasource>());
+    expect(getIt<IAddressLocalDatasource>(), isA<AddressLocalDatasource>());
+    expect(getIt.isRegistered<IAddressRepository>(), isTrue);
+    expect(getIt.isRegistered<ListAddresses>(), isTrue);
+    expect(getIt.isRegistered<CreateAddress>(), isTrue);
+    expect(getIt.isRegistered<UpdateAddress>(), isTrue);
+    expect(getIt.isRegistered<SelectPrimaryAddress>(), isTrue);
+    expect(getIt.isRegistered<DeleteAddress>(), isTrue);
+    expect(getIt.isRegistered<AddressBloc>(), isTrue);
     expect(getIt<ITransferLocalDatasource>(), isA<TransferLocalDatasource>());
     expect(getIt.isRegistered<ITransferRepository>(), isTrue);
     expect(getIt.isRegistered<ListTransferParties>(), isTrue);
