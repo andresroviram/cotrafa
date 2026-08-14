@@ -152,11 +152,11 @@ class UsersView extends StatelessWidget {
 
   Future<void> _openDetail(BuildContext context, UserProfile user) async {
     FocusManager.instance.primaryFocus?.unfocus();
-    final updated = await context.pushNamed<bool>(
+    await context.pushNamed<bool>(
       UserDetailView.name,
       pathParameters: {'userId': '${user.id}'},
     );
-    if (updated == true && context.mounted) _load(context);
+    if (context.mounted) _load(context);
   }
 
   List<UserProfile> _visibleUsers(UserState state) {

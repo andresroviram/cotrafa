@@ -475,6 +475,7 @@ void main() {
     );
     addTearDown(router.dispose);
     await tester.pumpWidget(routedApp(router));
+    clearInteractions(bloc);
 
     await tester.tap(find.text('Sofia Rovira'));
     await tester.pumpAndSettle();
@@ -482,6 +483,7 @@ void main() {
 
     router.pop();
     await tester.pumpAndSettle();
+    verify(() => bloc.add(const UserEvent.listRequested(1))).called(1);
     await tester.tap(find.byKey(const Key('user-actions-2')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('edit-user-2')), findsOneWidget);
