@@ -3,10 +3,9 @@ import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
-import 'package:feature_user/presentation/users/view/user_edit_view.dart';
+import 'package:feature_user/presentation/users/widgets/user_form_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 class UserDetailView extends StatelessWidget {
@@ -38,7 +37,7 @@ class UserDetailView extends StatelessWidget {
         return _UserDetailContent(
           user: user,
           onRefresh: () => _reload(context),
-          onEdit: () => _edit(context),
+          onEdit: () => _edit(context, user),
         );
       }
       if (state.status == UserStatus.failure) {
@@ -65,10 +64,11 @@ class UserDetailView extends StatelessWidget {
     UserEvent.profileRequested(actorUserId, userId),
   );
 
-  Future<void> _edit(BuildContext context) async {
-    final updated = await context.pushNamed<bool>(
-      UserEditView.name,
-      pathParameters: {'userId': '$userId'},
+  Future<void> _edit(BuildContext context, UserProfile user) async {
+    final updated = await showUserFormModal(
+      context,
+      actorUserId: actorUserId,
+      user: user,
     );
     if (updated == true && context.mounted) _reload(context);
   }
@@ -158,6 +158,8 @@ class _UserDetailContent extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+                    _BalanceCard(balanceCop: user.balanceCop),
                     const SizedBox(height: 32),
                     const _SectionHeader(
                       icon: Icons.person_outline,
@@ -234,6 +236,54 @@ class _UserDetailContent extends StatelessWidget {
           ),
         ),
       );
+}
+
+class _BalanceCard extends StatelessWidget {
+  const _BalanceCard({required this.balanceCop});
+
+  final int balanceCop;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Card(
+      key: const Key('user-available-balance'),
+      margin: EdgeInsets.zero,
+      color: colors.primaryContainer,
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.account_balance_wallet_outlined, color: colors.primary),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Saldo disponible',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: colors.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _currency.format(balanceCop),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: colors.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -380,3 +430,9 @@ String _formatPhone(String? value) {
   return '${digits.substring(0, 3)} ${digits.substring(3, 6)} '
       '${digits.substring(6)}';
 }
+
+final NumberFormat _currency = NumberFormat.currency(
+  locale: 'es_CO',
+  symbol: r'$',
+  decimalDigits: 0,
+);

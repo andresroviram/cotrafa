@@ -107,4 +107,34 @@ void main() {
     expect(find.text('client@cotrafa.local'), findsWidgets);
     expect(find.text('Sin registrar'), findsNWidgets(5));
   });
+
+  testWidgets('shows available balance and opens the shared edit modal', (
+    tester,
+  ) async {
+    const user = UserProfile(
+      id: 2,
+      email: 'client@cotrafa.local',
+      fullName: 'Client User',
+      firstName: 'Client',
+      lastName: 'User',
+      role: 'client',
+      status: 'active',
+      balanceCop: 250000,
+    );
+
+    await tester.pumpWidget(subject(user));
+
+    expect(find.byKey(const Key('user-available-balance')), findsOneWidget);
+    expect(find.text('Saldo disponible'), findsOneWidget);
+    expect(find.textContaining('250.000'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Editar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar usuario'), findsOneWidget);
+    expect(find.byKey(const Key('edit-user-first-name')), findsOneWidget);
+    expect(find.byKey(const Key('edit-user-last-name')), findsOneWidget);
+    expect(find.byKey(const Key('edit-user-email')), findsOneWidget);
+    expect(find.byKey(const Key('create-user-balance')), findsNothing);
+  });
 }
