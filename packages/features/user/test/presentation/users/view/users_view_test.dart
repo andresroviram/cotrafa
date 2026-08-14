@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/get_it.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
@@ -257,6 +259,76 @@ void main() {
     expect(tester.testTextInput.isVisible, isFalse);
   });
 
+  testWidgets('admin creates a client and receives an activation code', (
+    tester,
+  ) async {
+    final states = StreamController<UserState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+
+    var issuedForActor = 0;
+    var issuedForEmail = '';
+    await tester.pumpWidget(
+      subject(
+        const UserState(status: UserStatus.loaded),
+        issueActivationCode: (actorUserId, email) async {
+          issuedForActor = actorUserId;
+          issuedForEmail = email;
+          return '123456';
+        },
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('create-user-action')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('create-user-full-name')),
+      'Sofia Rovira',
+    );
+    await tester.enterText(
+      find.byKey(const Key('create-user-email')),
+      'sofia@cotrafa.local',
+    );
+    await tester.enterText(
+      find.byKey(const Key('create-user-balance')),
+      '250000',
+    );
+    await tester.tap(find.byKey(const Key('create-user-submit')));
+    await tester.pump();
+
+    verify(
+      () => bloc.add(
+        const UserEvent.createRequested(
+          1,
+          email: 'sofia@cotrafa.local',
+          fullName: 'Sofia Rovira',
+          initialBalanceCop: 250000,
+        ),
+      ),
+    ).called(1);
+
+    states.add(
+      const UserState(
+        status: UserStatus.created,
+        users: [
+          UserProfile(
+            id: 2,
+            email: 'sofia@cotrafa.local',
+            fullName: 'Sofia Rovira',
+            role: 'client',
+            status: 'pendingActivation',
+            balanceCop: 250000,
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('123456'), findsOneWidget);
+    expect(issuedForActor, 1);
+    expect(issuedForEmail, 'sofia@cotrafa.local');
+  });
+
   testWidgets('admin regenerates the code for a pending client', (
     tester,
   ) async {
@@ -293,7 +365,9 @@ void main() {
     expect(issuedForEmail, 'sofia@cotrafa.local');
   });
 
-  testWidgets('client cannot regenerate activation codes', (tester) async {
+  testWidgets('client cannot create users or regenerate activation codes', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       subject(
         const UserState(
@@ -313,6 +387,7 @@ void main() {
       ),
     );
 
+    expect(find.byKey(const Key('create-user-action')), findsNothing);
     expect(find.byKey(const Key('regenerate-code-2')), findsNothing);
   });
 }

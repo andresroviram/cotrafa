@@ -6,8 +6,9 @@ import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/users/view/users_mobile.dart';
 import 'package:feature_user/presentation/users/view/users_web.dart';
-import 'package:feature_user/presentation/users/widgets/user_card.dart';
 import 'package:feature_user/presentation/users/widgets/activation_code_dialog.dart';
+import 'package:feature_user/presentation/users/widgets/user_card.dart';
+import 'package:feature_user/presentation/users/widgets/user_create_form.dart';
 import 'package:feature_user/presentation/users/widgets/user_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -71,9 +72,12 @@ class UsersView extends StatelessWidget {
           ],
         );
         void refresh() => _load(context);
+        final onCreate = isAdmin && issueActivationCode != null
+            ? () => _openCreate(context)
+            : null;
         final page = ResponsiveBreakpoints.of(context).largerThan(MOBILE)
-            ? UsersWeb(body: body, onRefresh: refresh)
-            : UsersMobile(body: body, onRefresh: refresh);
+            ? UsersWeb(body: body, onRefresh: refresh, onCreate: onCreate)
+            : UsersMobile(body: body, onRefresh: refresh, onCreate: onCreate);
         return GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -88,6 +92,25 @@ class UsersView extends StatelessWidget {
         ? UserEvent.listRequested(actorUserId)
         : UserEvent.profileRequested(actorUserId, actorUserId),
   );
+
+  Future<void> _openCreate(BuildContext context) async {
+    final issuer = issueActivationCode;
+    if (issuer == null) return;
+    final bloc = context.read<UserBloc>();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: UserCreateForm(
+          actorUserId: actorUserId,
+          issueActivationCode: issuer,
+        ),
+      ),
+    );
+  }
 
   Future<void> _generateActivationCode(
     BuildContext context,
