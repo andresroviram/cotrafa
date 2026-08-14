@@ -2,13 +2,14 @@ import 'package:adaptive_theme/adaptive_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
-enum _Variant { icon, outlined }
+enum _Variant { icon, outlined, filled }
 
 class ThemeModeButton extends StatelessWidget {
   const ThemeModeButton._(this.variant);
 
   const ThemeModeButton.icon() : this._(_Variant.icon);
   const ThemeModeButton.outlined() : this._(_Variant.outlined);
+  const ThemeModeButton.filled() : this._(_Variant.filled);
 
   // ignore: library_private_types_in_public_api
   final _Variant variant;
@@ -40,6 +41,15 @@ class ThemeModeButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           backgroundColor: colorScheme.surfaceContainerHighest,
           side: BorderSide(color: colorScheme.secondary.withValues(alpha: 0.5)),
+        ),
+      ),
+      _Variant.filled => FilledButton.icon(
+        onPressed: action,
+        icon: Icon(iconData),
+        label: Text(actionLabel),
+        style: FilledButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
         ),
       ),
     };

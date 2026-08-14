@@ -135,7 +135,7 @@ class _ScaffoldWithNavigationRail extends StatelessWidget {
             ),
             const Padding(
               padding: EdgeInsets.all(16),
-              child: ThemeModeButton.outlined(),
+              child: ThemeModeButton.filled(),
             ),
           ],
         ),
@@ -223,7 +223,7 @@ class _ScaffoldWithDrawer extends StatelessWidget {
             ),
             const Padding(
               padding: EdgeInsets.all(16),
-              child: ThemeModeButton.outlined(),
+              child: ThemeModeButton.filled(),
             ),
           ],
         ),
@@ -418,7 +418,7 @@ class _ScaffoldWithNavigationBar extends StatelessWidget {
             ),
             const Padding(
               padding: EdgeInsets.all(16),
-              child: ThemeModeButton.outlined(),
+              child: ThemeModeButton.filled(),
             ),
           ],
         ),
