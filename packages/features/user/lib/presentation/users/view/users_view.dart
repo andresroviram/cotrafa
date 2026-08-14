@@ -9,6 +9,7 @@ import 'package:feature_user/presentation/users/view/users_web.dart';
 import 'package:feature_user/presentation/users/widgets/activation_code_dialog.dart';
 import 'package:feature_user/presentation/users/widgets/user_card.dart';
 import 'package:feature_user/presentation/users/widgets/user_create_form.dart';
+import 'package:feature_user/presentation/users/widgets/user_edit_form.dart';
 import 'package:feature_user/presentation/users/widgets/user_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -100,6 +101,7 @@ class UsersView extends StatelessWidget {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      useRootNavigator: true,
       useSafeArea: true,
       showDragHandle: true,
       builder: (_) => BlocProvider.value(
@@ -127,6 +129,25 @@ class UsersView extends StatelessWidget {
       return;
     }
     await showActivationCodeDialog(context, code: code);
+  }
+
+  Future<void> _openEdit(BuildContext context, UserProfile user) async {
+    final bloc = context.read<UserBloc>();
+    final updated = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      useRootNavigator: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: UserEditForm(actorUserId: actorUserId, user: user),
+      ),
+    );
+    if (updated != true || !context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Usuario actualizado')));
   }
 
   List<UserProfile> _visibleUsers(UserState state) {
@@ -162,6 +183,9 @@ class UsersView extends StatelessWidget {
             issueActivationCode != null;
         return UserCard(
           user: user,
+          onEdit: isAdmin || user.id == actorUserId
+              ? () => _openEdit(context, user)
+              : null,
           onGenerateActivationCode: canGenerateCode
               ? () => _generateActivationCode(context, user)
               : null,

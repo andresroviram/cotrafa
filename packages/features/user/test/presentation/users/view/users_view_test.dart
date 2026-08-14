@@ -67,6 +67,7 @@ void main() {
 
   Widget subject(
     UserState state, {
+    int actorUserId = 1,
     Brightness brightness = Brightness.light,
     bool isAdmin = true,
     Future<String?> Function(int, String)? issueActivationCode,
@@ -76,7 +77,7 @@ void main() {
       BlocProvider<UserBloc>.value(
         value: bloc,
         child: UsersView(
-          actorUserId: 1,
+          actorUserId: actorUserId,
           isAdmin: isAdmin,
           issueActivationCode: issueActivationCode,
         ),
@@ -329,6 +330,81 @@ void main() {
     expect(issuedForEmail, 'sofia@cotrafa.local');
   });
 
+  testWidgets('admin edits a user name while the email remains immutable', (
+    tester,
+  ) async {
+    final states = StreamController<UserState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+
+    const user = UserProfile(
+      id: 2,
+      email: 'sofia@cotrafa.local',
+      fullName: 'Sofia Rovira',
+      role: 'client',
+      status: 'active',
+      balanceCop: 250000,
+    );
+    await tester.pumpWidget(
+      subject(const UserState(status: UserStatus.loaded, users: [user])),
+    );
+
+    await tester.tap(find.byKey(const Key('edit-user-2')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar usuario'), findsOneWidget);
+    final email = tester.widget<TextField>(
+      find.descendant(
+        of: find.byKey(const Key('edit-user-email')),
+        matching: find.byType(TextField),
+      ),
+    );
+    expect(email.readOnly, isTrue);
+    expect(email.controller?.text, user.email);
+
+    await tester.enterText(find.byKey(const Key('edit-user-full-name')), '  ');
+    await tester.tap(find.byKey(const Key('edit-user-submit')));
+    await tester.pump();
+    expect(find.text('Ingresa el nombre completo'), findsOneWidget);
+    verifyNever(
+      () => bloc.add(const UserEvent.updateRequested(1, 2, fullName: '')),
+    );
+
+    await tester.enterText(
+      find.byKey(const Key('edit-user-full-name')),
+      'Sofia Actualizada',
+    );
+    await tester.tap(find.byKey(const Key('edit-user-submit')));
+    await tester.pump();
+
+    verify(
+      () => bloc.add(
+        const UserEvent.updateRequested(1, 2, fullName: 'Sofia Actualizada'),
+      ),
+    ).called(1);
+
+    states.add(
+      const UserState(
+        status: UserStatus.updated,
+        users: [
+          UserProfile(
+            id: 2,
+            email: 'sofia@cotrafa.local',
+            fullName: 'Sofia Actualizada',
+            role: 'client',
+            status: 'active',
+            balanceCop: 250000,
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Editar usuario'), findsNothing);
+    expect(find.text('Sofia Actualizada'), findsOneWidget);
+    expect(find.text('Usuario actualizado'), findsOneWidget);
+  });
+
   testWidgets('admin regenerates the code for a pending client', (
     tester,
   ) async {
@@ -365,9 +441,7 @@ void main() {
     expect(issuedForEmail, 'sofia@cotrafa.local');
   });
 
-  testWidgets('client cannot create users or regenerate activation codes', (
-    tester,
-  ) async {
+  testWidgets('client edits only itself without admin actions', (tester) async {
     await tester.pumpWidget(
       subject(
         const UserState(
@@ -381,13 +455,24 @@ void main() {
               status: 'pendingActivation',
               balanceCop: 250000,
             ),
+            UserProfile(
+              id: 3,
+              email: 'another@cotrafa.local',
+              fullName: 'Another Client',
+              role: 'client',
+              status: 'active',
+              balanceCop: 0,
+            ),
           ],
         ),
+        actorUserId: 2,
         isAdmin: false,
       ),
     );
 
     expect(find.byKey(const Key('create-user-action')), findsNothing);
     expect(find.byKey(const Key('regenerate-code-2')), findsNothing);
+    expect(find.byKey(const Key('edit-user-2')), findsOneWidget);
+    expect(find.byKey(const Key('edit-user-3')), findsNothing);
   });
 }

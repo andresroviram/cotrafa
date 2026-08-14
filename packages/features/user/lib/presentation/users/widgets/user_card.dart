@@ -6,10 +6,12 @@ class UserCard extends StatelessWidget {
   const UserCard({
     super.key,
     required this.user,
+    this.onEdit,
     this.onGenerateActivationCode,
   });
 
   final UserProfile user;
+  final VoidCallback? onEdit;
   final VoidCallback? onGenerateActivationCode;
 
   @override
@@ -73,6 +75,13 @@ class UserCard extends StatelessWidget {
                 tooltip: 'Generar nuevo código',
                 onPressed: onGenerateActivationCode,
                 icon: const Icon(Icons.key_outlined),
+              ),
+            if (onEdit != null)
+              IconButton(
+                key: Key('edit-user-${user.id}'),
+                tooltip: 'Editar usuario',
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
               ),
           ],
         ),
