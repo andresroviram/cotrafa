@@ -143,6 +143,9 @@ void main() {
     for (final column in ['country', 'postal_code', 'state', 'line2']) {
       await legacy.customStatement('ALTER TABLE addresses DROP COLUMN $column');
     }
+    for (final column in ['phone', 'birth_date', 'last_name', 'first_name']) {
+      await legacy.customStatement('ALTER TABLE users DROP COLUMN $column');
+    }
     await legacy.customStatement('PRAGMA user_version = 1');
     await legacy.close();
     final migrated = CotrafaDatabase.forTesting(
@@ -157,7 +160,14 @@ void main() {
       rows.map((row) => row.line1),
       containsAll(['Legacy', 'Street Migrated']),
     );
-    expect(migrated.schemaVersion, 2);
+    expect(migrated.schemaVersion, 3);
+    final userColumns = await migrated
+        .customSelect('PRAGMA table_info(users)')
+        .get();
+    expect(
+      userColumns.map((row) => row.read<String>('name')),
+      containsAll(['first_name', 'last_name', 'birth_date', 'phone']),
+    );
     await migrated.close();
     await directory.delete(recursive: true);
   });
@@ -179,7 +189,9 @@ CredentialHasher _fastHasher() => CredentialHasher(
 );
 Future<void> _activeUser(CotrafaDatabase database, int id, String email) async {
   await database.customStatement(
-    "INSERT INTO users VALUES ($id,'$email','Client','client','active',NULL,NULL,100,1,1)",
+    "INSERT INTO users (id,email,full_name,role,status,password_hash,"
+    "activation_code_hash,balance_cop,created_at,updated_at) VALUES "
+    "($id,'$email','Client','client','active',NULL,NULL,100,1,1)",
   );
   await database.customStatement(
     "INSERT INTO login_identifiers VALUES ('$email',$id,'email')",

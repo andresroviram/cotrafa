@@ -83,8 +83,10 @@ void main() {
         await _fails(database, _userSql(values));
       }
       await database.customStatement(
-        "INSERT INTO users VALUES (2,'client@example.com','Client','client',"
-        "'pendingActivation',NULL,NULL,50,1,1)",
+        "INSERT INTO users (id,email,full_name,role,status,password_hash,"
+        "activation_code_hash,balance_cop,created_at,updated_at) VALUES "
+        "(2,'client@example.com','Client','client','pendingActivation',"
+        'NULL,NULL,50,1,1)',
       );
       await database.customStatement(
         _identifierSql('client@example.com', 'email'),
@@ -92,6 +94,27 @@ void main() {
       await _fails(database, _identifierSql('client@example.com', 'username'));
       await _fails(database, _identifierSql('client2@example.com', 'email'));
       await _fails(database, _identifierSql('invalid', 'phone'));
+    });
+    test('stores optional personal profile fields', () async {
+      final columns = await _columns(database, 'users');
+      expect(
+        columns,
+        containsAll(<String>{'first_name', 'last_name', 'birth_date', 'phone'}),
+      );
+      await database.customStatement(
+        "INSERT INTO users (id,email,full_name,role,status,balance_cop,"
+        "created_at,updated_at,first_name,last_name,birth_date,phone) VALUES "
+        "(2,'profile@example.com','','client','active',0,1,1,'Sofia',"
+        "'Rovira',966124800000,'3001234567')",
+      );
+      final profile = await _one(
+        database,
+        'SELECT first_name,last_name,birth_date,phone FROM users WHERE id=2',
+      );
+      expect(profile.read<String>('first_name'), 'Sofia');
+      expect(profile.read<String>('last_name'), 'Rovira');
+      expect(profile.read<int>('birth_date'), 966124800000);
+      expect(profile.read<String>('phone'), '3001234567');
     });
     test('enforces address and immutable receipt storage', () async {
       await _insertClient(database, 2, 'origin@example.com');
@@ -149,7 +172,7 @@ void main() {
       await _columns(reopened, 'users'),
       isNot(containsAll(<String>{'password', 'activation_code'})),
     );
-    expect(reopened.schemaVersion, 2);
+    expect(reopened.schemaVersion, 3);
     await reopened.close();
     await directory.delete(recursive: true);
   });
@@ -183,8 +206,9 @@ Future<void> _fails(CotrafaDatabase database, String sql) async =>
     expectLater(database.customStatement(sql), throwsA(isA<Exception>()));
 Future<void> _insertClient(CotrafaDatabase database, int id, String email) =>
     database.customStatement(
-      "INSERT INTO users VALUES ($id,'$email','Client $id','client','active',"
-      "NULL,NULL,100,1,1)",
+      "INSERT INTO users (id,email,full_name,role,status,password_hash,"
+      "activation_code_hash,balance_cop,created_at,updated_at) VALUES "
+      "($id,'$email','Client $id','client','active',NULL,NULL,100,1,1)",
     );
 String _userSql(String values) =>
     "INSERT INTO users (email,full_name,role,status,balance_cop,created_at,updated_at) "

@@ -179,8 +179,9 @@ Future<void> _insertClient(
   String email,
 ) async {
   await database.customStatement(
-    "INSERT INTO users VALUES ($id,'$email','Client','client',"
-    "'pendingActivation',NULL,NULL,0,1,1)",
+    "INSERT INTO users (id,email,full_name,role,status,password_hash,"
+    "activation_code_hash,balance_cop,created_at,updated_at) VALUES "
+    "($id,'$email','Client','client','pendingActivation',NULL,NULL,0,1,1)",
   );
   await database.customStatement(
     "INSERT INTO login_identifiers VALUES ('${email.trim().toLowerCase()}',$id,'email')",

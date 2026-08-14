@@ -150,8 +150,10 @@ void main() {
 
 Future<void> _user(CotrafaDatabase db, int id, String name, int balance) =>
     db.customStatement(
-      "INSERT INTO users VALUES ($id,'user$id@example.com','$name','client',"
-      "'active',NULL,NULL,$balance,1,1)",
+      "INSERT INTO users (id,email,full_name,role,status,password_hash,"
+      "activation_code_hash,balance_cop,created_at,updated_at) VALUES "
+      "($id,'user$id@example.com','$name','client','active',NULL,NULL,"
+      "$balance,1,1)",
     );
 Future<int> _balance(CotrafaDatabase db, int id) => db
     .customSelect('SELECT balance_cop FROM users WHERE id=$id')

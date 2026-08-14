@@ -35,8 +35,10 @@ void main() {
       ),
     );
     await database.customStatement(
-      "INSERT INTO users VALUES (2,'Client@Example.com','Client','client',"
-      "'pendingActivation',NULL,NULL,0,1,1)",
+      "INSERT INTO users (id,email,full_name,role,status,password_hash,"
+      "activation_code_hash,balance_cop,created_at,updated_at) VALUES "
+      "(2,'Client@Example.com','Client','client','pendingActivation',"
+      'NULL,NULL,0,1,1)',
     );
     await database.customStatement(
       "INSERT INTO login_identifiers VALUES ('client@example.com',2,'email')",

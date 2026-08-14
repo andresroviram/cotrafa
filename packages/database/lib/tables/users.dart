@@ -16,4 +16,8 @@ class Users extends Table {
   )();
   IntColumn get createdAt => integer()();
   IntColumn get updatedAt => integer()();
+  TextColumn get firstName => text().nullable()();
+  TextColumn get lastName => text().nullable()();
+  IntColumn get birthDate => integer().nullable()();
+  TextColumn get phone => text().nullable()();
 }

@@ -28,7 +28,7 @@ class CotrafaDatabase extends _$CotrafaDatabase {
   final CotrafaDatabaseSeed _seed;
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -49,14 +49,18 @@ class CotrafaDatabase extends _$CotrafaDatabase {
       );
     },
     onUpgrade: (Migrator migrator, int from, int to) async {
-      if (from == 1 && to == 2) {
+      if (from < 2) {
         await migrator.addColumn(addresses, addresses.line2);
         await migrator.addColumn(addresses, addresses.state);
         await migrator.addColumn(addresses, addresses.postalCode);
         await migrator.addColumn(addresses, addresses.country);
-        return;
       }
-      throw StateError('No migration path registered from $from to $to.');
+      if (from < 3) {
+        await migrator.addColumn(users, users.firstName);
+        await migrator.addColumn(users, users.lastName);
+        await migrator.addColumn(users, users.birthDate);
+        await migrator.addColumn(users, users.phone);
+      }
     },
     beforeOpen: (_) async {
       await customStatement('PRAGMA foreign_keys = ON');
