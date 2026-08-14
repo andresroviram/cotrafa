@@ -68,6 +68,36 @@ El umbral se aplica al **total consolidado del workspace**. Core y Database qued
 ./scripts/check_coverage.sh 70
 ```
 
+### Generar y abrir el reporte HTML
+
+El reporte consolidado que usa CI se genera desde la raíz del proyecto con:
+
+```bash
+# Ejecuta los tests, consolida coverage/lcov.info y valida el umbral del 60 %
+./scripts/check_coverage.sh 60
+```
+
+Este script ejecuta internamente `fvm dart run melos run test:coverage` para crear
+los reportes LCOV de cada package. Si `genhtml` está instalado, también genera
+`coverage/html/index.html`.
+
+```bash
+# macOS (instalación y apertura)
+brew install lcov
+open coverage/html/index.html
+
+# Linux (instalación y apertura)
+sudo apt-get install lcov
+xdg-open coverage/html/index.html
+```
+
+En Windows, el reporte HTML puede generarse con el script Bash desde WSL o Git
+Bash y abrirse desde PowerShell:
+
+```powershell
+Start-Process .\coverage\html\index.html
+```
+
 Los scripts verifican automáticamente:
 
 - ✅ Ejecutan todos los tests del monorepo.
