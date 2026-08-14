@@ -71,16 +71,21 @@ class UsersView extends StatelessWidget {
                   ),
                 ),
               ),
-            Expanded(child: content),
+            Expanded(
+              child: RefreshIndicator(
+                key: const Key('user-refresh-indicator'),
+                onRefresh: () => _refresh(context),
+                child: content,
+              ),
+            ),
           ],
         );
-        void refresh() => _load(context);
         final onCreate = isAdmin && issueActivationCode != null
             ? () => _openCreate(context)
             : null;
         final page = ResponsiveBreakpoints.of(context).largerThan(MOBILE)
-            ? UsersWeb(body: body, onRefresh: refresh, onCreate: onCreate)
-            : UsersMobile(body: body, onRefresh: refresh, onCreate: onCreate);
+            ? UsersWeb(body: body, onCreate: onCreate)
+            : UsersMobile(body: body, onCreate: onCreate);
         return GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -95,6 +100,15 @@ class UsersView extends StatelessWidget {
         ? UserEvent.listRequested(actorUserId)
         : UserEvent.profileRequested(actorUserId, actorUserId),
   );
+
+  Future<void> _refresh(BuildContext context) async {
+    final bloc = context.read<UserBloc>();
+    final completed = bloc.stream
+        .skipWhile((state) => state.status != UserStatus.loading)
+        .firstWhere((state) => state.status != UserStatus.loading);
+    _load(context);
+    await completed;
+  }
 
   Future<void> _openCreate(BuildContext context) async {
     final issuer = issueActivationCode;
@@ -156,16 +170,17 @@ class UsersView extends StatelessWidget {
 
   Widget _body(BuildContext context, UserState state, List<UserProfile> users) {
     if (state.status == UserStatus.loading && state.users.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return _staticBody(const Center(child: CircularProgressIndicator()));
     }
     if (state.status == UserStatus.failure) {
-      return _UsersFailure(onRetry: () => _load(context));
+      return _staticBody(_UsersFailure(onRetry: () => _load(context)));
     }
     if (users.isEmpty) {
-      return const _EmptyUsers();
+      return _staticBody(const _EmptyUsers());
     }
     return ListView.separated(
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
       itemCount: users.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -189,6 +204,11 @@ class UsersView extends StatelessWidget {
       },
     );
   }
+
+  Widget _staticBody(Widget child) => CustomScrollView(
+    physics: const AlwaysScrollableScrollPhysics(),
+    slivers: [SliverFillRemaining(hasScrollBody: false, child: child)],
+  );
 }
 
 class _EmptyUsers extends StatelessWidget {

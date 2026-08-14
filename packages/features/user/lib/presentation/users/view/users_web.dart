@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 
 class UsersWeb extends StatelessWidget {
-  const UsersWeb({
-    super.key,
-    required this.body,
-    required this.onRefresh,
-    this.onCreate,
-  });
+  const UsersWeb({super.key, required this.body, this.onCreate});
 
   final Widget body;
-  final VoidCallback onRefresh;
   final VoidCallback? onCreate;
 
   @override
@@ -38,11 +32,6 @@ class UsersWeb extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                     ],
-                    IconButton(
-                      tooltip: 'Actualizar usuarios',
-                      onPressed: onRefresh,
-                      icon: const Icon(Icons.refresh),
-                    ),
                   ],
                 ),
               ),

@@ -189,6 +189,52 @@ void main() {
     expect(menuButton.offset, const Offset(0, 40));
   });
 
+  testWidgets('refreshes below the search field with pull to refresh', (
+    tester,
+  ) async {
+    final states = StreamController<UserState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    const state = UserState(
+      status: UserStatus.loaded,
+      users: [
+        UserProfile(
+          id: 2,
+          email: 'client@cotrafa.test',
+          fullName: 'Sofia Rovira',
+          role: 'client',
+          status: 'active',
+          balanceCop: 250000,
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(subject(state));
+    clearInteractions(bloc);
+
+    expect(find.byIcon(Icons.refresh), findsNothing);
+    expect(find.byTooltip('Actualizar usuarios'), findsNothing);
+    final refresh = find.byKey(const Key('user-refresh-indicator'));
+    expect(refresh, findsOneWidget);
+    expect(
+      tester.getTopLeft(refresh).dy,
+      greaterThanOrEqualTo(
+        tester.getBottomLeft(find.byKey(const Key('user-search-field'))).dy,
+      ),
+    );
+
+    final refreshCompleted = tester
+        .widget<RefreshIndicator>(refresh)
+        .onRefresh();
+    verify(() => bloc.add(const UserEvent.listRequested(1))).called(1);
+
+    states
+      ..add(state.copyWith(status: UserStatus.loading))
+      ..add(state);
+    await refreshCompleted;
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('exposes empty, failure, and retry states', (tester) async {
     await tester.pumpWidget(
       subject(const UserState(status: UserStatus.loaded)),
