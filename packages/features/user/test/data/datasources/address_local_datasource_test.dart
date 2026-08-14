@@ -1,15 +1,18 @@
 import 'dart:io';
 
+import 'package:core/errors/error.dart';
 import 'package:core/security/credential_hasher.dart';
+import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
-import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:feature_user/data/datasources/address_local_datasource.dart';
+import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late CotrafaDatabase database;
   late AddressLocalDatasource addresses;
+
   setUp(() async {
     database = CotrafaDatabase.forTesting(
       NativeDatabase.memory(),
@@ -24,88 +27,105 @@ void main() {
     await _activeUser(database, 2, 'client@example.com');
     await _activeUser(database, 3, 'other@example.com');
   });
+
   tearDown(() => database.close());
+
   test(
     'client owns addresses while admin can manage any active user',
     () async {
-      expect((await addresses.list(2, 2)).value, isEmpty);
-      final own = (await addresses.create(2, 2, _input('Own'))).value!;
+      expect(await addresses.list(2, 2), isEmpty);
+      final own = await addresses.create(2, 2, _draft('Own'));
       expect(own.isPrimary, isTrue);
       expect(own.line2, 'Suite Own');
       expect(own.state, 'Antioquia');
       expect(own.postalCode, '050001');
       expect(own.country, 'Colombia');
-      expect((await addresses.list(2, 2)).value?.length, 1);
-      expect(
-        (await addresses.create(2, 3, _input('Attack'))).error,
-        AddressError.unauthorized,
+      expect(await addresses.list(2, 2), hasLength(1));
+      await expectLater(
+        addresses.create(2, 3, _draft('Attack')),
+        throwsA(isA<UnauthorizedException>()),
       );
-      expect(
-        (await addresses.create(1, 3, _input('Admin'))).value?.isPrimary,
-        isTrue,
-      );
+      expect((await addresses.create(1, 3, _draft('Admin'))).isPrimary, isTrue);
       await database.customStatement(
         "UPDATE users SET status='inactive' WHERE id=2",
       );
-      expect((await addresses.list(2, 2)).error, AddressError.unauthorized);
-      expect((await addresses.list(1, 2)).error, AddressError.inactiveTarget);
+      await expectLater(
+        addresses.list(2, 2),
+        throwsA(isA<UnauthorizedException>()),
+      );
+      await expectLater(
+        addresses.list(1, 2),
+        throwsA(isA<ValidationException>()),
+      );
     },
   );
+
   test(
     'primary selection is explicit and rolls back on database failure',
     () async {
-      final first = (await addresses.create(2, 2, _input('First'))).value!;
-      final second = (await addresses.create(2, 2, _input('Second'))).value!;
+      final first = await addresses.create(2, 2, _draft('First'));
+      final second = await addresses.create(2, 2, _draft('Second'));
       expect(first.isPrimary, isTrue);
       expect(second.isPrimary, isFalse);
-      final edited = (await addresses.update(
-        2,
-        2,
-        second.id,
-        _input('Edited'),
-      )).value!;
+      final edited = await addresses.update(2, 2, second.id, _draft('Edited'));
       expect(edited.label, 'Edited');
       expect(edited.isPrimary, isFalse);
-      expect(
-        (await addresses.selectPrimary(2, 2, second.id)).value?.id,
-        second.id,
-      );
+      expect((await addresses.selectPrimary(2, 2, second.id)).id, second.id);
       await database.customStatement(
         'CREATE TRIGGER fail_primary BEFORE UPDATE OF is_primary ON addresses '
         "WHEN NEW.id=${first.id} AND NEW.is_primary=1 BEGIN SELECT RAISE(ABORT,'fail'); END",
       );
-      expect(
-        (await addresses.selectPrimary(2, 2, first.id)).error,
-        AddressError.storageFailure,
+      await expectLater(
+        addresses.selectPrimary(2, 2, first.id),
+        throwsA(anything),
       );
-      final rows = (await addresses.list(2, 2)).value!;
+      final rows = await addresses.list(2, 2);
       expect(rows.singleWhere((row) => row.isPrimary).id, second.id);
     },
   );
+
   test('delete promotes lowest ID, supports empty, and rolls back', () async {
-    final first = (await addresses.create(2, 2, _input('First'))).value!;
-    final second = (await addresses.create(2, 2, _input('Second'))).value!;
-    final third = (await addresses.create(2, 2, _input('Third'))).value!;
+    final first = await addresses.create(2, 2, _draft('First'));
+    final second = await addresses.create(2, 2, _draft('Second'));
+    final third = await addresses.create(2, 2, _draft('Third'));
     await addresses.selectPrimary(2, 2, second.id);
     await database.customStatement(
       'CREATE TRIGGER fail_promotion BEFORE UPDATE OF is_primary ON addresses '
       "WHEN NEW.id=${first.id} AND NEW.is_primary=1 BEGIN SELECT RAISE(ABORT,'fail'); END",
     );
-    expect(
-      (await addresses.delete(2, 2, second.id)).error,
-      AddressError.storageFailure,
-    );
-    var rows = (await addresses.list(2, 2)).value!;
-    expect(rows.length, 3);
+    await expectLater(addresses.delete(2, 2, second.id), throwsA(anything));
+    var rows = await addresses.list(2, 2);
+    expect(rows, hasLength(3));
     expect(rows.singleWhere((row) => row.isPrimary).id, second.id);
     await database.customStatement('DROP TRIGGER fail_promotion');
-    expect((await addresses.delete(2, 2, third.id)).value, isTrue);
+    await addresses.delete(2, 2, third.id);
     await addresses.delete(2, 2, second.id);
-    rows = (await addresses.list(2, 2)).value!;
+    rows = await addresses.list(2, 2);
     expect(rows.single.isPrimary, isTrue);
     await addresses.delete(2, 2, first.id);
-    expect((await addresses.list(2, 2)).value, isEmpty);
+    expect(await addresses.list(2, 2), isEmpty);
   });
+
+  test('validates required fields before persistence', () async {
+    await expectLater(
+      addresses.create(
+        2,
+        2,
+        const AddressDraft(
+          line1: ' ',
+          line2: null,
+          city: 'Medellín',
+          state: null,
+          postalCode: null,
+          country: 'Colombia',
+          label: 'Casa',
+        ),
+      ),
+      throwsA(isA<ValidationException>()),
+    );
+    expect(await addresses.list(2, 2), isEmpty);
+  });
+
   test(
     'address changes never affect transfer creation or receipt snapshots',
     () async {
@@ -113,12 +133,8 @@ void main() {
         "INSERT INTO transfers VALUES ('receipt',2,3,10,'completed',NULL,1,'Origin','Destination')",
       );
       final before = await _receipt(database);
-      final address = (await addresses.create(
-        2,
-        2,
-        _input('Transferless'),
-      )).value!;
-      await addresses.update(2, 2, address.id, _input('Changed'));
+      final address = await addresses.create(2, 2, _draft('Transferless'));
+      await addresses.update(2, 2, address.id, _draft('Changed'));
       await addresses.delete(2, 2, address.id);
       final after = await _receipt(database);
       expect(after.read<int>('amount_cop'), before.read<int>('amount_cop'));
@@ -127,7 +143,9 @@ void main() {
       expect(after.read<String>('status'), 'completed');
     },
   );
+
   test('migrates v1 addresses without data loss', () async {
+    await database.close();
     final directory = await Directory.systemTemp.createTemp('cotrafa-v1-');
     final file = File('${directory.path}/legacy.sqlite');
     final legacy = CotrafaDatabase.forTesting(
@@ -152,10 +170,10 @@ void main() {
       NativeDatabase(file),
       _fastHasher(),
     );
-    final service = AddressLocalDatasource(migrated);
-    final created = await service.create(1, 4, _input('Migrated'));
-    expect(created.value?.country, 'Colombia');
-    final rows = (await service.list(1, 4)).value!;
+    final datasource = AddressLocalDatasource(migrated);
+    final created = await datasource.create(1, 4, _draft('Migrated'));
+    expect(created.country, 'Colombia');
+    final rows = await datasource.list(1, 4);
     expect(
       rows.map((row) => row.line1),
       containsAll(['Legacy', 'Street Migrated']),
@@ -173,20 +191,22 @@ void main() {
   });
 }
 
-AddressInput _input(String label) => AddressInput(
-  'Street $label',
-  'Suite $label',
-  'Medellin',
-  'Antioquia',
-  '050001',
-  'Colombia',
-  label,
+AddressDraft _draft(String label) => AddressDraft(
+  line1: 'Street $label',
+  line2: 'Suite $label',
+  city: 'Medellin',
+  state: 'Antioquia',
+  postalCode: '050001',
+  country: 'Colombia',
+  label: label,
 );
+
 CredentialHasher _fastHasher() => CredentialHasher(
   memoryKiB: 64,
   iterations: 1,
   saltFactory: () => List<int>.filled(16, 7),
 );
+
 Future<void> _activeUser(CotrafaDatabase database, int id, String email) async {
   await database.customStatement(
     "INSERT INTO users (id,email,full_name,role,status,password_hash,"
