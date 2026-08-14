@@ -39,9 +39,7 @@ void main() {
     }
   });
 
-  testWidgets('starts on the login screen in light adaptive mode', (
-    tester,
-  ) async {
+  Future<void> pumpApp(WidgetTester tester, Locale locale) async {
     final authBloc = MockAuthBloc();
     when(
       () => authBloc.state,
@@ -63,10 +61,18 @@ void main() {
         supportedLocales: const [Locale('es'), Locale('en')],
         path: 'assets/translations',
         fallbackLocale: const Locale('es'),
+        startLocale: locale,
+        saveLocale: false,
         child: const App(),
       ),
     );
-    await tester.pump();
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('starts on the login screen in light adaptive mode', (
+    tester,
+  ) async {
+    await pumpApp(tester, const Locale('es'));
 
     expect(
       tester.widget<AdaptiveTheme>(find.byType(AdaptiveTheme)).initial,
@@ -78,5 +84,15 @@ void main() {
     );
     expect(find.byType(Image), findsOneWidget);
     expect(find.text('Iniciar sesión'), findsOneWidget);
+  });
+
+  testWidgets('renders the login screen in English', (tester) async {
+    await pumpApp(tester, const Locale('en'));
+
+    expect(find.text('Welcome'), findsOneWidget);
+    expect(find.text('Email or username'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
+    expect(find.text('Sign in as Admin'), findsOneWidget);
+    expect(find.text('Activate account'), findsOneWidget);
   });
 }

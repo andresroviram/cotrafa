@@ -15,6 +15,7 @@ import 'package:feature_auth/routes.dart';
 import 'package:feature_transfer/routes.dart';
 import 'package:feature_user/presentation/users/view/users_view.dart';
 import 'package:feature_user/routes.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -83,7 +84,7 @@ GoRouter createRouter(AuthBloc authBloc) {
                 const ThemeModeButton.icon(),
                 const LanguageSwitcherButton(),
                 IconButton(
-                  tooltip: 'Cerrar sesión',
+                  tooltip: 'nav.logout'.tr(),
                   onPressed: () =>
                       authBloc.add(const AuthEvent.logoutRequested()),
                   icon: const Icon(Icons.logout),

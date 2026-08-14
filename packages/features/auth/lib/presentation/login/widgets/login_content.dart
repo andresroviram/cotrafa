@@ -1,5 +1,6 @@
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -63,7 +64,7 @@ class _LoginContentState extends State<LoginContent> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Semantics(
-                          label: 'Logo de Cotrafa',
+                          label: 'auth.login.logo_semantics'.tr(),
                           image: true,
                           child: Image.asset(
                             logoPath,
@@ -90,14 +91,14 @@ class _LoginContentState extends State<LoginContent> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   Text(
-                                    'Bienvenido',
+                                    'auth.login.title'.tr(),
                                     textAlign: TextAlign.center,
                                     style: theme.textTheme.headlineSmall
                                         ?.copyWith(fontWeight: FontWeight.w700),
                                   ),
                                   const SizedBox(height: 28),
-                                  const _FieldLabel(
-                                    text: 'Correo o nombre de usuario',
+                                  _FieldLabel(
+                                    text: 'auth.login.identifier_label'.tr(),
                                   ),
                                   const SizedBox(height: 8),
                                   TextFormField(
@@ -112,15 +113,17 @@ class _LoginContentState extends State<LoginContent> {
                                     ],
                                     decoration: _inputDecoration(
                                       context,
-                                      hint: 'tu@correo.com',
+                                      hint: 'auth.login.identifier_hint'.tr(),
                                     ),
                                     validator: (value) =>
                                         value == null || value.trim().isEmpty
-                                        ? 'Ingresa tu correo o nombre de usuario.'
+                                        ? 'auth.login.identifier_required'.tr()
                                         : null,
                                   ),
                                   const SizedBox(height: 14),
-                                  const _FieldLabel(text: 'Contraseña'),
+                                  _FieldLabel(
+                                    text: 'auth.login.password_label'.tr(),
+                                  ),
                                   const SizedBox(height: 8),
                                   TextFormField(
                                     controller: _passwordController,
@@ -136,12 +139,14 @@ class _LoginContentState extends State<LoginContent> {
                                     decoration:
                                         _inputDecoration(
                                           context,
-                                          hint: 'Ingresa tu contraseña',
+                                          hint: 'auth.login.password_hint'.tr(),
                                         ).copyWith(
                                           suffixIcon: IconButton(
                                             tooltip: _obscurePassword
-                                                ? 'Mostrar contraseña'
-                                                : 'Ocultar contraseña',
+                                                ? 'auth.login.show_password'
+                                                      .tr()
+                                                : 'auth.login.hide_password'
+                                                      .tr(),
                                             onPressed: () => setState(
                                               () => _obscurePassword =
                                                   !_obscurePassword,
@@ -156,7 +161,7 @@ class _LoginContentState extends State<LoginContent> {
                                         ),
                                     validator: (value) =>
                                         value == null || value.isEmpty
-                                        ? 'Ingresa tu contraseña.'
+                                        ? 'auth.login.password_required'.tr()
                                         : null,
                                   ),
                                   const SizedBox(height: 24),
@@ -167,7 +172,7 @@ class _LoginContentState extends State<LoginContent> {
                                         : _submitClient,
                                     child: _ButtonLabel(
                                       loading: widget.isLoading,
-                                      text: 'Iniciar sesión',
+                                      text: 'auth.login.submit'.tr(),
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -179,14 +184,14 @@ class _LoginContentState extends State<LoginContent> {
                                         : () => context.read<AuthBloc>().add(
                                             const AuthEvent.demoAdminLoginRequested(),
                                           ),
-                                    child: const Text('Iniciar como Admin'),
+                                    child: Text('auth.login.admin_submit'.tr()),
                                   ),
                                   const SizedBox(height: 8),
                                   TextButton(
                                     onPressed: widget.isLoading
                                         ? null
                                         : widget.onActivation,
-                                    child: const Text('Activar cuenta'),
+                                    child: Text('auth.login.activate'.tr()),
                                   ),
                                 ],
                               ),

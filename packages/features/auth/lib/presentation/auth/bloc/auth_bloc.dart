@@ -46,7 +46,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             ? _next(AuthStatus.unauthenticated)
             : _next(AuthStatus.authenticated, identity: identity),
         onFailure: (_) =>
-            _next(AuthStatus.failure, message: 'Unable to restore session.'),
+            _next(AuthStatus.failure, message: 'auth.errors.restore'),
       ),
     );
   }
@@ -56,7 +56,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) => _authenticate(
     _loginDemoAdminUseCase.call,
-    'Unable to sign in.',
+    'auth.errors.sign_in',
     AuthStatus.authenticated,
     emit,
   );
@@ -66,7 +66,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) => _authenticate(
     () => _login(event.identifier, event.password),
-    'Unable to sign in.',
+    'auth.errors.sign_in',
     AuthStatus.authenticated,
     emit,
   );
@@ -81,7 +81,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       event.username,
       event.password,
     ),
-    'Unable to activate account.',
+    'auth.errors.activate',
     AuthStatus.activationSuccess,
     emit,
   );
@@ -112,7 +112,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       result.fold(
         onSuccess: (_) => _next(AuthStatus.unauthenticated),
         onFailure: (_) =>
-            _next(AuthStatus.failure, message: 'Unable to sign out.'),
+            _next(AuthStatus.failure, message: 'auth.errors.sign_out'),
       ),
     );
   }

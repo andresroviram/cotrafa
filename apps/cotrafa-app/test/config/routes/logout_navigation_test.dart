@@ -92,6 +92,8 @@ void main() {
         supportedLocales: const [Locale('es'), Locale('en')],
         path: 'assets/translations',
         fallbackLocale: const Locale('es'),
+        startLocale: const Locale('es'),
+        saveLocale: false,
         child: const App(),
       ),
     );

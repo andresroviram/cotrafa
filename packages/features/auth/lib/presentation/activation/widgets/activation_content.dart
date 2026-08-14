@@ -1,5 +1,6 @@
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -101,7 +102,7 @@ class _ActivationContentState extends State<ActivationContent> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Activa tu cuenta',
+            'auth.activation.title'.tr(),
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
@@ -109,7 +110,7 @@ class _ActivationContentState extends State<ActivationContent> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Usa el código entregado por el administrador y crea tus credenciales.',
+            'auth.activation.subtitle'.tr(),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
@@ -117,7 +118,7 @@ class _ActivationContentState extends State<ActivationContent> {
           _field(
             key: const Key('activation-email'),
             controller: _emailController,
-            label: 'Correo electrónico',
+            label: 'auth.activation.email'.tr(),
             keyboardType: TextInputType.emailAddress,
             validator: _validateEmail,
           ),
@@ -125,28 +126,28 @@ class _ActivationContentState extends State<ActivationContent> {
           _field(
             key: const Key('activation-code'),
             controller: _codeController,
-            label: 'Código de activación',
+            label: 'auth.activation.code'.tr(),
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(6),
             ],
             validator: (value) => !RegExp(r'^\d{6}$').hasMatch(value ?? '')
-                ? 'Ingresa el código de 6 dígitos.'
+                ? 'auth.activation.code_required'.tr()
                 : null,
           ),
           const SizedBox(height: 14),
           _field(
             key: const Key('activation-username'),
             controller: _usernameController,
-            label: 'Nombre de usuario',
+            label: 'auth.activation.username'.tr(),
             validator: _validateUsername,
           ),
           const SizedBox(height: 14),
           _field(
             key: const Key('activation-password'),
             controller: _passwordController,
-            label: 'Nueva contraseña',
+            label: 'auth.activation.new_password'.tr(),
             obscureText: _obscurePassword,
             textInputAction: TextInputAction.done,
             validator: _validatePassword,
@@ -162,12 +163,12 @@ class _ActivationContentState extends State<ActivationContent> {
                     dimension: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Activar cuenta'),
+                : Text('auth.activation.submit'.tr()),
           ),
           const SizedBox(height: 8),
           TextButton(
             onPressed: widget.isLoading ? null : widget.onBack,
-            child: const Text('Volver al inicio de sesión'),
+            child: Text('auth.activation.back'.tr()),
           ),
         ],
       ),
@@ -200,7 +201,9 @@ class _ActivationContentState extends State<ActivationContent> {
   );
 
   IconButton _visibilityButton() => IconButton(
-    tooltip: _obscurePassword ? 'Mostrar contraseña' : 'Ocultar contraseña',
+    tooltip: _obscurePassword
+        ? 'auth.login.show_password'.tr()
+        : 'auth.login.hide_password'.tr(),
     onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
     icon: Icon(
       _obscurePassword
@@ -211,22 +214,22 @@ class _ActivationContentState extends State<ActivationContent> {
 
   String? _validateEmail(String? value) {
     final email = value?.trim() ?? '';
-    if (email.isEmpty) return 'Ingresa tu correo electrónico.';
+    if (email.isEmpty) return 'auth.validation.email_required'.tr();
     return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)
         ? null
-        : 'Ingresa un correo válido.';
+        : 'auth.validation.email_invalid'.tr();
   }
 
   String? _validateUsername(String? value) {
     final username = value?.trim() ?? '';
-    if (username.length < 3) return 'Usa al menos 3 caracteres.';
+    if (username.length < 3) return 'auth.validation.username_min'.tr();
     return RegExp(r'^[a-zA-Z0-9._-]+$').hasMatch(username)
         ? null
-        : 'Usa letras, números, punto, guion o guion bajo.';
+        : 'auth.validation.username_chars'.tr();
   }
 
   String? _validatePassword(String? value) =>
-      (value?.length ?? 0) < 8 ? 'Usa al menos 8 caracteres.' : null;
+      (value?.length ?? 0) < 8 ? 'auth.validation.password_min'.tr() : null;
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;

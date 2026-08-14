@@ -1,5 +1,6 @@
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
@@ -63,7 +64,7 @@ class LoginView extends StatelessWidget {
     if (state.status == AuthStatus.failure) {
       AppNotification.showNotificationError(
         context,
-        title: state.message ?? 'No fue posible iniciar sesión.',
+        title: (state.message ?? 'auth.errors.sign_in').tr(),
       );
     }
   }

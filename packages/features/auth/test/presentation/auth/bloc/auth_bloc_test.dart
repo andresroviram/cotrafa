@@ -27,7 +27,7 @@ void main() {
   ];
   const signInFailureStates = <AuthState>[
     AuthState(status: AuthStatus.loading),
-    AuthState(status: AuthStatus.failure, message: 'Unable to sign in.'),
+    AuthState(status: AuthStatus.failure, message: 'auth.errors.sign_in'),
   ];
   late _Restore restore;
   late _Login login;
@@ -105,10 +105,7 @@ void main() {
     act: (bloc) => bloc.add(const AuthEvent.restoreRequested()),
     expect: () => const <AuthState>[
       AuthState(status: AuthStatus.loading),
-      AuthState(
-        status: AuthStatus.failure,
-        message: 'Unable to restore session.',
-      ),
+      AuthState(status: AuthStatus.failure, message: 'auth.errors.restore'),
     ],
   );
 
@@ -197,10 +194,7 @@ void main() {
     ),
     expect: () => const <AuthState>[
       AuthState(status: AuthStatus.loading),
-      AuthState(
-        status: AuthStatus.failure,
-        message: 'Unable to activate account.',
-      ),
+      AuthState(status: AuthStatus.failure, message: 'auth.errors.activate'),
     ],
   );
 
@@ -229,7 +223,7 @@ void main() {
     act: (bloc) => bloc.add(const AuthEvent.logoutRequested()),
     expect: () => const <AuthState>[
       AuthState(status: AuthStatus.loading),
-      AuthState(status: AuthStatus.failure, message: 'Unable to sign out.'),
+      AuthState(status: AuthStatus.failure, message: 'auth.errors.sign_out'),
     ],
   );
 }

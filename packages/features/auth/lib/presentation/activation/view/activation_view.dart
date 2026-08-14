@@ -1,5 +1,6 @@
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_auth/presentation/activation/view/activation_mobile.dart';
 import 'package:feature_auth/presentation/activation/view/activation_web.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
@@ -62,7 +63,7 @@ class ActivationView extends StatelessWidget {
     if (state.status == AuthStatus.failure) {
       AppNotification.showNotificationError(
         context,
-        title: state.message ?? 'No fue posible activar la cuenta.',
+        title: (state.message ?? 'auth.errors.activate').tr(),
       );
     }
   }
