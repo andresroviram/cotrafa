@@ -40,18 +40,24 @@ void main() {
     verify(() => bloc.add(const UserEvent.profileRequested(1, 2))).called(1);
   });
 
-  testWidgets('edits the name and keeps the email read-only', (tester) async {
-    const user = UserProfile(
+  testWidgets('edits optional personal data and keeps email read-only', (
+    tester,
+  ) async {
+    final user = UserProfile(
       id: 2,
       email: 'sofia@cotrafa.local',
       fullName: 'Sofia Rovira',
+      firstName: 'Sofia',
+      lastName: 'Rovira',
+      birthDate: DateTime(2000, 6, 15),
+      phone: '3000000000',
       role: 'client',
       status: 'active',
       balanceCop: 250000,
     );
     when(
       () => bloc.state,
-    ).thenReturn(const UserState(status: UserStatus.loaded, users: [user]));
+    ).thenReturn(UserState(status: UserStatus.loaded, users: [user]));
 
     await tester.pumpWidget(
       app(
@@ -73,21 +79,31 @@ void main() {
     expect(email.readOnly, isTrue);
     expect(email.controller?.text, user.email);
 
-    await tester.enterText(find.byKey(const Key('edit-user-full-name')), '  ');
-    await tester.tap(find.byKey(const Key('edit-user-submit')));
-    await tester.pump();
-    expect(find.text('Ingresa el nombre completo'), findsOneWidget);
-
     await tester.enterText(
-      find.byKey(const Key('edit-user-full-name')),
-      'Sofia Actualizada',
+      find.byKey(const Key('edit-user-first-name')),
+      'Sofía',
+    );
+    await tester.enterText(
+      find.byKey(const Key('edit-user-last-name')),
+      'Rovira Gómez',
+    );
+    await tester.enterText(
+      find.byKey(const Key('edit-user-phone')),
+      '3012345678',
     );
     await tester.tap(find.byKey(const Key('edit-user-submit')));
     await tester.pump();
 
     verify(
       () => bloc.add(
-        const UserEvent.updateRequested(1, 2, fullName: 'Sofia Actualizada'),
+        UserEvent.updateRequested(
+          1,
+          2,
+          firstName: 'Sofía',
+          lastName: 'Rovira Gómez',
+          birthDate: DateTime(2000, 6, 15),
+          phone: '3012345678',
+        ),
       ),
     ).called(1);
   });

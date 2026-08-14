@@ -48,8 +48,18 @@ final class EditUserProfile extends _UserUseCase {
   Future<Result<UserProfile>> call(
     int actorUserId,
     int userId, {
-    required String fullName,
-  }) => _repository.editProfile(actorUserId, userId, fullName: fullName);
+    required String? firstName,
+    required String? lastName,
+    required DateTime? birthDate,
+    required String? phone,
+  }) => _repository.editProfile(
+    actorUserId,
+    userId,
+    firstName: firstName,
+    lastName: lastName,
+    birthDate: birthDate,
+    phone: phone,
+  );
 }
 
 @injectable

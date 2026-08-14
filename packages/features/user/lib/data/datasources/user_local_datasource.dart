@@ -16,7 +16,10 @@ abstract interface class IUserLocalDatasource {
   Future<UserProfile> editProfile(
     int actorUserId,
     int userId, {
-    required String fullName,
+    required String? firstName,
+    required String? lastName,
+    required DateTime? birthDate,
+    required String? phone,
   });
   Future<DeleteOutcome> deleteUser(int actorUserId, int userId);
 }
@@ -35,7 +38,8 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     }
     final rows = await _database
         .customSelect(
-          'SELECT id,email,full_name,role,status,balance_cop FROM users ORDER BY id',
+          'SELECT id,email,full_name,first_name,last_name,birth_date,phone,'
+          'role,status,balance_cop FROM users ORDER BY id',
         )
         .get();
     return rows.map(_profile).toList();
@@ -81,7 +85,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
       <Object?>[
         id,
         normalized,
-        normalized.split('@').first,
+        _fallbackName(normalized),
         initialBalanceCop,
         now,
         now,
@@ -98,18 +102,46 @@ final class UserLocalDatasource implements IUserLocalDatasource {
   Future<UserProfile> editProfile(
     int actorUserId,
     int userId, {
-    required String fullName,
+    required String? firstName,
+    required String? lastName,
+    required DateTime? birthDate,
+    required String? phone,
   }) => _database.transaction(() async {
     final actor = await _user(actorUserId);
     if (!_canAccess(actor, userId)) {
       throw const UnauthorizedException();
     }
-    if (await _user(userId) == null) {
+    final target = await _user(userId);
+    if (target == null) {
       throw const NotFoundException();
     }
+    final normalizedFirstName = _optional(firstName);
+    final normalizedLastName = _optional(lastName);
+    final normalizedPhone = _optional(phone);
+    final displayName = <String?>[
+      normalizedFirstName,
+      normalizedLastName,
+    ].whereType<String>().join(' ');
     await _database.customStatement(
-      'UPDATE users SET full_name=?,updated_at=? WHERE id=?',
-      <Object?>[fullName, DateTime.now().millisecondsSinceEpoch, userId],
+      'UPDATE users SET full_name=?,first_name=?,last_name=?,birth_date=?,'
+      'phone=?,updated_at=? WHERE id=?',
+      <Object?>[
+        displayName.isEmpty
+            ? _fallbackName(target.read<String>('email'))
+            : displayName,
+        normalizedFirstName,
+        normalizedLastName,
+        birthDate == null
+            ? null
+            : DateTime.utc(
+                birthDate.year,
+                birthDate.month,
+                birthDate.day,
+              ).millisecondsSinceEpoch,
+        normalizedPhone,
+        DateTime.now().millisecondsSinceEpoch,
+        userId,
+      ],
     );
     return _profile((await _user(userId))!);
   });
@@ -160,7 +192,8 @@ final class UserLocalDatasource implements IUserLocalDatasource {
 
   Future<QueryRow?> _user(int id) => _database
       .customSelect(
-        'SELECT id,email,full_name,role,status,balance_cop FROM users WHERE id=?',
+        'SELECT id,email,full_name,first_name,last_name,birth_date,phone,'
+        'role,status,balance_cop FROM users WHERE id=?',
         variables: <Variable<Object>>[Variable<int>(id)],
       )
       .getSingleOrNull();
@@ -190,10 +223,27 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     id: row.read<int>('id'),
     email: row.read<String>('email'),
     fullName: row.read<String>('full_name'),
+    firstName: row.readNullable<String>('first_name'),
+    lastName: row.readNullable<String>('last_name'),
+    birthDate: switch (row.readNullable<int>('birth_date')) {
+      final milliseconds? => DateTime.fromMillisecondsSinceEpoch(
+        milliseconds,
+        isUtc: true,
+      ),
+      null => null,
+    },
+    phone: row.readNullable<String>('phone'),
     role: row.read<String>('role'),
     status: row.read<String>('status'),
     balanceCop: row.read<int>('balance_cop'),
   );
 
   String _normalize(String value) => value.trim().toLowerCase();
+
+  String? _optional(String? value) {
+    final normalized = value?.trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
+  }
+
+  String _fallbackName(String email) => email.split('@').first;
 }

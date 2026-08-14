@@ -13,7 +13,10 @@ abstract interface class IUserRepository {
   Future<Result<UserProfile>> editProfile(
     int actorUserId,
     int userId, {
-    required String fullName,
+    required String? firstName,
+    required String? lastName,
+    required DateTime? birthDate,
+    required String? phone,
   });
   Future<Result<DeleteOutcome>> deleteUser(int actorUserId, int userId);
 }

@@ -40,9 +40,19 @@ final class UserRepositoryImpl implements IUserRepository {
   Future<Result<UserProfile>> editProfile(
     int actorUserId,
     int userId, {
-    required String fullName,
+    required String? firstName,
+    required String? lastName,
+    required DateTime? birthDate,
+    required String? phone,
   }) => _datasource
-      .editProfile(actorUserId, userId, fullName: fullName)
+      .editProfile(
+        actorUserId,
+        userId,
+        firstName: firstName,
+        lastName: lastName,
+        birthDate: birthDate,
+        phone: phone,
+      )
       .toResult(fallback: const StorageFailure());
 
   @override

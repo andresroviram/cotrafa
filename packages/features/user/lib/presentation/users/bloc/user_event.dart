@@ -16,7 +16,10 @@ sealed class UserEvent with _$UserEvent {
   const factory UserEvent.updateRequested(
     int actorUserId,
     int userId, {
-    required String fullName,
+    required String? firstName,
+    required String? lastName,
+    required DateTime? birthDate,
+    required String? phone,
   }) = UserUpdateRequested;
   const factory UserEvent.deleteRequested(int actorUserId, int userId) =
       UserDeleteRequested;

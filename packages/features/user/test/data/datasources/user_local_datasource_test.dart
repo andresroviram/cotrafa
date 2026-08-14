@@ -39,10 +39,19 @@ void main() {
     expect(row.readNullable<String>('password_hash'), isNull);
     expect(row.readNullable<String>('activation_code_hash'), isNull);
     expect((await users.listUsers(1)).length, 2);
-    expect(
-      (await users.editProfile(1, created.id, fullName: 'Edited')).fullName,
-      'Edited',
+    final updated = await users.editProfile(
+      1,
+      created.id,
+      firstName: 'Sofia',
+      lastName: 'Rovira',
+      birthDate: DateTime(2000, 6, 15),
+      phone: '3001234567',
     );
+    expect(updated.fullName, 'Sofia Rovira');
+    expect(updated.firstName, 'Sofia');
+    expect(updated.lastName, 'Rovira');
+    expect(updated.birthDate, DateTime.utc(2000, 6, 15));
+    expect(updated.phone, '3001234567');
     await expectLater(
       _create(users, CotrafaDatabaseSeed.test.email.toUpperCase(), 0),
       throwsA(isA<DuplicateException>()),
@@ -67,7 +76,7 @@ void main() {
     expect((await users.listUsers(1)).length, 2);
   });
 
-  test('active client can view and edit only own name', () async {
+  test('active client can view and edit only own optional profile', () async {
     final client = await _create(users, 'client@example.com', 75);
     await database.customStatement(
       "UPDATE users SET status='active' WHERE id=${client.id}",
@@ -77,7 +86,10 @@ void main() {
       (await users.editProfile(
         client.id,
         client.id,
-        fullName: 'Self',
+        firstName: 'Self',
+        lastName: null,
+        birthDate: null,
+        phone: null,
       )).fullName,
       'Self',
     );
@@ -86,7 +98,14 @@ void main() {
       throwsA(isA<UnauthorizedException>()),
     );
     await expectLater(
-      users.editProfile(client.id, 1, fullName: 'Attack'),
+      users.editProfile(
+        client.id,
+        1,
+        firstName: 'Attack',
+        lastName: null,
+        birthDate: null,
+        phone: null,
+      ),
       throwsA(isA<UnauthorizedException>()),
     );
     await expectLater(

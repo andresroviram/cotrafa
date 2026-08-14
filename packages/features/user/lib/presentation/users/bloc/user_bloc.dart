@@ -100,7 +100,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     final result = await _editUserProfile(
       event.actorUserId,
       event.userId,
-      fullName: event.fullName,
+      firstName: event.firstName,
+      lastName: event.lastName,
+      birthDate: event.birthDate,
+      phone: event.phone,
     );
     emit(
       result.fold(

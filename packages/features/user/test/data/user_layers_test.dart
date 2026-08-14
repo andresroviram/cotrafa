@@ -52,7 +52,10 @@ void main() {
       (await EditUserProfile(repository)(
         1,
         user.id,
-        fullName: 'Updated Client',
+        firstName: 'Updated',
+        lastName: 'Client',
+        birthDate: DateTime(2000, 1, 1),
+        phone: '3001234567',
       )).valueOrNull?.fullName,
       'Updated Client',
     );

@@ -34,6 +34,9 @@ void main() {
     id: 2,
     email: 'client@example.com',
     fullName: 'Updated Client',
+    firstName: 'Updated',
+    lastName: 'Client',
+    phone: '3001234567',
     role: 'client',
     status: 'pendingActivation',
     balanceCop: 150000,
@@ -116,7 +119,14 @@ void main() {
         ),
       ).thenAnswer((_) async => const Success(client));
       when(
-        () => repository.editProfile(1, 2, fullName: 'Updated Client'),
+        () => repository.editProfile(
+          1,
+          2,
+          firstName: 'Updated',
+          lastName: 'Client',
+          birthDate: null,
+          phone: '3001234567',
+        ),
       ).thenAnswer((_) async => const Success(updatedClient));
     },
     build: build,
@@ -131,7 +141,14 @@ void main() {
       );
       await Future<void>.delayed(Duration.zero);
       bloc.add(
-        const UserEvent.updateRequested(1, 2, fullName: 'Updated Client'),
+        const UserEvent.updateRequested(
+          1,
+          2,
+          firstName: 'Updated',
+          lastName: 'Client',
+          birthDate: null,
+          phone: '3001234567',
+        ),
       );
     },
     expect: () => const <UserState>[
