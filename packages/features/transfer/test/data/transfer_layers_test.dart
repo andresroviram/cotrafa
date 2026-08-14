@@ -57,6 +57,9 @@ void main() {
     () async {
       when(() => datasource.listParties(2)).thenAnswer((_) async => parties);
       when(
+        () => datasource.listTransfers(2),
+      ).thenAnswer((_) async => [receipt]);
+      when(
         () => datasource.createTransfer(command),
       ).thenAnswer((_) async => receipt);
       when(
@@ -64,6 +67,7 @@ void main() {
       ).thenAnswer((_) async => receipt);
 
       expect(await ListTransferParties(repository)(2), const Success(parties));
+      expect((await ListTransfers(repository)(2)).valueOrNull, [receipt]);
       expect(await CreateTransfer(repository)(command), const Success(receipt));
       expect(
         await GetTransferReceipt(repository)('receipt-1'),

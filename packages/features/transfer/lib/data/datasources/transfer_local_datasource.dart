@@ -9,6 +9,7 @@ import 'package:injectable/injectable.dart';
 
 abstract interface class ITransferLocalDatasource {
   Future<List<TransferParty>> listParties(int actorUserId);
+  Future<List<TransferReceipt>> listTransfers(int actorUserId);
   Future<TransferReceipt> createTransfer(TransferCommand command);
   Future<TransferReceipt> getReceipt(String id);
   Future<void> requestReceiptAction(String id, ReceiptAction action);
@@ -49,6 +50,31 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
         )
         .get();
     return rows.map(_party).toList();
+  }
+
+  @override
+  Future<List<TransferReceipt>> listTransfers(int actorUserId) async {
+    final actor = await _user(actorUserId);
+    if (actor == null || actor.read<String>('status') != 'active') {
+      throw const UnauthorizedException();
+    }
+    final isAdmin = actor.read<String>('role') == 'admin';
+    final rows = await _database
+        .customSelect(
+          isAdmin
+              ? 'SELECT * FROM transfers ORDER BY created_at DESC, id DESC'
+              : 'SELECT * FROM transfers '
+                    'WHERE origin_user_id=? OR destination_user_id=? '
+                    'ORDER BY created_at DESC, id DESC',
+          variables: isAdmin
+              ? const <Variable<Object>>[]
+              : <Variable<Object>>[
+                  Variable<int>(actorUserId),
+                  Variable<int>(actorUserId),
+                ],
+        )
+        .get();
+    return rows.map(_receipt).toList();
   }
 
   @override

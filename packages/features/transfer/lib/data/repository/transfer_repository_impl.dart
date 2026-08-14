@@ -21,6 +21,12 @@ final class TransferRepositoryImpl implements ITransferRepository {
       ).toResult(fallback: const StorageFailure());
 
   @override
+  Future<Result<List<TransferReceipt>>> listTransfers(int actorUserId) =>
+      Future<List<TransferReceipt>>.sync(
+        () => _datasource.listTransfers(actorUserId),
+      ).toResult(fallback: const StorageReadFailure());
+
+  @override
   Future<Result<TransferReceipt>> createTransfer(TransferCommand command) =>
       Future<TransferReceipt>.sync(
         () => _datasource.createTransfer(command),

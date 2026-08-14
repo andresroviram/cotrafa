@@ -44,6 +44,45 @@ void main() {
     );
   });
 
+  test('lists only the transfer history visible to the actor', () async {
+    await transfers.createTransfer(
+      const TransferCommand(
+        actorId: 2,
+        originId: 2,
+        destinationId: 3,
+        amountCop: 10,
+      ),
+    );
+    await TransferLocalDatasource.forTesting(
+      db,
+      idGenerator: () => 'transfer-2',
+      clock: () => DateTime.fromMillisecondsSinceEpoch(2000),
+    ).createTransfer(
+      const TransferCommand(
+        actorId: 1,
+        originId: 4,
+        destinationId: 3,
+        amountCop: 10,
+      ),
+    );
+
+    expect((await transfers.listTransfers(2)).map((transfer) => transfer.id), [
+      'transfer-1',
+    ]);
+    expect((await transfers.listTransfers(3)).map((transfer) => transfer.id), [
+      'transfer-2',
+      'transfer-1',
+    ]);
+    expect((await transfers.listTransfers(1)).map((transfer) => transfer.id), [
+      'transfer-2',
+      'transfer-1',
+    ]);
+    await expectLater(
+      transfers.listTransfers(99),
+      throwsA(isA<UnauthorizedException>()),
+    );
+  });
+
   test('client and admin create atomic address-free receipts', () async {
     final receipt = await transfers.createTransfer(
       const TransferCommand(

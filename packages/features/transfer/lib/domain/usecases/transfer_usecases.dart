@@ -21,6 +21,14 @@ final class ListTransferParties extends _TransferUseCase {
 }
 
 @injectable
+final class ListTransfers extends _TransferUseCase {
+  const ListTransfers(super.repository);
+
+  Future<Result<List<TransferReceipt>>> call(int actorUserId) =>
+      repository.listTransfers(actorUserId);
+}
+
+@injectable
 final class CreateTransfer extends _TransferUseCase {
   const CreateTransfer(super.repository);
 
