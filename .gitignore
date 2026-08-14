@@ -33,7 +33,7 @@ migrate_working_dir/
 .pub/
 /build/
 /build_web/
-/coverage/
+**/coverage/
 packages/**/build/
 
 # Generated Dart sources
@@ -42,6 +42,11 @@ packages/**/build/
 *.gr.dart
 *.config.dart
 injectable.module.dart
+
+# Generated Drift web worker
+**/web/drift_worker.dart.js
+**/web/drift_worker.dart.js.deps
+**/web/drift_worker.dart.js.map
 
 # Symbolication and obfuscation
 app.*.symbols

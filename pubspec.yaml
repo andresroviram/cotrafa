@@ -17,33 +17,132 @@ dev_dependencies:
   melos: ^7.4.0
 
 melos:
+  repository: https://github.com/andresroviram/cotrafa
+
   command:
     bootstrap:
       hooks:
-        post: echo "Cotrafa workspace bootstrap complete."
+        post: echo "Cotrafa workspace bootstrap complete. Run 'fvm dart run melos run build:cotrafa-all' to generate code."
 
   scripts:
     generate:
       run: fvm dart run melos exec --depends-on=build_runner --concurrency=1 -- "fvm dart run build_runner build"
       description: Generate code for packages that use build_runner.
 
+    build:cotrafa-all:
+      run: fvm dart run melos run generate:core && fvm dart run melos run generate:database && fvm dart run melos run generate:auth && fvm dart run melos run generate:user && fvm dart run melos run generate:transfer && fvm dart run melos run generate:app && fvm dart run melos run build:web-worker:cotrafa
+      description: Generate Cotrafa code in dependency order, including the Drift web worker.
+
+    generate:core:
+      exec: fvm dart run build_runner build
+      packageFilters:
+        scope: core
+      description: Generate Core code.
+
+    generate:database:
+      exec: fvm dart run build_runner build
+      packageFilters:
+        scope: cotrafa_database
+      description: Generate the Drift database.
+
+    generate:auth:
+      exec: fvm dart run build_runner build
+      packageFilters:
+        scope: feature_auth
+      description: Generate Auth code.
+
+    generate:user:
+      exec: fvm dart run build_runner build
+      packageFilters:
+        scope: feature_user
+      description: Generate User code.
+
+    generate:transfer:
+      exec: fvm dart run build_runner build
+      packageFilters:
+        scope: feature_transfer
+      description: Generate Transfer code.
+
+    generate:app:
+      exec: fvm dart run build_runner build
+      packageFilters:
+        scope: cotrafa_app
+      description: Generate application DI and environment code.
+
+    build:web-worker:cotrafa:
+      run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm dart compile js -O1 -o web/drift_worker.dart.js web/drift_worker.dart
+      description: Compile the Cotrafa Drift web worker.
+
+    build:watch:
+      exec: fvm dart run build_runner watch
+      packageFilters:
+        dependsOn: build_runner
+      description: Watch build_runner packages.
+
     analyze:
       exec: fvm dart analyze .
       concurrency: 4
       description: Analyze every workspace package.
 
+    analyze:changed:
+      exec: fvm dart analyze .
+      concurrency: 4
+      packageFilters:
+        diff: origin/main
+      description: Analyze packages changed from origin/main.
+
     test:
       run: fvm dart run melos exec --dir-exists=test --concurrency=4 -- "fvm flutter test"
       description: Run tests in every package that has a test directory.
+
+    test:coverage:
+      run: fvm dart run melos exec --dir-exists=test --concurrency=1 -- "fvm flutter test --coverage"
+      description: Run all package tests and generate LCOV reports.
+
+    test:changed:
+      exec: fvm flutter test
+      concurrency: 4
+      packageFilters:
+        dirExists: test
+        diff: origin/main
+      description: Test packages changed from origin/main.
 
     format:check:
       run: git ls-files --cached --others --exclude-standard -z -- "*.dart" | xargs -0 fvm dart format --output=none --set-exit-if-changed
       description: Check tracked and intended untracked Dart files without formatting ignored generated outputs.
 
+    format:
+      run: fvm dart run melos run format:check
+      description: Alias for the workspace format check.
+
+    format:fix:
+      run: git ls-files --cached --others --exclude-standard -z -- "*.dart" | xargs -0 fvm dart format
+      description: Format tracked and intended untracked Dart files.
+
+    clean:generated:
+      run: find . \( -name "*.g.dart" -o -name "*.freezed.dart" -o -name "*.config.dart" \) -delete
+      description: Remove generated Dart sources.
+
+    setup:web:
+      run: ./scripts/setup_web.sh
+      description: Install SQLite WASM and compile the Drift web worker.
+
+    coverage:check:
+      run: ./scripts/check_coverage.sh 60
+      description: Generate coverage and enforce a 60 percent workspace threshold.
+
     run:mobile:
-      run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm flutter run
+      run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm flutter run --dart-define=FLAVOR=dev
       description: Run the Cotrafa application on a mobile target.
 
     run:web:
-      run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm flutter run -d chrome
+      run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm flutter run -d chrome --web-port 4002 --dart-define=FLAVOR=dev
       description: Run the Cotrafa application in Chrome.
+
+    run:desktop:
+      run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm flutter run -d macos --dart-define=FLAVOR=dev
+      description: Run the Cotrafa application on macOS.
+
+    ci:
+      run: fvm dart run melos run format:check && fvm dart run melos run analyze && fvm dart run melos run test
+      description: Run the local CI quality pipeline.
