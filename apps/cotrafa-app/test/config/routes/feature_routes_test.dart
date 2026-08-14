@@ -35,6 +35,11 @@ void main() {
           .path,
       UsersView.path,
     );
-    expect((transferRoutes.routes.single as GoRoute).path, TransferView.path);
+    expect(
+      (transferRoutes(actorUserId: () => 1, isAdmin: () => true).routes.single
+              as GoRoute)
+          .path,
+      TransferView.path,
+    );
   });
 }

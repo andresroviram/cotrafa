@@ -3,6 +3,9 @@ import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/get_it.dart';
 import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
 import 'package:feature_transfer/data/datasources/transfer_local_datasource.dart';
+import 'package:feature_transfer/domain/repository/i_transfer_repository.dart';
+import 'package:feature_transfer/domain/usecases/transfer_usecases.dart';
+import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
 import 'package:feature_user/data/datasources/address_local_datasource.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
 import 'package:feature_user/domain/repository/i_user_repository.dart';
@@ -30,6 +33,10 @@ void main() {
     expect(getIt.isRegistered<CreateClient>(), isTrue);
     expect(getIt.isRegistered<UserBloc>(), isTrue);
     expect(getIt<AddressLocalDatasource>(), isA<AddressLocalDatasource>());
-    expect(getIt<TransferLocalDatasource>(), isA<TransferLocalDatasource>());
+    expect(getIt<ITransferLocalDatasource>(), isA<TransferLocalDatasource>());
+    expect(getIt.isRegistered<ITransferRepository>(), isTrue);
+    expect(getIt.isRegistered<ListTransferParties>(), isTrue);
+    expect(getIt.isRegistered<CreateTransfer>(), isTrue);
+    expect(getIt.isRegistered<TransferBloc>(), isTrue);
   });
 }

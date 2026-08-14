@@ -7,7 +7,7 @@ import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart'
 import 'package:injectable/injectable.dart';
 
 @injectable
-final class TransferBloc extends Bloc<TransferEvent, TransferState> {
+class TransferBloc extends Bloc<TransferEvent, TransferState> {
   TransferBloc(this._listParties, this._createTransfer)
     : super(const TransferState()) {
     on<TransferLoadRequested>(_load);

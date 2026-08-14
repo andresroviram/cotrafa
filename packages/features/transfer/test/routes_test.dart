@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 
 void main() {
   test('owns the transfer shell branch', () {
-    final route = transferRoutes.routes.single as GoRoute;
+    final route =
+        transferRoutes(actorUserId: () => 7, isAdmin: () => true).routes.single
+            as GoRoute;
 
     expect(route.path, TransferView.path);
     expect(route.name, TransferView.name);

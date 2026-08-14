@@ -104,7 +104,10 @@ GoRouter createRouter(AuthBloc authBloc) {
               return result.valueOrNull;
             },
           ),
-          transferRoutes,
+          transferRoutes(
+            actorUserId: () => authBloc.state.identity!.userId,
+            isAdmin: () => authBloc.state.identity!.role == 'admin',
+          ),
         ],
       ),
     ],
