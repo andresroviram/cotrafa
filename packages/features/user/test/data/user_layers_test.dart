@@ -37,7 +37,6 @@ void main() {
     final created = await CreateClient(repository)(
       1,
       email: ' CLIENT@EXAMPLE.COM ',
-      fullName: 'Client',
       initialBalanceCop: 150000,
     );
     final user = created.valueOrNull!;
@@ -46,8 +45,8 @@ void main() {
     expect(user.balanceCop, 150000);
     expect((await ListUsers(repository)(1)).valueOrNull, hasLength(2));
     expect(
-      (await GetUser(repository)(1, user.id)).valueOrNull?.fullName,
-      'Client',
+      (await GetUser(repository)(1, user.id)).valueOrNull?.email,
+      'client@example.com',
     );
     expect(
       (await EditUserProfile(repository)(
@@ -67,7 +66,6 @@ void main() {
     final invalid = await CreateClient(repository)(
       1,
       email: 'client@example.com',
-      fullName: 'Client',
       initialBalanceCop: -1,
     );
     final missing = await GetUser(repository)(1, 999);

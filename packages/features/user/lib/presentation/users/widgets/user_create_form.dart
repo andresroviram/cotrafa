@@ -24,14 +24,12 @@ class UserCreateForm extends StatefulWidget {
 
 class _UserCreateFormState extends State<UserCreateForm> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _balanceController = TextEditingController(text: '0');
   bool _handledCreation = false;
 
   @override
   void dispose() {
-    _fullNameController.dispose();
     _emailController.dispose();
     _balanceController.dispose();
     super.dispose();
@@ -63,20 +61,6 @@ class _UserCreateFormState extends State<UserCreateForm> {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 24),
-                TextFormField(
-                  key: const Key('create-user-full-name'),
-                  controller: _fullNameController,
-                  textInputAction: TextInputAction.next,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre completo',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? 'Ingresa el nombre completo'
-                      : null,
-                ),
-                const SizedBox(height: 16),
                 TextFormField(
                   key: const Key('create-user-email'),
                   controller: _emailController,
@@ -152,7 +136,6 @@ class _UserCreateFormState extends State<UserCreateForm> {
       UserEvent.createRequested(
         widget.actorUserId,
         email: _emailController.text.trim(),
-        fullName: _fullNameController.text.trim(),
         initialBalanceCop: int.parse(_balanceController.text),
       ),
     );

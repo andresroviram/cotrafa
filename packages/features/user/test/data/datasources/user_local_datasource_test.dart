@@ -29,6 +29,10 @@ void main() {
   test('admin CRUD rejects invalid identifiers or balance', () async {
     final created = await _create(users, ' CLIENT@EXAMPLE.COM ', 250);
     expect(created.email, 'client@example.com');
+    expect(created.firstName, isNull);
+    expect(created.lastName, isNull);
+    expect(created.birthDate, isNull);
+    expect(created.phone, isNull);
     expect(created.status, 'pendingActivation');
     expect(created.balanceCop, 250);
     final row = await _user(database, created.id);
@@ -68,7 +72,7 @@ void main() {
     await database.customStatement(
       "UPDATE users SET status='active' WHERE id=${client.id}",
     );
-    expect((await users.getUser(client.id, client.id)).fullName, 'Client');
+    expect((await users.getUser(client.id, client.id)).email, client.email);
     expect(
       (await users.editProfile(
         client.id,
@@ -181,12 +185,7 @@ Future<UserProfile> _create(
   UserLocalDatasource users,
   String email,
   int balance,
-) => users.createClient(
-  1,
-  email: email,
-  fullName: 'Client',
-  initialBalanceCop: balance,
-);
+) => users.createClient(1, email: email, initialBalanceCop: balance);
 
 Future<QueryRow> _user(CotrafaDatabase database, int id) =>
     database.customSelect('SELECT * FROM users WHERE id=$id').getSingle();

@@ -8,7 +8,6 @@ abstract interface class IUserRepository {
   Future<Result<UserProfile>> createClient(
     int actorUserId, {
     required String email,
-    required String fullName,
     required int initialBalanceCop,
   });
   Future<Result<UserProfile>> editProfile(

@@ -27,13 +27,11 @@ final class UserRepositoryImpl implements IUserRepository {
   Future<Result<UserProfile>> createClient(
     int actorUserId, {
     required String email,
-    required String fullName,
     required int initialBalanceCop,
   }) => _datasource
       .createClient(
         actorUserId,
         email: email,
-        fullName: fullName,
         initialBalanceCop: initialBalanceCop,
       )
       .toResult(fallback: const StorageFailure());

@@ -79,7 +79,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     final result = await _createClient(
       event.actorUserId,
       email: event.email,
-      fullName: event.fullName,
       initialBalanceCop: event.initialBalanceCop,
     );
     emit(

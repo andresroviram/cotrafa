@@ -11,7 +11,6 @@ abstract interface class IUserLocalDatasource {
   Future<UserProfile> createClient(
     int actorUserId, {
     required String email,
-    required String fullName,
     required int initialBalanceCop,
   });
   Future<UserProfile> editProfile(
@@ -57,7 +56,6 @@ final class UserLocalDatasource implements IUserLocalDatasource {
   Future<UserProfile> createClient(
     int actorUserId, {
     required String email,
-    required String fullName,
     required int initialBalanceCop,
   }) => _database.transaction(() async {
     if (!await _isActiveAdmin(actorUserId)) {
@@ -80,7 +78,14 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     await _database.customStatement(
       "INSERT INTO users (id,email,full_name,role,status,balance_cop,created_at,updated_at) "
       "VALUES (?, ?, ?, 'client', 'pendingActivation', ?, ?, ?)",
-      <Object?>[id, normalized, fullName, initialBalanceCop, now, now],
+      <Object?>[
+        id,
+        normalized,
+        normalized.split('@').first,
+        initialBalanceCop,
+        now,
+        now,
+      ],
     );
     await _database.customStatement(
       "INSERT INTO login_identifiers VALUES (?,?,'email')",

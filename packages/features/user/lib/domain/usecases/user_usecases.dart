@@ -33,12 +33,10 @@ final class CreateClient extends _UserUseCase {
   Future<Result<UserProfile>> call(
     int actorUserId, {
     required String email,
-    required String fullName,
     required int initialBalanceCop,
   }) => _repository.createClient(
     actorUserId,
     email: email,
-    fullName: fullName,
     initialBalanceCop: initialBalanceCop,
   );
 }

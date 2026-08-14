@@ -296,10 +296,6 @@ void main() {
     await tester.tap(find.byKey(const Key('create-user-action')));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('create-user-full-name')),
-      'Sofia Rovira',
-    );
-    await tester.enterText(
       find.byKey(const Key('create-user-email')),
       'sofia@cotrafa.local',
     );
@@ -315,7 +311,6 @@ void main() {
         const UserEvent.createRequested(
           1,
           email: 'sofia@cotrafa.local',
-          fullName: 'Sofia Rovira',
           initialBalanceCop: 250000,
         ),
       ),
@@ -328,7 +323,7 @@ void main() {
           UserProfile(
             id: 2,
             email: 'sofia@cotrafa.local',
-            fullName: 'Sofia Rovira',
+            fullName: 'sofia',
             role: 'client',
             status: 'pendingActivation',
             balanceCop: 250000,

@@ -55,7 +55,6 @@ void main() {
     const event = UserEvent.createRequested(
       1,
       email: 'client@example.com',
-      fullName: 'Client',
       initialBalanceCop: 150000,
     );
 
@@ -64,7 +63,6 @@ void main() {
       const UserEvent.createRequested(
         1,
         email: 'client@example.com',
-        fullName: 'Client',
         initialBalanceCop: 150000,
       ),
     );
@@ -114,7 +112,6 @@ void main() {
         () => repository.createClient(
           1,
           email: 'client@example.com',
-          fullName: 'Client',
           initialBalanceCop: 150000,
         ),
       ).thenAnswer((_) async => const Success(client));
@@ -129,7 +126,6 @@ void main() {
         const UserEvent.createRequested(
           1,
           email: 'client@example.com',
-          fullName: 'Client',
           initialBalanceCop: 150000,
         ),
       );

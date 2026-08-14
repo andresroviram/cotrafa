@@ -11,7 +11,6 @@ sealed class UserEvent with _$UserEvent {
   const factory UserEvent.createRequested(
     int actorUserId, {
     required String email,
-    required String fullName,
     required int initialBalanceCop,
   }) = UserCreateRequested;
   const factory UserEvent.updateRequested(
