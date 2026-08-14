@@ -127,6 +127,12 @@ void main() {
     expect(find.byKey(const Key('user-available-balance')), findsOneWidget);
     expect(find.text('Saldo disponible'), findsOneWidget);
     expect(find.textContaining('250.000'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byKey(const Key('user-available-balance'))).dy,
+      lessThan(
+        tester.getTopLeft(find.widgetWithText(FilledButton, 'Editar')).dy,
+      ),
+    );
 
     await tester.tap(find.widgetWithText(FilledButton, 'Editar'));
     await tester.pumpAndSettle();

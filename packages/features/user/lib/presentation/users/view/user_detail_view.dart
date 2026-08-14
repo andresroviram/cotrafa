@@ -138,6 +138,8 @@ class _UserDetailContent extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    _BalanceCard(balanceCop: user.balanceCop),
                     const SizedBox(height: 24),
                     Row(
                       children: [
@@ -158,8 +160,6 @@ class _UserDetailContent extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    _BalanceCard(balanceCop: user.balanceCop),
                     const SizedBox(height: 32),
                     const _SectionHeader(
                       icon: Icons.person_outline,
