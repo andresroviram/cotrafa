@@ -67,4 +67,20 @@ void main() {
       );
     }
   });
+
+  test('keeps BlocListener side effects in atomic feature views', () {
+    final dartFiles = Directory('lib/presentation/users')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .where((file) => !file.path.endsWith('_view.dart'));
+
+    for (final file in dartFiles) {
+      expect(
+        file.readAsStringSync(),
+        isNot(contains('BlocListener<')),
+        reason: file.path,
+      );
+    }
+  });
 }

@@ -1,5 +1,4 @@
 import 'package:feature_user/domain/entities/user_profile.dart';
-import 'package:feature_user/presentation/users/activation_code_issuer.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/widgets/user_form.dart';
 import 'package:flutter/material.dart';
@@ -9,12 +8,7 @@ Future<bool?> showUserFormModal(
   BuildContext context, {
   required int actorUserId,
   UserProfile? user,
-  ActivationCodeIssuer? issueActivationCode,
 }) {
-  assert(
-    user != null || issueActivationCode != null,
-    'Creation requires an activation-code issuer.',
-  );
   final bloc = context.read<UserBloc>();
   return showModalBottomSheet<bool>(
     context: context,
@@ -25,10 +19,7 @@ Future<bool?> showUserFormModal(
     builder: (_) => BlocProvider.value(
       value: bloc,
       child: user == null
-          ? UserForm.create(
-              actorUserId: actorUserId,
-              issueActivationCode: issueActivationCode!,
-            )
+          ? UserForm.create(actorUserId: actorUserId)
           : UserForm.edit(actorUserId: actorUserId, user: user),
     ),
   );

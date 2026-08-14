@@ -414,6 +414,10 @@ void main() {
     expect(find.text('123456'), findsOneWidget);
     expect(issuedForActor, 1);
     expect(issuedForEmail, 'sofia@cotrafa.local');
+
+    await tester.tap(find.text('Entendido'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('create-user-submit')), findsNothing);
   });
 
   testWidgets('requires first and last name when creating a client', (

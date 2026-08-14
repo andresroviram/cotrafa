@@ -7,6 +7,7 @@ import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/users/view/users_mobile.dart';
 import 'package:feature_user/presentation/users/view/users_web.dart';
+import 'package:feature_user/presentation/users/widgets/activation_code_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -66,7 +67,7 @@ class UsersView extends StatelessWidget {
     );
   }
 
-  void _onStateChanged(BuildContext context, UserState state) {
+  Future<void> _onStateChanged(BuildContext context, UserState state) async {
     if (!context.mounted) return;
     if (state.message != null) {
       if (state.notificationType == UserNotificationType.info) {
@@ -90,5 +91,43 @@ class UsersView extends StatelessWidget {
     if (message != null) {
       AppNotification.showNotification(context, title: message);
     }
+    if (state.status == UserStatus.created) {
+      await _completeCreation(context, state);
+    } else if (state.status == UserStatus.updated) {
+      _closeRootModal(context);
+    }
+  }
+
+  Future<void> _completeCreation(BuildContext context, UserState state) async {
+    final issuer = issueActivationCode;
+    if (issuer == null || state.users.isEmpty) return;
+    final bloc = context.read<UserBloc>();
+    final code = await issuer(actorUserId, state.users.last.email);
+    if (!context.mounted) return;
+    if (code == null) {
+      bloc.add(
+        const UserEvent.notificationRequested(
+          'Usuario creado. Genera su código desde la lista de usuarios.',
+          type: UserNotificationType.info,
+        ),
+      );
+    } else {
+      await showActivationCodeDialog(
+        context,
+        code: code,
+        onCopied: () => bloc.add(
+          const UserEvent.notificationRequested(
+            'Código copiado',
+            type: UserNotificationType.info,
+          ),
+        ),
+      );
+    }
+    if (context.mounted) _closeRootModal(context);
+  }
+
+  void _closeRootModal(BuildContext context) {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    if (navigator.canPop()) navigator.pop(true);
   }
 }

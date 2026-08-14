@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:bot_toast/bot_toast.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
@@ -34,12 +37,16 @@ void main() {
           foregroundColor: Colors.white,
         ),
       ),
-      builder: (context, child) => ResponsiveBreakpoints.builder(
-        child: child!,
-        breakpoints: const [
-          Breakpoint(start: 0, end: 450, name: MOBILE),
-          Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
-        ],
+      navigatorObservers: [BotToastNavigatorObserver()],
+      builder: (context, child) => BotToastInit()(
+        context,
+        ResponsiveBreakpoints.builder(
+          child: child!,
+          breakpoints: const [
+            Breakpoint(start: 0, end: 450, name: MOBILE),
+            Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+          ],
+        ),
       ),
       home: BlocProvider<UserBloc>.value(
         value: bloc,
@@ -158,5 +165,34 @@ void main() {
     expect(find.byKey(const Key('edit-user-last-name')), findsOneWidget);
     expect(find.byKey(const Key('edit-user-email')), findsOneWidget);
     expect(find.byKey(const Key('create-user-balance')), findsNothing);
+  });
+
+  testWidgets('closes the edit modal from the atomic view listener', (
+    tester,
+  ) async {
+    final states = StreamController<UserState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    const user = UserProfile(
+      id: 2,
+      email: 'client@cotrafa.local',
+      fullName: 'Client User',
+      firstName: 'Client',
+      lastName: 'User',
+      role: 'client',
+      status: 'active',
+      balanceCop: 250000,
+    );
+
+    await tester.pumpWidget(subject(user));
+    await tester.tap(find.widgetWithText(FilledButton, 'Editar'));
+    await tester.pumpAndSettle();
+    clearInteractions(bloc);
+
+    states.add(const UserState(status: UserStatus.updated, users: [user]));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('edit-user-submit')), findsNothing);
+    expect(find.byType(UserDetailView), findsOneWidget);
   });
 }

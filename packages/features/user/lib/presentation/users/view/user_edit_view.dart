@@ -54,6 +54,8 @@ class UserEditView extends StatelessWidget {
     }
     if (state.status == UserStatus.updated) {
       AppNotification.showNotification(context, title: 'Usuario actualizado');
+      final navigator = Navigator.of(context);
+      if (navigator.canPop()) navigator.pop(true);
     }
   }
 }

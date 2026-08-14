@@ -108,13 +108,8 @@ class UsersWeb extends StatelessWidget {
   bool get _canCreate => isAdmin && issueActivationCode != null;
 
   Future<void> _openCreate(BuildContext context) async {
-    final issuer = issueActivationCode;
-    if (issuer == null) return;
-    await showUserFormModal(
-      context,
-      actorUserId: actorUserId,
-      issueActivationCode: issuer,
-    );
+    if (issueActivationCode == null) return;
+    await showUserFormModal(context, actorUserId: actorUserId);
   }
 
   void _load(UserBloc bloc) => bloc.add(
