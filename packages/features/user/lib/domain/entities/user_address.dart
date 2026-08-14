@@ -90,4 +90,20 @@ final class AddressDraft {
   final String? postalCode;
   final String country;
   final String label;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AddressDraft &&
+          line1 == other.line1 &&
+          line2 == other.line2 &&
+          city == other.city &&
+          state == other.state &&
+          postalCode == other.postalCode &&
+          country == other.country &&
+          label == other.label;
+
+  @override
+  int get hashCode =>
+      Object.hash(line1, line2, city, state, postalCode, country, label);
 }

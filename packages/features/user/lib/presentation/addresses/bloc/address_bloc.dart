@@ -7,7 +7,7 @@ import 'package:feature_user/presentation/addresses/bloc/address_state.dart';
 import 'package:injectable/injectable.dart';
 
 @injectable
-final class AddressBloc extends Bloc<AddressEvent, AddressState> {
+class AddressBloc extends Bloc<AddressEvent, AddressState> {
   AddressBloc(
     this._listAddresses,
     this._createAddress,
