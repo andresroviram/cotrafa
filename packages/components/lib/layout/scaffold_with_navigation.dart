@@ -15,7 +15,7 @@ String _resolveDrawerLogoPath(
   required String logoPath,
   String? logoDarkPath,
 }) {
-  return Theme.of(context).brightness == Brightness.dark
+  return Theme.of(context).brightness != Brightness.dark
       ? (logoDarkPath ?? logoPath)
       : logoPath;
 }
@@ -253,10 +253,10 @@ class _NavigationRail extends StatelessWidget {
       extended: expand,
       selectedIndex: navigationShell.currentIndex,
       unselectedLabelTextStyle: theme.textTheme.labelSmall?.copyWith(
-        fontSize: 10,
+        fontSize: 12,
       ),
       selectedLabelTextStyle: theme.textTheme.labelSmall?.copyWith(
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: FontWeight.w600,
       ),
       onDestinationSelected: (index) {
@@ -395,7 +395,10 @@ class _ScaffoldWithNavigationBar extends StatelessWidget {
         child: Column(
           children: [
             DrawerHeader(
-              decoration: const BoxDecoration(border: Border()),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                border: const Border(),
+              ),
               margin: EdgeInsets.zero,
               child: Center(
                 child: Image.asset(
