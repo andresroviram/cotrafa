@@ -19,75 +19,113 @@ class UserCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Text(
-                _initials(user.fullName),
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w700,
+      child: InkWell(
+        onTap: onEdit,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: theme.colorScheme.primaryContainer,
+                child: Text(
+                  _initials(user.fullName),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user.fullName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w700,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.fullName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    user.email,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    const SizedBox(height: 4),
+                    Text(
+                      user.email,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      _Label(text: _status(user.status)),
-                      _Label(text: _currency.format(user.balanceCop)),
-                    ],
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _Label(text: _status(user.status)),
+                        _Label(text: _currency.format(user.balanceCop)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (onGenerateActivationCode != null)
-              IconButton(
-                key: Key('regenerate-code-${user.id}'),
-                tooltip: 'Generar nuevo código',
-                onPressed: onGenerateActivationCode,
-                icon: const Icon(Icons.key_outlined),
-              ),
-            if (onEdit != null)
-              IconButton(
-                key: Key('edit-user-${user.id}'),
-                tooltip: 'Editar usuario',
-                onPressed: onEdit,
-                icon: const Icon(Icons.edit_outlined),
-              ),
-          ],
+              if (onEdit != null || onGenerateActivationCode != null)
+                PopupMenuButton<_UserCardAction>(
+                  key: Key('user-actions-${user.id}'),
+                  tooltip: 'Acciones del usuario',
+                  itemBuilder: (_) => [
+                    if (onEdit != null)
+                      PopupMenuItem(
+                        key: Key('edit-user-${user.id}'),
+                        value: _UserCardAction.edit,
+                        onTap: () => _afterMenuCloses(onEdit),
+                        child: const _MenuItem(
+                          icon: Icons.edit_outlined,
+                          label: 'Editar',
+                        ),
+                      ),
+                    if (onGenerateActivationCode != null)
+                      PopupMenuItem(
+                        key: Key('regenerate-code-${user.id}'),
+                        value: _UserCardAction.regenerateCode,
+                        onTap: () => _afterMenuCloses(onGenerateActivationCode),
+                        child: const _MenuItem(
+                          icon: Icons.key_outlined,
+                          label: 'Generar nuevo código',
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+enum _UserCardAction { edit, regenerateCode }
+
+void _afterMenuCloses(VoidCallback? callback) {
+  WidgetsBinding.instance.addPostFrameCallback((_) => callback?.call());
+}
+
+class _MenuItem extends StatelessWidget {
+  const _MenuItem({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon),
+      const SizedBox(width: 12),
+      Flexible(child: Text(label)),
+    ],
+  );
 }
 
 final NumberFormat _currency = NumberFormat.currency(

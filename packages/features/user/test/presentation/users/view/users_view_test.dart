@@ -9,6 +9,7 @@ import 'package:feature_user/presentation/users/view/users_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
@@ -86,6 +87,17 @@ void main() {
       brightness: brightness,
     );
   }
+
+  Widget routedApp(GoRouter router) => MaterialApp.router(
+    routerConfig: router,
+    builder: (_, child) => ResponsiveBreakpoints.builder(
+      child: child!,
+      breakpoints: const [
+        Breakpoint(start: 0, end: 450, name: MOBILE),
+        Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+      ],
+    ),
+  );
 
   testWidgets('loads the correct scope from the authenticated actor', (
     tester,
@@ -255,7 +267,8 @@ void main() {
     await gesture.up();
     await tester.pump();
 
-    await tester.tap(find.text('Sofia Rovira'));
+    final listTopLeft = tester.getTopLeft(find.byType(ListView));
+    await tester.tapAt(listTopLeft + const Offset(4, 4));
     await tester.pump();
     expect(tester.testTextInput.isVisible, isFalse);
   });
@@ -330,13 +343,9 @@ void main() {
     expect(issuedForEmail, 'sofia@cotrafa.local');
   });
 
-  testWidgets('admin edits a user name while the email remains immutable', (
+  testWidgets('opens the full edit route from the card and action menu', (
     tester,
   ) async {
-    final states = StreamController<UserState>.broadcast();
-    addTearDown(states.close);
-    when(() => bloc.stream).thenAnswer((_) => states.stream);
-
     const user = UserProfile(
       id: 2,
       email: 'sofia@cotrafa.local',
@@ -345,64 +354,46 @@ void main() {
       status: 'active',
       balanceCop: 250000,
     );
-    await tester.pumpWidget(
-      subject(const UserState(status: UserStatus.loaded, users: [user])),
-    );
-
-    await tester.tap(find.byKey(const Key('edit-user-2')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Editar usuario'), findsOneWidget);
-    final email = tester.widget<TextField>(
-      find.descendant(
-        of: find.byKey(const Key('edit-user-email')),
-        matching: find.byType(TextField),
-      ),
-    );
-    expect(email.readOnly, isTrue);
-    expect(email.controller?.text, user.email);
-
-    await tester.enterText(find.byKey(const Key('edit-user-full-name')), '  ');
-    await tester.tap(find.byKey(const Key('edit-user-submit')));
-    await tester.pump();
-    expect(find.text('Ingresa el nombre completo'), findsOneWidget);
-    verifyNever(
-      () => bloc.add(const UserEvent.updateRequested(1, 2, fullName: '')),
-    );
-
-    await tester.enterText(
-      find.byKey(const Key('edit-user-full-name')),
-      'Sofia Actualizada',
-    );
-    await tester.tap(find.byKey(const Key('edit-user-submit')));
-    await tester.pump();
-
-    verify(
-      () => bloc.add(
-        const UserEvent.updateRequested(1, 2, fullName: 'Sofia Actualizada'),
-      ),
-    ).called(1);
-
-    states.add(
-      const UserState(
-        status: UserStatus.updated,
-        users: [
-          UserProfile(
-            id: 2,
-            email: 'sofia@cotrafa.local',
-            fullName: 'Sofia Actualizada',
-            role: 'client',
-            status: 'active',
-            balanceCop: 250000,
+    when(
+      () => bloc.state,
+    ).thenReturn(const UserState(status: UserStatus.loaded, users: [user]));
+    final router = GoRouter(
+      initialLocation: '/users',
+      routes: [
+        GoRoute(
+          path: '/users',
+          builder: (_, _) => BlocProvider<UserBloc>.value(
+            value: bloc,
+            child: const UsersView(actorUserId: 1, isAdmin: true),
           ),
-        ],
-      ),
+          routes: [
+            GoRoute(
+              path: ':userId/edit',
+              name: 'edit-user',
+              builder: (_, state) => Scaffold(
+                body: Text('Editar usuario ${state.pathParameters['userId']}'),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
-    await tester.pumpAndSettle();
+    addTearDown(router.dispose);
+    await tester.pumpWidget(routedApp(router));
 
-    expect(find.text('Editar usuario'), findsNothing);
-    expect(find.text('Sofia Actualizada'), findsOneWidget);
-    expect(find.text('Usuario actualizado'), findsOneWidget);
+    await tester.tap(find.text('Sofia Rovira'));
+    await tester.pumpAndSettle();
+    expect(find.text('Editar usuario 2'), findsOneWidget);
+
+    router.pop();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('user-actions-2')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('edit-user-2')), findsOneWidget);
+    expect(find.widgetWithIcon(Row, Icons.edit_outlined), findsOneWidget);
+    await tester.tap(find.text('Editar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Editar usuario 2'), findsOneWidget);
   });
 
   testWidgets('admin regenerates the code for a pending client', (
@@ -433,7 +424,13 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byKey(const Key('regenerate-code-2')));
+    await tester.tap(find.byKey(const Key('user-actions-2')));
+    await tester.pumpAndSettle();
+    final codeAction = find.ancestor(
+      of: find.text('Generar nuevo código'),
+      matching: find.byType(InkWell),
+    );
+    await tester.tap(codeAction.first);
     await tester.pumpAndSettle();
 
     expect(find.text('654321'), findsOneWidget);
@@ -472,7 +469,7 @@ void main() {
 
     expect(find.byKey(const Key('create-user-action')), findsNothing);
     expect(find.byKey(const Key('regenerate-code-2')), findsNothing);
-    expect(find.byKey(const Key('edit-user-2')), findsOneWidget);
-    expect(find.byKey(const Key('edit-user-3')), findsNothing);
+    expect(find.byKey(const Key('user-actions-2')), findsOneWidget);
+    expect(find.byKey(const Key('user-actions-3')), findsNothing);
   });
 }
