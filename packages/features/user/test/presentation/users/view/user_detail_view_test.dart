@@ -1,20 +1,25 @@
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
+import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/users/view/user_detail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 final class _MockUserBloc extends Mock implements UserBloc {}
 
 void main() {
+  setUpAll(() => registerFallbackValue(const UserEvent.listRequested(0)));
+
   late _MockUserBloc bloc;
 
   setUp(() {
     bloc = _MockUserBloc();
     when(() => bloc.stream).thenAnswer((_) => const Stream<UserState>.empty());
+    when(() => bloc.add(any())).thenReturn(null);
     when(() => bloc.close()).thenAnswer((_) async {});
   });
 
@@ -28,6 +33,13 @@ void main() {
           backgroundColor: Color(0xFF004183),
           foregroundColor: Colors.white,
         ),
+      ),
+      builder: (context, child) => ResponsiveBreakpoints.builder(
+        child: child!,
+        breakpoints: const [
+          Breakpoint(start: 0, end: 450, name: MOBILE),
+          Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+        ],
       ),
       home: BlocProvider<UserBloc>.value(
         value: bloc,
@@ -84,10 +96,14 @@ void main() {
 
     await tester.tap(find.text('Direcciones'));
     await tester.pump();
-    expect(
-      find.text('La gestión de direcciones estará disponible próximamente'),
-      findsOneWidget,
-    );
+    verify(
+      () => bloc.add(
+        const UserEvent.notificationRequested(
+          'La gestión de direcciones estará disponible próximamente',
+          type: UserNotificationType.info,
+        ),
+      ),
+    ).called(1);
   });
 
   testWidgets('shows safe placeholders for missing optional data', (

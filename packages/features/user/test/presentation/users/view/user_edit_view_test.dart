@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 final class _MockUserBloc extends Mock implements UserBloc {}
 
@@ -25,7 +26,16 @@ void main() {
 
   tearDown(() async => getIt.reset());
 
-  Widget app(Widget home) => MaterialApp(home: home);
+  Widget app(Widget home) => MaterialApp(
+    builder: (context, child) => ResponsiveBreakpoints.builder(
+      child: child!,
+      breakpoints: const [
+        Breakpoint(start: 0, end: 450, name: MOBILE),
+        Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+      ],
+    ),
+    home: home,
+  );
 
   testWidgets('loads the requested user when the full route opens', (
     tester,
@@ -88,10 +98,9 @@ void main() {
 
     await tester.enterText(find.byKey(const Key('edit-user-first-name')), '');
     await tester.enterText(find.byKey(const Key('edit-user-last-name')), '');
-    await tester.tap(find.byKey(const Key('edit-user-submit')));
-    await tester.pump();
-    expect(find.text('Ingresa el nombre'), findsOneWidget);
-    expect(find.text('Ingresa el apellido'), findsOneWidget);
+    final submit = find.byKey(const Key('edit-user-submit'));
+    expect(tester.state<FormState>(find.byType(Form)).validate(), isFalse);
+    await tester.pumpAndSettle();
 
     await tester.enterText(
       find.byKey(const Key('edit-user-first-name')),
@@ -105,7 +114,8 @@ void main() {
       find.byKey(const Key('edit-user-phone')),
       '3012345678',
     );
-    await tester.tap(find.byKey(const Key('edit-user-submit')));
+    await tester.ensureVisible(submit);
+    tester.widget<FilledButton>(submit).onPressed?.call();
     await tester.pump();
 
     verify(

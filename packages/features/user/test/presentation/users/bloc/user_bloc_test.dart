@@ -125,16 +125,25 @@ void main() {
       status: UserStatus.loaded,
       users: [admin, client],
       message: 'No pudimos generar el código',
+      notificationType: UserNotificationType.info,
     ),
     act: (bloc) => bloc.add(
-      const UserEvent.notificationRequested('No pudimos generar el código'),
+      const UserEvent.notificationRequested(
+        'No pudimos generar el código',
+        type: UserNotificationType.info,
+      ),
     ),
     expect: () => const <UserState>[
-      UserState(status: UserStatus.loaded, users: [admin, client]),
+      UserState(
+        status: UserStatus.loaded,
+        users: [admin, client],
+        notificationType: UserNotificationType.info,
+      ),
       UserState(
         status: UserStatus.loaded,
         users: [admin, client],
         message: 'No pudimos generar el código',
+        notificationType: UserNotificationType.info,
       ),
     ],
   );

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:feature_user/presentation/users/bloc/user_state.dart';
 
 part 'user_event.freezed.dart';
 
@@ -8,8 +9,10 @@ sealed class UserEvent with _$UserEvent {
   const factory UserEvent.profileRequested(int actorUserId, int userId) =
       UserProfileRequested;
   const factory UserEvent.searchChanged(String query) = UserSearchChanged;
-  const factory UserEvent.notificationRequested(String message) =
-      UserNotificationRequested;
+  const factory UserEvent.notificationRequested(
+    String message, {
+    @Default(UserNotificationType.error) UserNotificationType type,
+  }) = UserNotificationRequested;
   const factory UserEvent.createRequested(
     int actorUserId, {
     required String email,

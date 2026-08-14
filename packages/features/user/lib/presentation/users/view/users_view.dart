@@ -69,7 +69,11 @@ class UsersView extends StatelessWidget {
   void _onStateChanged(BuildContext context, UserState state) {
     if (!context.mounted) return;
     if (state.message != null) {
-      AppNotification.showNotificationError(context, title: state.message!);
+      if (state.notificationType == UserNotificationType.info) {
+        AppNotification.showNotification(context, title: state.message!);
+      } else {
+        AppNotification.showNotificationError(context, title: state.message!);
+      }
       return;
     }
     final message = switch (state.status) {

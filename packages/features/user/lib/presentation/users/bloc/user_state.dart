@@ -6,6 +6,8 @@ part 'user_state.freezed.dart';
 
 enum UserStatus { initial, loading, loaded, created, updated, deleted, failure }
 
+enum UserNotificationType { info, error }
+
 @freezed
 abstract class UserState with _$UserState {
   const factory UserState({
@@ -14,5 +16,6 @@ abstract class UserState with _$UserState {
     @Default('') String searchQuery,
     DeleteOutcome? deleteOutcome,
     String? message,
+    @Default(UserNotificationType.error) UserNotificationType notificationType,
   }) = _UserState;
 }

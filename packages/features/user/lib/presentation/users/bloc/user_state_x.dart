@@ -5,7 +5,8 @@ extension UserStateX on UserState {
       (status == UserStatus.initial || status == UserStatus.loading) &&
       users.isEmpty;
 
-  bool get hasFailure => status == UserStatus.failure && message != null;
+  bool get hasFailure =>
+      status == UserStatus.failure && message != null && users.isEmpty;
 
   T resolve<T>({
     required T Function() loading,

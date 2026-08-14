@@ -293,15 +293,6 @@ class _UserFormState extends State<UserForm> {
     if (!_submitted) return;
     if (state.status == UserStatus.failure) {
       _submitted = false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.isEditing
-                ? 'No pudimos actualizar el usuario'
-                : 'No pudimos crear el usuario',
-          ),
-        ),
-      );
       return;
     }
     if (widget.isEditing && state.status == UserStatus.updated) {
@@ -315,15 +306,24 @@ class _UserFormState extends State<UserForm> {
     final code = await issuer(widget.actorUserId, createdUser.email);
     if (!context.mounted) return;
     if (code == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Usuario creado. Genera su código desde la lista de usuarios.',
-          ),
+      context.read<UserBloc>().add(
+        const UserEvent.notificationRequested(
+          'Usuario creado. Genera su código desde la lista de usuarios.',
+          type: UserNotificationType.info,
         ),
       );
     } else {
-      await showActivationCodeDialog(context, code: code);
+      final bloc = context.read<UserBloc>();
+      await showActivationCodeDialog(
+        context,
+        code: code,
+        onCopied: () => bloc.add(
+          const UserEvent.notificationRequested(
+            'Código copiado',
+            type: UserNotificationType.info,
+          ),
+        ),
+      );
     }
     if (context.mounted) Navigator.of(context).pop(true);
   }

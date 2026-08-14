@@ -1,11 +1,13 @@
 import 'package:core/get_it.dart';
-import 'package:feature_user/domain/entities/user_profile.dart';
+import 'package:core/utils/notifications.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
-import 'package:feature_user/presentation/users/widgets/user_form.dart';
+import 'package:feature_user/presentation/users/view/user_edit_mobile.dart';
+import 'package:feature_user/presentation/users/view/user_edit_web.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 class UserEditView extends StatelessWidget {
   const UserEditView({
@@ -29,53 +31,29 @@ class UserEditView extends StatelessWidget {
       );
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Editar usuario')),
-    body: BlocBuilder<UserBloc, UserState>(
-      builder: (context, state) {
-        final user = _findUser(state.users);
-        if (user != null) {
-          return UserForm.edit(
-            actorUserId: actorUserId,
-            user: user,
-            showHeading: false,
-            topPadding: 24,
-          );
-        }
-        if (state.status == UserStatus.failure) {
-          return _LoadFailure(
-            onRetry: () => context.read<UserBloc>().add(
-              UserEvent.profileRequested(actorUserId, userId),
-            ),
-          );
-        }
-        return const Center(child: CircularProgressIndicator());
-      },
-    ),
+  Widget build(BuildContext context) => BlocListener<UserBloc, UserState>(
+    listenWhen: (previous, current) =>
+        previous.status != current.status ||
+        previous.message != current.message ||
+        previous.notificationType != current.notificationType,
+    listener: _onStateChanged,
+    child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
+        ? UserEditWeb(actorUserId: actorUserId, userId: userId)
+        : UserEditMobile(actorUserId: actorUserId, userId: userId),
   );
 
-  UserProfile? _findUser(List<UserProfile> users) {
-    for (final user in users) {
-      if (user.id == userId) return user;
+  void _onStateChanged(BuildContext context, UserState state) {
+    final message = state.message;
+    if (message != null) {
+      if (state.notificationType == UserNotificationType.info) {
+        AppNotification.showNotification(context, title: message);
+      } else {
+        AppNotification.showNotificationError(context, title: message);
+      }
+      return;
     }
-    return null;
+    if (state.status == UserStatus.updated) {
+      AppNotification.showNotification(context, title: 'Usuario actualizado');
+    }
   }
-}
-
-class _LoadFailure extends StatelessWidget {
-  const _LoadFailure({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('No pudimos cargar el usuario'),
-        const SizedBox(height: 12),
-        OutlinedButton(onPressed: onRetry, child: const Text('Reintentar')),
-      ],
-    ),
-  );
 }

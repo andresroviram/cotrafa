@@ -44,5 +44,15 @@ void main() {
       resolve(const UserState(status: UserStatus.loading, users: [user])),
       'data:1',
     );
+    expect(
+      resolve(
+        const UserState(
+          status: UserStatus.failure,
+          users: [user],
+          message: 'Unable to update user.',
+        ),
+      ),
+      'data:1',
+    );
   });
 }

@@ -46,10 +46,11 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       emit(state.copyWith(searchQuery: event.query.trim().toLowerCase()));
 
   void _notification(UserNotificationRequested event, Emitter<UserState> emit) {
-    if (state.message == event.message) {
+    if (state.message == event.message &&
+        state.notificationType == event.type) {
       emit(state.copyWith(message: null));
     }
-    emit(state.copyWith(message: event.message));
+    emit(state.copyWith(message: event.message, notificationType: event.type));
   }
 
   Future<void> _list(UserListRequested event, Emitter<UserState> emit) async {

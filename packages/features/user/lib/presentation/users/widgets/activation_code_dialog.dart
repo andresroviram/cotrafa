@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 Future<void> showActivationCodeDialog(
   BuildContext context, {
   required String code,
+  required VoidCallback onCopied,
 }) => showDialog<void>(
   context: context,
   builder: (dialogContext) => AlertDialog(
@@ -32,9 +33,7 @@ Future<void> showActivationCodeDialog(
         onPressed: () async {
           await Clipboard.setData(ClipboardData(text: code));
           if (!dialogContext.mounted) return;
-          ScaffoldMessenger.of(
-            dialogContext,
-          ).showSnackBar(const SnackBar(content: Text('Código copiado')));
+          onCopied();
         },
         icon: const Icon(Icons.copy_outlined),
         label: const Text('Copiar'),

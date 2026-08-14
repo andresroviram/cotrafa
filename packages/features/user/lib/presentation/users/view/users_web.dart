@@ -166,7 +166,16 @@ class UsersWeb extends StatelessWidget {
       );
       return;
     }
-    await showActivationCodeDialog(context, code: code);
+    await showActivationCodeDialog(
+      context,
+      code: code,
+      onCopied: () => bloc.add(
+        const UserEvent.notificationRequested(
+          'Código copiado',
+          type: UserNotificationType.info,
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteUser(
