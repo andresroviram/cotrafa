@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 final class _MockAuthBloc extends Mock implements AuthBloc {}
 
@@ -30,6 +31,13 @@ void main() {
           useMaterial3: true,
           colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF004183)),
         ),
+        builder: (context, child) => ResponsiveBreakpoints.builder(
+          child: child!,
+          breakpoints: const [
+            Breakpoint(start: 0, end: 450, name: MOBILE),
+            Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+          ],
+        ),
         home: BlocProvider<AuthBloc>.value(
           value: bloc,
           child: const ActivationView(
@@ -40,6 +48,7 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
   }
 
   testWidgets('renders separate first-access credentials', (tester) async {

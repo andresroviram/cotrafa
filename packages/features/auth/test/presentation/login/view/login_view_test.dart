@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 
 final class _MockAuthBloc extends Mock implements AuthBloc {}
 
@@ -31,6 +32,13 @@ void main() {
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF004183)),
     ),
+    builder: (context, child) => ResponsiveBreakpoints.builder(
+      child: child!,
+      breakpoints: const [
+        Breakpoint(start: 0, end: 450, name: MOBILE),
+        Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+      ],
+    ),
     home: BlocProvider<AuthBloc>.value(
       value: bloc,
       child: const LoginView(
@@ -41,10 +49,15 @@ void main() {
     ),
   );
 
+  Future<void> pumpSubject(WidgetTester tester) async {
+    await tester.pumpWidget(subject());
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('renders a minimal client login with a separate admin action', (
     tester,
   ) async {
-    await tester.pumpWidget(subject());
+    await pumpSubject(tester);
 
     expect(find.byType(Image), findsOneWidget);
     expect(find.text('Bienvenido'), findsOneWidget);
@@ -80,7 +93,18 @@ void main() {
       ],
     );
     addTearDown(router.dispose);
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(
+      MaterialApp.router(
+        routerConfig: router,
+        builder: (context, child) => ResponsiveBreakpoints.builder(
+          child: child!,
+          breakpoints: const [
+            Breakpoint(start: 0, end: 450, name: MOBILE),
+            Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+          ],
+        ),
+      ),
+    );
 
     await tester.ensureVisible(find.text('Activar cuenta'));
     await tester.tap(find.text('Activar cuenta'));
@@ -92,7 +116,7 @@ void main() {
   testWidgets('validates client credentials before dispatching login', (
     tester,
   ) async {
-    await tester.pumpWidget(subject());
+    await pumpSubject(tester);
     await tester.ensureVisible(find.text('Iniciar sesión'));
     await tester.tap(find.text('Iniciar sesión'));
     await tester.pump();
@@ -105,7 +129,7 @@ void main() {
   testWidgets('clears the password validation error while typing', (
     tester,
   ) async {
-    await tester.pumpWidget(subject());
+    await pumpSubject(tester);
     await tester.ensureVisible(find.text('Iniciar sesión'));
     await tester.tap(find.text('Iniciar sesión'));
     await tester.pump();
@@ -127,7 +151,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(subject());
+    await pumpSubject(tester);
     await tester.showKeyboard(find.byType(TextFormField).first);
     expect(tester.testTextInput.isVisible, isTrue);
 
@@ -148,7 +172,7 @@ void main() {
   testWidgets('dispatches client and injected demo login events', (
     tester,
   ) async {
-    await tester.pumpWidget(subject());
+    await pumpSubject(tester);
     final fields = find.byType(TextFormField);
     await tester.enterText(fields.at(0), ' CLIENT@EXAMPLE.COM ');
     await tester.enterText(fields.at(1), 'secret');
