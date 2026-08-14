@@ -270,10 +270,54 @@ Configura estos grupos en **Codemagic → App Settings → Environment variables
 - Resultado independiente para éxito o fallo.
 - Historial persistido con snapshots inmutables de las partes.
 
-## Calidad y pruebas
+## 🧪 Cobertura de Tests
 
-- Pruebas unitarias de dominio, repositorios, datasources y BLoC.
-- Pruebas de widgets, navegación, DI y límites arquitectónicos.
-- Formato y análisis estático de todos los packages.
-- Cobertura LCOV agregada con umbral configurable.
-- CI reproducible con Flutter 3.44.9, FVM, Melos y JDK 17.
+[![codecov](https://codecov.io/gh/andresroviram/cotrafa/graph/badge.svg)](https://codecov.io/gh/andresroviram/cotrafa)
+
+El proyecto mantiene un umbral mínimo de cobertura del **60%** en el CI/CD. Los archivos generados por Drift, Freezed e Injectable no se incluyen en la medición.
+
+### Estado actual
+
+```text
+Total:                    80.43% ✅ (2675/3326 líneas)
+├─ features/              83.08% ✅ (2451/2950 líneas)
+├─ components/            85.71% ✅ (24/28 líneas)
+├─ apps/cotrafa-app/      78.63% ✅ (103/131 líneas)
+├─ core/                  45.45% ⚠️ (40/88 líneas)
+└─ database/              44.19% ⚠️ (57/129 líneas)
+```
+
+El umbral se aplica al **total consolidado del workspace**. Core y Database quedan identificados como las áreas prioritarias para elevar la cobertura por package.
+
+### Resumen de tests
+
+- **189 tests** ejecutándose exitosamente.
+- **50 tests de widgets** para vistas, formularios, navegación y componentes.
+- **36 tests de BLoC** para eventos, estados y transiciones.
+- **103 tests adicionales** de dominio, datasources, repositorios, persistencia, DI y arquitectura.
+- **80.43% de cobertura total**, 20.43 puntos por encima del umbral del 60%.
+
+### Scripts de cobertura
+
+```powershell
+# Windows
+.\scripts\check_coverage.ps1
+.\scripts\check_coverage.ps1 -Threshold 70
+```
+
+```bash
+# Linux/macOS
+./scripts/check_coverage.sh
+./scripts/check_coverage.sh 70
+```
+
+Los scripts verifican automáticamente:
+
+- ✅ Ejecutan todos los tests del monorepo.
+- ✅ Generan reportes LCOV por package.
+- ✅ Consolidan las rutas de fuentes sin colisiones entre packages.
+- ✅ Excluyen código generado de la medición.
+- ✅ Comparan el resultado con el umbral configurado.
+- ✅ Fallan con un código de salida distinto de cero cuando no se cumple.
+
+Además, el pipeline valida formato, análisis estático y builds reproducibles con Flutter 3.44.9, FVM, Melos y JDK 17.
