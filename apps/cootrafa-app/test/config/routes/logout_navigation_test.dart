@@ -4,9 +4,13 @@ import 'package:cootrafa_app/app.dart';
 import 'package:cootrafa_app/config/routes/app_router.dart';
 import 'package:core/get_it.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:feature_auth/domain/entities/auth_identity.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
+import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
+import 'package:feature_user/presentation/users/bloc/user_event.dart';
+import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -17,10 +21,13 @@ import 'package:shared_preferences_platform_interface/shared_preferences_async_p
 
 final class MockAuthBloc extends Mock implements AuthBloc {}
 
+final class MockUserBloc extends Mock implements UserBloc {}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() async {
+    registerFallbackValue(const UserEvent.listRequested(0));
     SharedPreferences.setMockInitialValues({});
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.empty();
@@ -30,7 +37,10 @@ void main() {
   testWidgets('logout action returns the authenticated shell to login', (
     tester,
   ) async {
-    var currentState = const AuthState(status: AuthStatus.authenticated);
+    var currentState = const AuthState(
+      status: AuthStatus.authenticated,
+      identity: AuthIdentity(userId: 1, role: 'admin'),
+    );
     final states = StreamController<AuthState>.broadcast();
     final authBloc = MockAuthBloc();
     when(() => authBloc.state).thenAnswer((_) => currentState);
@@ -41,10 +51,18 @@ void main() {
       currentState = const AuthState(status: AuthStatus.unauthenticated);
       states.add(currentState);
     });
+    final userBloc = MockUserBloc();
+    when(() => userBloc.state).thenReturn(const UserState());
+    when(
+      () => userBloc.stream,
+    ).thenAnswer((_) => const Stream<UserState>.empty());
+    when(() => userBloc.add(any())).thenReturn(null);
+    when(() => userBloc.close()).thenAnswer((_) async {});
 
     final router = createRouter(authBloc);
     getIt
       ..registerSingleton<AuthBloc>(authBloc)
+      ..registerFactory<UserBloc>(() => userBloc)
       ..registerSingleton<GoRouter>(router);
     addTearDown(() async {
       await states.close();
