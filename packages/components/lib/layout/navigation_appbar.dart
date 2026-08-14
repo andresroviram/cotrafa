@@ -27,7 +27,6 @@ class NavigationAppBar extends StatelessWidget implements PreferredSizeWidget {
           vertical: 8,
         ),
         child: IconButton(
-          color: Colors.black,
           onPressed: () {
             // if (scaffoldDrawerKey?.currentState?.isDrawerOpen ?? false) {
             //   scaffoldDrawerKey?.currentState?.closeDrawer();

@@ -101,6 +101,13 @@ void main() {
   );
 
   blocTest<UserBloc, UserState>(
+    'stores the normalized presentation search query',
+    build: build,
+    act: (bloc) => bloc.add(const UserEvent.searchChanged('  Sofia  ')),
+    expect: () => const <UserState>[UserState(searchQuery: 'sofia')],
+  );
+
+  blocTest<UserBloc, UserState>(
     'creates and updates a client without losing the loaded list',
     setUp: () {
       when(

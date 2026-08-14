@@ -1,10 +1,12 @@
 import 'package:core/get_it.dart';
+import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/users/view/users_mobile.dart';
 import 'package:feature_user/presentation/users/view/users_web.dart';
 import 'package:feature_user/presentation/users/widgets/user_card.dart';
+import 'package:feature_user/presentation/users/widgets/user_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -38,13 +40,33 @@ class UsersView extends StatelessWidget {
       buildWhen: (previous, current) =>
           previous.status != current.status ||
           previous.users != current.users ||
-          previous.message != current.message,
+          previous.message != current.message ||
+          previous.searchQuery != current.searchQuery,
       builder: (context, state) {
-        final body = _body(context, state);
+        final content = _body(context, state, _visibleUsers(state));
+        final body = Column(
+          children: [
+            if (isAdmin)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: UserSearchField(
+                  onChanged: (query) => context.read<UserBloc>().add(
+                    UserEvent.searchChanged(query),
+                  ),
+                ),
+              ),
+            Expanded(child: content),
+          ],
+        );
         void refresh() => _load(context);
-        return ResponsiveBreakpoints.of(context).largerThan(MOBILE)
+        final page = ResponsiveBreakpoints.of(context).largerThan(MOBILE)
             ? UsersWeb(body: body, onRefresh: refresh)
             : UsersMobile(body: body, onRefresh: refresh);
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: page,
+        );
       },
     );
   }
@@ -55,21 +77,31 @@ class UsersView extends StatelessWidget {
         : UserEvent.profileRequested(actorUserId, actorUserId),
   );
 
-  Widget _body(BuildContext context, UserState state) {
+  List<UserProfile> _visibleUsers(UserState state) {
+    if (state.searchQuery.isEmpty) return state.users;
+    return state.users.where((user) {
+      final query = state.searchQuery;
+      return user.fullName.toLowerCase().contains(query) ||
+          user.email.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  Widget _body(BuildContext context, UserState state, List<UserProfile> users) {
     if (state.status == UserStatus.loading && state.users.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.status == UserStatus.failure) {
       return _UsersFailure(onRetry: () => _load(context));
     }
-    if (state.users.isEmpty) {
+    if (users.isEmpty) {
       return const _EmptyUsers();
     }
     return ListView.separated(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-      itemCount: state.users.length,
+      itemCount: users.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (_, index) => UserCard(user: state.users[index]),
+      itemBuilder: (_, index) => UserCard(user: users[index]),
     );
   }
 }

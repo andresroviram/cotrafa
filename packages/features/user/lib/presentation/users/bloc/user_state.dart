@@ -11,6 +11,7 @@ abstract class UserState with _$UserState {
   const factory UserState({
     @Default(UserStatus.initial) UserStatus status,
     @Default(<UserProfile>[]) List<UserProfile> users,
+    @Default('') String searchQuery,
     DeleteOutcome? deleteOutcome,
     String? message,
   }) = _UserState;

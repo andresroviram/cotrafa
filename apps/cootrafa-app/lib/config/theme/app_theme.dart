@@ -35,7 +35,9 @@ abstract final class AppTheme {
   );
 
   static CardThemeData _cardTheme(ColorScheme colors) => CardThemeData(
-    color: colors.surfaceContainerLow,
+    color: colors.brightness == Brightness.light
+        ? Colors.white
+        : colors.surfaceContainerLow,
     elevation: 2,
     surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(

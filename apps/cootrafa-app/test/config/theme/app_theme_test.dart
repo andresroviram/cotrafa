@@ -12,4 +12,12 @@ void main() {
     expect(colors.surface, Colors.white);
     expect(colors.onSurface, Colors.black);
   });
+
+  test('uses white cards in light mode and native surfaces in dark mode', () {
+    expect(AppTheme.light.cardTheme.color, Colors.white);
+    expect(
+      AppTheme.dark.cardTheme.color,
+      AppTheme.dark.colorScheme.surfaceContainerLow,
+    );
+  });
 }
