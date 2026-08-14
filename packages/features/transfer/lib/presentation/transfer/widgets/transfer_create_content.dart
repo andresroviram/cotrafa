@@ -112,13 +112,6 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Nueva transferencia',
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 20),
             if (widget.isAdmin)
               DropdownButtonFormField<int>(
                 key: ValueKey('transfer-origin-$_originId'),

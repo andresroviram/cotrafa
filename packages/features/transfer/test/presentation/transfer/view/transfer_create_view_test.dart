@@ -70,7 +70,7 @@ void main() {
   testWidgets('renders the client transfer form', (tester) async {
     await pumpLoaded(tester);
 
-    expect(find.text('Nueva transferencia'), findsWidgets);
+    expect(find.text('Nueva transferencia'), findsOneWidget);
     expect(find.byKey(const Key('transfer-client-origin')), findsOneWidget);
     expect(find.textContaining('Origin User'), findsOneWidget);
     expect(find.text('Usuario destino'), findsOneWidget);
