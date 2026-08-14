@@ -33,10 +33,18 @@ final class CreateClient extends _UserUseCase {
   Future<Result<UserProfile>> call(
     int actorUserId, {
     required String email,
+    required String firstName,
+    required String lastName,
+    required DateTime? birthDate,
+    required String? phone,
     required int initialBalanceCop,
   }) => _repository.createClient(
     actorUserId,
     email: email,
+    firstName: firstName,
+    lastName: lastName,
+    birthDate: birthDate,
+    phone: phone,
     initialBalanceCop: initialBalanceCop,
   );
 }
@@ -48,8 +56,8 @@ final class EditUserProfile extends _UserUseCase {
   Future<Result<UserProfile>> call(
     int actorUserId,
     int userId, {
-    required String? firstName,
-    required String? lastName,
+    required String firstName,
+    required String lastName,
     required DateTime? birthDate,
     required String? phone,
   }) => _repository.editProfile(

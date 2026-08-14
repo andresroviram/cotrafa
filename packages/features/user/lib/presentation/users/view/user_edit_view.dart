@@ -3,7 +3,7 @@ import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
-import 'package:feature_user/presentation/users/widgets/user_edit_form.dart';
+import 'package:feature_user/presentation/users/widgets/user_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -35,7 +35,11 @@ class UserEditView extends StatelessWidget {
       builder: (context, state) {
         final user = _findUser(state.users);
         if (user != null) {
-          return UserEditForm(actorUserId: actorUserId, user: user);
+          return UserForm.edit(
+            actorUserId: actorUserId,
+            user: user,
+            showHeading: false,
+          );
         }
         if (state.status == UserStatus.failure) {
           return _LoadFailure(

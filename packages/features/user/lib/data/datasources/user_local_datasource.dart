@@ -11,13 +11,17 @@ abstract interface class IUserLocalDatasource {
   Future<UserProfile> createClient(
     int actorUserId, {
     required String email,
+    required String firstName,
+    required String lastName,
+    required DateTime? birthDate,
+    required String? phone,
     required int initialBalanceCop,
   });
   Future<UserProfile> editProfile(
     int actorUserId,
     int userId, {
-    required String? firstName,
-    required String? lastName,
+    required String firstName,
+    required String lastName,
     required DateTime? birthDate,
     required String? phone,
   });
@@ -60,6 +64,10 @@ final class UserLocalDatasource implements IUserLocalDatasource {
   Future<UserProfile> createClient(
     int actorUserId, {
     required String email,
+    required String firstName,
+    required String lastName,
+    required DateTime? birthDate,
+    required String? phone,
     required int initialBalanceCop,
   }) => _database.transaction(() async {
     if (!await _isActiveAdmin(actorUserId)) {
@@ -70,6 +78,9 @@ final class UserLocalDatasource implements IUserLocalDatasource {
         message: 'Initial balance cannot be negative.',
       );
     }
+    final normalizedFirstName = _requiredName(firstName);
+    final normalizedLastName = _requiredName(lastName);
+    final normalizedPhone = _optional(phone);
     final normalized = _normalize(email);
     if (await _identifierExists(normalized)) {
       throw const DuplicateException();
@@ -80,12 +91,17 @@ final class UserLocalDatasource implements IUserLocalDatasource {
         .getSingle();
     final now = DateTime.now().millisecondsSinceEpoch;
     await _database.customStatement(
-      "INSERT INTO users (id,email,full_name,role,status,balance_cop,created_at,updated_at) "
-      "VALUES (?, ?, ?, 'client', 'pendingActivation', ?, ?, ?)",
+      'INSERT INTO users (id,email,full_name,first_name,last_name,birth_date,'
+      'phone,role,status,balance_cop,created_at,updated_at) '
+      "VALUES (?, ?, ?, ?, ?, ?, ?, 'client', 'pendingActivation', ?, ?, ?)",
       <Object?>[
         id,
         normalized,
-        _fallbackName(normalized),
+        '$normalizedFirstName $normalizedLastName',
+        normalizedFirstName,
+        normalizedLastName,
+        _date(birthDate),
+        normalizedPhone,
         initialBalanceCop,
         now,
         now,
@@ -102,8 +118,8 @@ final class UserLocalDatasource implements IUserLocalDatasource {
   Future<UserProfile> editProfile(
     int actorUserId,
     int userId, {
-    required String? firstName,
-    required String? lastName,
+    required String firstName,
+    required String lastName,
     required DateTime? birthDate,
     required String? phone,
   }) => _database.transaction(() async {
@@ -115,29 +131,17 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     if (target == null) {
       throw const NotFoundException();
     }
-    final normalizedFirstName = _optional(firstName);
-    final normalizedLastName = _optional(lastName);
+    final normalizedFirstName = _requiredName(firstName);
+    final normalizedLastName = _requiredName(lastName);
     final normalizedPhone = _optional(phone);
-    final displayName = <String?>[
-      normalizedFirstName,
-      normalizedLastName,
-    ].whereType<String>().join(' ');
     await _database.customStatement(
       'UPDATE users SET full_name=?,first_name=?,last_name=?,birth_date=?,'
       'phone=?,updated_at=? WHERE id=?',
       <Object?>[
-        displayName.isEmpty
-            ? _fallbackName(target.read<String>('email'))
-            : displayName,
+        '$normalizedFirstName $normalizedLastName',
         normalizedFirstName,
         normalizedLastName,
-        birthDate == null
-            ? null
-            : DateTime.utc(
-                birthDate.year,
-                birthDate.month,
-                birthDate.day,
-              ).millisecondsSinceEpoch,
+        _date(birthDate),
         normalizedPhone,
         DateTime.now().millisecondsSinceEpoch,
         userId,
@@ -245,5 +249,17 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     return normalized == null || normalized.isEmpty ? null : normalized;
   }
 
-  String _fallbackName(String email) => email.split('@').first;
+  String _requiredName(String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) {
+      throw const ValidationException(
+        message: 'First name and last name are required.',
+      );
+    }
+    return normalized;
+  }
+
+  int? _date(DateTime? value) => value == null
+      ? null
+      : DateTime.utc(value.year, value.month, value.day).millisecondsSinceEpoch;
 }

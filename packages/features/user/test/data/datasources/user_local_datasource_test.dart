@@ -29,8 +29,8 @@ void main() {
   test('admin CRUD rejects invalid identifiers or balance', () async {
     final created = await _create(users, ' CLIENT@EXAMPLE.COM ', 250);
     expect(created.email, 'client@example.com');
-    expect(created.firstName, isNull);
-    expect(created.lastName, isNull);
+    expect(created.firstName, 'Client');
+    expect(created.lastName, 'User');
     expect(created.birthDate, isNull);
     expect(created.phone, isNull);
     expect(created.status, 'pendingActivation');
@@ -73,10 +73,22 @@ void main() {
         ),
       ),
     );
+    await expectLater(
+      users.createClient(
+        1,
+        email: 'missing-name@example.com',
+        firstName: ' ',
+        lastName: 'User',
+        birthDate: null,
+        phone: null,
+        initialBalanceCop: 0,
+      ),
+      throwsA(isA<ValidationException>()),
+    );
     expect((await users.listUsers(1)).length, 2);
   });
 
-  test('active client can view and edit only own optional profile', () async {
+  test('active client can view and edit only own profile', () async {
     final client = await _create(users, 'client@example.com', 75);
     await database.customStatement(
       "UPDATE users SET status='active' WHERE id=${client.id}",
@@ -87,11 +99,11 @@ void main() {
         client.id,
         client.id,
         firstName: 'Self',
-        lastName: null,
+        lastName: 'User',
         birthDate: null,
         phone: null,
       )).fullName,
-      'Self',
+      'Self User',
     );
     await expectLater(
       users.getUser(client.id, 1),
@@ -102,9 +114,21 @@ void main() {
         client.id,
         1,
         firstName: 'Attack',
-        lastName: null,
+        lastName: 'Admin',
         birthDate: null,
         phone: null,
+      ),
+      throwsA(isA<UnauthorizedException>()),
+    );
+    await expectLater(
+      users.createClient(
+        client.id,
+        email: 'forbidden@example.com',
+        firstName: 'Forbidden',
+        lastName: 'Client',
+        birthDate: null,
+        phone: null,
+        initialBalanceCop: 1000,
       ),
       throwsA(isA<UnauthorizedException>()),
     );
@@ -204,7 +228,15 @@ Future<UserProfile> _create(
   UserLocalDatasource users,
   String email,
   int balance,
-) => users.createClient(1, email: email, initialBalanceCop: balance);
+) => users.createClient(
+  1,
+  email: email,
+  firstName: 'Client',
+  lastName: 'User',
+  birthDate: null,
+  phone: null,
+  initialBalanceCop: balance,
+);
 
 Future<QueryRow> _user(CotrafaDatabase database, int id) =>
     database.customSelect('SELECT * FROM users WHERE id=$id').getSingle();

@@ -10,7 +10,7 @@ import 'package:feature_user/presentation/users/view/users_mobile.dart';
 import 'package:feature_user/presentation/users/view/users_web.dart';
 import 'package:feature_user/presentation/users/widgets/activation_code_dialog.dart';
 import 'package:feature_user/presentation/users/widgets/user_card.dart';
-import 'package:feature_user/presentation/users/widgets/user_create_form.dart';
+import 'package:feature_user/presentation/users/widgets/user_form_modal.dart';
 import 'package:feature_user/presentation/users/widgets/user_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -99,20 +99,10 @@ class UsersView extends StatelessWidget {
   Future<void> _openCreate(BuildContext context) async {
     final issuer = issueActivationCode;
     if (issuer == null) return;
-    final bloc = context.read<UserBloc>();
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      builder: (_) => BlocProvider.value(
-        value: bloc,
-        child: UserCreateForm(
-          actorUserId: actorUserId,
-          issueActivationCode: issuer,
-        ),
-      ),
+    await showUserFormModal(
+      context,
+      actorUserId: actorUserId,
+      issueActivationCode: issuer,
     );
   }
 

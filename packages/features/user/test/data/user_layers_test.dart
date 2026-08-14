@@ -37,6 +37,10 @@ void main() {
     final created = await CreateClient(repository)(
       1,
       email: ' CLIENT@EXAMPLE.COM ',
+      firstName: 'Client',
+      lastName: 'User',
+      birthDate: null,
+      phone: null,
       initialBalanceCop: 150000,
     );
     final user = created.valueOrNull!;
@@ -69,6 +73,10 @@ void main() {
     final invalid = await CreateClient(repository)(
       1,
       email: 'client@example.com',
+      firstName: 'Client',
+      lastName: 'User',
+      birthDate: null,
+      phone: null,
       initialBalanceCop: -1,
     );
     final missing = await GetUser(repository)(1, 999);

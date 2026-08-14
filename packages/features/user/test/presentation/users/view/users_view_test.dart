@@ -305,6 +305,14 @@ void main() {
     await tester.tap(find.byKey(const Key('create-user-action')));
     await tester.pumpAndSettle();
     await tester.enterText(
+      find.byKey(const Key('create-user-first-name')),
+      'Sofia',
+    );
+    await tester.enterText(
+      find.byKey(const Key('create-user-last-name')),
+      'Rovira',
+    );
+    await tester.enterText(
       find.byKey(const Key('create-user-email')),
       'sofia@cotrafa.local',
     );
@@ -320,6 +328,10 @@ void main() {
         const UserEvent.createRequested(
           1,
           email: 'sofia@cotrafa.local',
+          firstName: 'Sofia',
+          lastName: 'Rovira',
+          birthDate: null,
+          phone: null,
           initialBalanceCop: 250000,
         ),
       ),
@@ -332,7 +344,9 @@ void main() {
           UserProfile(
             id: 2,
             email: 'sofia@cotrafa.local',
-            fullName: 'sofia',
+            fullName: 'Sofia Rovira',
+            firstName: 'Sofia',
+            lastName: 'Rovira',
             role: 'client',
             status: 'pendingActivation',
             balanceCop: 250000,
@@ -345,6 +359,30 @@ void main() {
     expect(find.text('123456'), findsOneWidget);
     expect(issuedForActor, 1);
     expect(issuedForEmail, 'sofia@cotrafa.local');
+  });
+
+  testWidgets('requires first and last name when creating a client', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      subject(
+        const UserState(status: UserStatus.loaded),
+        issueActivationCode: (_, _) async => '123456',
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('create-user-action')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('create-user-email')),
+      'client@cotrafa.local',
+    );
+    await tester.tap(find.byKey(const Key('create-user-submit')));
+    await tester.pump();
+
+    expect(find.text('Ingresa el nombre'), findsOneWidget);
+    expect(find.text('Ingresa el apellido'), findsOneWidget);
+    verifyNever(() => bloc.add(any()));
   });
 
   testWidgets('opens detail from the card and edit from the action menu', (

@@ -25,7 +25,9 @@ void main() {
   const client = UserProfile(
     id: 2,
     email: 'client@example.com',
-    fullName: 'Client',
+    fullName: 'Client User',
+    firstName: 'Client',
+    lastName: 'User',
     role: 'client',
     status: 'pendingActivation',
     balanceCop: 150000,
@@ -58,6 +60,10 @@ void main() {
     const event = UserEvent.createRequested(
       1,
       email: 'client@example.com',
+      firstName: 'Client',
+      lastName: 'User',
+      birthDate: null,
+      phone: null,
       initialBalanceCop: 150000,
     );
 
@@ -66,6 +72,10 @@ void main() {
       const UserEvent.createRequested(
         1,
         email: 'client@example.com',
+        firstName: 'Client',
+        lastName: 'User',
+        birthDate: null,
+        phone: null,
         initialBalanceCop: 150000,
       ),
     );
@@ -115,6 +125,10 @@ void main() {
         () => repository.createClient(
           1,
           email: 'client@example.com',
+          firstName: 'Client',
+          lastName: 'User',
+          birthDate: null,
+          phone: null,
           initialBalanceCop: 150000,
         ),
       ).thenAnswer((_) async => const Success(client));
@@ -136,6 +150,10 @@ void main() {
         const UserEvent.createRequested(
           1,
           email: 'client@example.com',
+          firstName: 'Client',
+          lastName: 'User',
+          birthDate: null,
+          phone: null,
           initialBalanceCop: 150000,
         ),
       );

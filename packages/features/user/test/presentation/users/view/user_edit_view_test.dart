@@ -40,7 +40,7 @@ void main() {
     verify(() => bloc.add(const UserEvent.profileRequested(1, 2))).called(1);
   });
 
-  testWidgets('edits optional personal data and keeps email read-only', (
+  testWidgets('edits profile data and keeps email and balance immutable', (
     tester,
   ) async {
     final user = UserProfile(
@@ -78,6 +78,14 @@ void main() {
     );
     expect(email.readOnly, isTrue);
     expect(email.controller?.text, user.email);
+    expect(find.byKey(const Key('create-user-balance')), findsNothing);
+
+    await tester.enterText(find.byKey(const Key('edit-user-first-name')), '');
+    await tester.enterText(find.byKey(const Key('edit-user-last-name')), '');
+    await tester.tap(find.byKey(const Key('edit-user-submit')));
+    await tester.pump();
+    expect(find.text('Ingresa el nombre'), findsOneWidget);
+    expect(find.text('Ingresa el apellido'), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('edit-user-first-name')),

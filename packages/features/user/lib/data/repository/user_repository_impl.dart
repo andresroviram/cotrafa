@@ -27,11 +27,19 @@ final class UserRepositoryImpl implements IUserRepository {
   Future<Result<UserProfile>> createClient(
     int actorUserId, {
     required String email,
+    required String firstName,
+    required String lastName,
+    required DateTime? birthDate,
+    required String? phone,
     required int initialBalanceCop,
   }) => _datasource
       .createClient(
         actorUserId,
         email: email,
+        firstName: firstName,
+        lastName: lastName,
+        birthDate: birthDate,
+        phone: phone,
         initialBalanceCop: initialBalanceCop,
       )
       .toResult(fallback: const StorageFailure());
@@ -40,8 +48,8 @@ final class UserRepositoryImpl implements IUserRepository {
   Future<Result<UserProfile>> editProfile(
     int actorUserId,
     int userId, {
-    required String? firstName,
-    required String? lastName,
+    required String firstName,
+    required String lastName,
     required DateTime? birthDate,
     required String? phone,
   }) => _datasource
