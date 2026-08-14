@@ -18,10 +18,13 @@ StatefulShellBranch transferRoutes({
     GoRoute(
       path: TransferView.path,
       name: TransferView.name,
-      pageBuilder: (_, state) => NoTransitionPage(
-        key: state.pageKey,
-        child: TransferView.create(actorUserId: actorUserId()),
-      ),
+      pageBuilder: (_, state) {
+        final currentActorUserId = actorUserId();
+        return NoTransitionPage(
+          key: ValueKey('${state.pageKey}-$currentActorUserId'),
+          child: TransferView.create(actorUserId: currentActorUserId),
+        );
+      },
       routes: [
         GoRoute(
           path: TransferCreateView.path,

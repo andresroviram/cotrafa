@@ -55,8 +55,6 @@ void main() {
     when(() => authBloc.add(const AuthEvent.logoutRequested())).thenAnswer((_) {
       currentState = const AuthState(status: AuthStatus.loading);
       states.add(currentState);
-      currentState = const AuthState(status: AuthStatus.unauthenticated);
-      states.add(currentState);
     });
     final userBloc = MockUserBloc();
     when(
@@ -101,6 +99,12 @@ void main() {
 
     expect(find.byTooltip('Cerrar sesión'), findsOneWidget);
     await tester.tap(find.byTooltip('Cerrar sesión'));
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+
+    currentState = const AuthState(status: AuthStatus.unauthenticated);
+    states.add(currentState);
     await tester.pumpAndSettle();
 
     verify(() => authBloc.add(const AuthEvent.logoutRequested())).called(1);

@@ -22,14 +22,18 @@ StatefulShellBranch usersRoutes({
     GoRoute(
       path: UsersView.path,
       name: UsersView.name,
-      pageBuilder: (_, state) => NoTransitionPage(
-        key: state.pageKey,
-        child: UsersView.create(
-          actorUserId: actorUserId(),
-          isAdmin: isAdmin(),
-          issueActivationCode: issueActivationCode,
-        ),
-      ),
+      pageBuilder: (_, state) {
+        final currentActorUserId = actorUserId();
+        final currentIsAdmin = isAdmin();
+        return NoTransitionPage(
+          key: ValueKey('${state.pageKey}-$currentActorUserId-$currentIsAdmin'),
+          child: UsersView.create(
+            actorUserId: currentActorUserId,
+            isAdmin: currentIsAdmin,
+            issueActivationCode: issueActivationCode,
+          ),
+        );
+      },
       routes: [
         GoRoute(
           path: UserDetailView.path,

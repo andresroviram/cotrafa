@@ -16,6 +16,9 @@ void main() {
     when(
       () => authBloc.state,
     ).thenReturn(const AuthState(status: AuthStatus.unauthenticated));
+    when(
+      () => authBloc.stream,
+    ).thenAnswer((_) => const Stream<AuthState>.empty());
 
     final router = createRouter(authBloc);
 

@@ -30,10 +30,12 @@ abstract class RouterModule {
 
 GoRouter createRouter(AuthBloc authBloc) {
   final rootKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+  final authRefresh = _AuthRouterRefresh(authBloc.stream);
   return GoRouter(
     navigatorKey: rootKey,
     debugLogDiagnostics: kDebugMode,
     initialLocation: LoginView.path,
+    refreshListenable: authRefresh,
     observers: [BotToastNavigatorObserver()],
     redirect: (_, state) {
       final isAuthenticated = switch (authBloc.state.status) {
@@ -94,8 +96,8 @@ GoRouter createRouter(AuthBloc authBloc) {
         branches: [
           usersRoutes(
             parentNavigatorKey: rootKey,
-            actorUserId: () => authBloc.state.identity!.userId,
-            isAdmin: () => authBloc.state.identity!.role == 'admin',
+            actorUserId: () => authBloc.state.identity?.userId ?? -1,
+            isAdmin: () => authBloc.state.identity?.role == 'admin',
             issueActivationCode: (actorUserId, email) async {
               final result = await getIt<IssueActivationCode>()(
                 actorUserId,
@@ -106,11 +108,17 @@ GoRouter createRouter(AuthBloc authBloc) {
           ),
           transferRoutes(
             parentNavigatorKey: rootKey,
-            actorUserId: () => authBloc.state.identity!.userId,
-            isAdmin: () => authBloc.state.identity!.role == 'admin',
+            actorUserId: () => authBloc.state.identity?.userId ?? -1,
+            isAdmin: () => authBloc.state.identity?.role == 'admin',
           ),
         ],
       ),
     ],
   );
+}
+
+final class _AuthRouterRefresh extends ChangeNotifier {
+  _AuthRouterRefresh(Stream<AuthState> states) {
+    states.listen((_) => notifyListeners());
+  }
 }
