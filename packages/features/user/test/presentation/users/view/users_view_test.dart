@@ -7,7 +7,7 @@ import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
-import 'package:feature_user/presentation/users/view/user_detail_view.dart';
+import 'package:feature_user/presentation/user_detail/view/user_detail_view.dart';
 import 'package:feature_user/presentation/users/view/users_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

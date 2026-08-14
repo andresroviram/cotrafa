@@ -30,13 +30,13 @@ void main() {
   test('keeps detail and edit views on the same presentation contract', () {
     for (final feature in ['user_detail', 'user_edit']) {
       final view = File(
-        'lib/presentation/users/view/${feature}_view.dart',
+        'lib/presentation/$feature/view/${feature}_view.dart',
       ).readAsStringSync();
       final mobile = File(
-        'lib/presentation/users/view/${feature}_mobile.dart',
+        'lib/presentation/$feature/view/${feature}_mobile.dart',
       ).readAsStringSync();
       final web = File(
-        'lib/presentation/users/view/${feature}_web.dart',
+        'lib/presentation/$feature/view/${feature}_web.dart',
       ).readAsStringSync();
 
       expect(view, contains('BlocListener<UserBloc, UserState>'));
@@ -54,7 +54,7 @@ void main() {
   });
 
   test('does not emit ScaffoldMessenger feedback from User presentation', () {
-    final dartFiles = Directory('lib/presentation/users')
+    final dartFiles = Directory('lib/presentation')
         .listSync(recursive: true)
         .whereType<File>()
         .where((file) => file.path.endsWith('.dart'));
@@ -69,7 +69,7 @@ void main() {
   });
 
   test('keeps BlocListener side effects in atomic feature views', () {
-    final dartFiles = Directory('lib/presentation/users')
+    final dartFiles = Directory('lib/presentation')
         .listSync(recursive: true)
         .whereType<File>()
         .where((file) => file.path.endsWith('.dart'))

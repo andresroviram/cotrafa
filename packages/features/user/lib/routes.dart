@@ -1,6 +1,6 @@
 import 'package:feature_user/presentation/users/activation_code_issuer.dart';
-import 'package:feature_user/presentation/users/view/user_detail_view.dart';
-import 'package:feature_user/presentation/users/view/user_edit_view.dart';
+import 'package:feature_user/presentation/user_detail/view/user_detail_view.dart';
+import 'package:feature_user/presentation/user_edit/view/user_edit_view.dart';
 import 'package:feature_user/presentation/users/view/users_view.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';

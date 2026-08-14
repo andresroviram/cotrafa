@@ -3,13 +3,13 @@ import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/users/bloc/user_state_x.dart';
-import 'package:feature_user/presentation/users/widgets/user_form.dart';
-import 'package:feature_user/presentation/users/widgets/user_load_failure.dart';
+import 'package:feature_user/presentation/shared/widgets/user_form.dart';
+import 'package:feature_user/presentation/shared/widgets/user_load_failure.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class UserEditWeb extends StatelessWidget {
-  const UserEditWeb({
+class UserEditMobile extends StatelessWidget {
+  const UserEditMobile({
     required this.actorUserId,
     required this.userId,
     super.key,

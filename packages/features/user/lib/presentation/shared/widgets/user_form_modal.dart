@@ -1,6 +1,6 @@
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
-import 'package:feature_user/presentation/users/widgets/user_form.dart';
+import 'package:feature_user/presentation/shared/widgets/user_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
