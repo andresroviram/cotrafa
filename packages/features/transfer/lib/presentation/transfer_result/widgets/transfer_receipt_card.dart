@@ -1,6 +1,7 @@
+import 'package:components/localized_formatters.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class TransferReceiptCard extends StatelessWidget {
   const TransferReceiptCard({required this.receipt, super.key});
@@ -10,14 +11,10 @@ class TransferReceiptCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final currency = NumberFormat.currency(
-      locale: 'es_CO',
-      symbol: r'$',
-      decimalDigits: 0,
+    final date = localizedDateTime(
+      context,
+      DateTime.fromMillisecondsSinceEpoch(receipt.createdAt),
     );
-    final date = DateFormat(
-      'dd/MM/yyyy HH:mm',
-    ).format(DateTime.fromMillisecondsSinceEpoch(receipt.createdAt));
     return Card(
       key: const Key('transfer-receipt'),
       margin: EdgeInsets.zero,
@@ -31,7 +28,7 @@ class TransferReceiptCard extends StatelessWidget {
                 Icon(Icons.check_circle, color: theme.colorScheme.primary),
                 const SizedBox(width: 12),
                 Text(
-                  'Comprobante',
+                  'transfer.receipt.title'.tr(),
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -39,16 +36,28 @@ class TransferReceiptCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            _ReceiptRow(label: 'Número', value: receipt.id),
-            _ReceiptRow(label: 'Fecha', value: date),
-            _ReceiptRow(label: 'Origen', value: receipt.originSnapshot),
-            _ReceiptRow(label: 'Destino', value: receipt.destinationSnapshot),
             _ReceiptRow(
-              label: 'Valor',
-              value: currency.format(receipt.amountCop),
+              label: 'transfer.receipt.number'.tr(),
+              value: receipt.id,
+            ),
+            _ReceiptRow(label: 'transfer.receipt.date'.tr(), value: date),
+            _ReceiptRow(
+              label: 'transfer.receipt.origin'.tr(),
+              value: receipt.originSnapshot,
+            ),
+            _ReceiptRow(
+              label: 'transfer.receipt.destination'.tr(),
+              value: receipt.destinationSnapshot,
+            ),
+            _ReceiptRow(
+              label: 'transfer.receipt.amount'.tr(),
+              value: localizedCop(context, receipt.amountCop),
             ),
             if (receipt.description != null)
-              _ReceiptRow(label: 'Descripción', value: receipt.description!),
+              _ReceiptRow(
+                label: 'transfer.receipt.description'.tr(),
+                value: receipt.description!,
+              ),
           ],
         ),
       ),

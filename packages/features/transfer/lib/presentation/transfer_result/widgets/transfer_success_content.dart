@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
 import 'package:feature_transfer/presentation/transfer_result/widgets/transfer_receipt_card.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +18,7 @@ class TransferSuccessContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
     key: const Key('transfer-result-success'),
-    appBar: AppBar(title: const Text('Comprobante')),
+    appBar: AppBar(title: Text('transfer.result.receipt_title'.tr())),
     body: SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -34,7 +35,7 @@ class TransferSuccessContent extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Transferencia exitosa',
+                  'transfer.result.success'.tr(),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
@@ -46,7 +47,7 @@ class TransferSuccessContent extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onHistory,
                   icon: const Icon(Icons.receipt_long_outlined),
-                  label: const Text('Volver al historial'),
+                  label: Text('transfer.result.back_to_history'.tr()),
                 ),
               ],
             ),

@@ -27,9 +27,9 @@ class TransferHistoryBloc
           status: TransferHistoryStatus.loaded,
           transfers: transfers,
         ),
-        onFailure: (failure) => TransferHistoryState(
+        onFailure: (_) => const TransferHistoryState(
           status: TransferHistoryStatus.failure,
-          message: failure.message,
+          message: 'transfer.errors.load_history',
         ),
       ),
     );

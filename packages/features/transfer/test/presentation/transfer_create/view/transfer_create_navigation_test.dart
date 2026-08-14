@@ -131,7 +131,7 @@ void main() {
       const TransferState(
         status: TransferStatus.failure,
         parties: [party],
-        message: 'Saldo insuficiente.',
+        message: 'transfer.form.insufficient_balance',
       ),
     );
     await tester.pumpAndSettle();

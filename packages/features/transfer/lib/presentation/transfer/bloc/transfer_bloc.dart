@@ -27,9 +27,9 @@ class TransferBloc extends Bloc<TransferEvent, TransferState> {
       result.fold(
         onSuccess: (parties) =>
             TransferState(status: TransferStatus.loaded, parties: parties),
-        onFailure: (failure) => TransferState(
+        onFailure: (_) => const TransferState(
           status: TransferStatus.failure,
-          message: failure.message,
+          message: 'transfer.errors.load_parties',
         ),
       ),
     );
@@ -59,11 +59,11 @@ class TransferBloc extends Bloc<TransferEvent, TransferState> {
       ),
     );
     switch (result) {
-      case Error(error: final failure):
+      case Error():
         emit(
           state.copyWith(
             status: TransferStatus.failure,
-            message: failure.message,
+            message: 'transfer.errors.create',
           ),
         );
       case Success(value: final receipt):

@@ -1,10 +1,11 @@
+import 'package:components/localized_formatters.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_transfer/domain/entities/transfer_party.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
 typedef TransferSubmit = void Function(TransferEvent event);
 
@@ -37,12 +38,6 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
   int? _originId;
   int? _destinationId;
 
-  static final _currency = NumberFormat.currency(
-    locale: 'es_CO',
-    symbol: r'$',
-    decimalDigits: 0,
-  );
-
   @override
   void initState() {
     super.initState();
@@ -74,7 +69,7 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Nueva transferencia')),
+    appBar: AppBar(title: Text('transfer.new'.tr())),
     body: SafeArea(
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -117,9 +112,9 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
                 key: ValueKey('transfer-origin-$_originId'),
                 initialValue: _originId,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Usuario origen',
-                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                decoration: InputDecoration(
+                  labelText: 'transfer.form.origin'.tr(),
+                  prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
                 ),
                 items: widget.state.parties
                     .map(
@@ -136,18 +131,18 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
                         if (_destinationId == value) _destinationId = null;
                       }),
                 validator: (value) =>
-                    value == null ? 'Selecciona el usuario origen.' : null,
+                    value == null ? 'transfer.form.origin_required'.tr() : null,
               )
             else
               InputDecorator(
                 key: const Key('transfer-client-origin'),
-                decoration: const InputDecoration(
-                  labelText: 'Usuario origen',
-                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                decoration: InputDecoration(
+                  labelText: 'transfer.form.origin'.tr(),
+                  prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
                 ),
                 child: Text(switch (_party(_originId)) {
                   final party? => _partyLabel(party),
-                  null => 'Usuario no disponible',
+                  null => 'transfer.form.unavailable_user'.tr(),
                 }),
               ),
             const SizedBox(height: 16),
@@ -155,9 +150,9 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
               key: ValueKey('transfer-destination-$_destinationId-$_originId'),
               initialValue: _destinationId,
               isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Usuario destino',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                labelText: 'transfer.form.destination'.tr(),
+                prefixIcon: const Icon(Icons.person_outline),
               ),
               items: widget.state.parties
                   .where((party) => party.id != _originId)
@@ -171,8 +166,9 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
               onChanged: widget.state.isSubmitting
                   ? null
                   : (value) => setState(() => _destinationId = value),
-              validator: (value) =>
-                  value == null ? 'Selecciona el usuario destino.' : null,
+              validator: (value) => value == null
+                  ? 'transfer.form.destination_required'.tr()
+                  : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -182,8 +178,8 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                labelText: 'Valor',
+              decoration: InputDecoration(
+                labelText: 'transfer.form.amount'.tr(),
                 prefixText: r'$ ',
               ),
               validator: _validateAmount,
@@ -195,9 +191,9 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
               enabled: !widget.state.isSubmitting,
               textInputAction: TextInputAction.done,
               maxLength: 160,
-              decoration: const InputDecoration(
-                labelText: 'Descripción (opcional)',
-                prefixIcon: Icon(Icons.notes_outlined),
+              decoration: InputDecoration(
+                labelText: 'transfer.form.description'.tr(),
+                prefixIcon: const Icon(Icons.notes_outlined),
               ),
               onFieldSubmitted: (_) => _submit(),
             ),
@@ -211,7 +207,7 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.send_outlined),
-              label: const Text('Transferir'),
+              label: Text('transfer.action'.tr()),
             ),
           ],
         ),
@@ -221,10 +217,12 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
 
   String? _validateAmount(String? value) {
     final amount = int.tryParse(value ?? '');
-    if (amount == null || amount <= 0) return 'Ingresa un valor válido.';
+    if (amount == null || amount <= 0) {
+      return 'transfer.form.amount_invalid'.tr();
+    }
     final origin = _party(_originId);
     if (origin != null && amount > origin.balanceCop) {
-      return 'Saldo insuficiente.';
+      return 'transfer.form.insufficient_balance'.tr();
     }
     return null;
   }
@@ -264,5 +262,5 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
   }
 
   String _partyLabel(TransferParty party) =>
-      '${party.displayName} · ${_currency.format(party.balanceCop)}';
+      '${party.displayName} · ${localizedCop(context, party.balanceCop)}';
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
@@ -55,14 +56,17 @@ class TransferCreateView extends StatelessWidget {
       TransferStatus.completed when state.receipt != null =>
         TransferOutcome.success(state.receipt!),
       TransferStatus.failure when state.parties.isNotEmpty =>
-        TransferOutcome.failure(state.message ?? 'No fue posible transferir.'),
+        TransferOutcome.failure(state.message ?? 'transfer.errors.create'),
       _ => null,
     };
     if (outcome != null) {
       unawaited(_openResult(context, outcome));
     } else if (state.status == TransferStatus.failure &&
         state.message != null) {
-      AppNotification.showNotificationError(context, title: state.message!);
+      AppNotification.showNotificationError(
+        context,
+        title: state.message!.tr(),
+      );
     }
   }
 

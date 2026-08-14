@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class TransferLoadFailure extends StatelessWidget {
@@ -12,7 +13,7 @@ class TransferLoadFailure extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Transferencias')),
+    appBar: AppBar(title: Text('transfer.title'.tr())),
     body: Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -21,9 +22,9 @@ class TransferLoadFailure extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, size: 48),
             const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
+            Text(message.tr(), textAlign: TextAlign.center),
             const SizedBox(height: 16),
-            FilledButton(onPressed: onRetry, child: const Text('Reintentar')),
+            FilledButton(onPressed: onRetry, child: Text('common.retry'.tr())),
           ],
         ),
       ),

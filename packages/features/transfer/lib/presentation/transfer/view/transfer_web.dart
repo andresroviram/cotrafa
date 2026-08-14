@@ -5,6 +5,7 @@ import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_sta
 import 'package:feature_transfer/presentation/transfer_create/view/transfer_create_view.dart';
 import 'package:feature_transfer/presentation/transfer/widgets/transfer_history_content.dart';
 import 'package:feature_transfer/presentation/shared/widgets/transfer_load_failure.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -52,7 +53,7 @@ class _Loading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Transferencias')),
+    appBar: AppBar(title: Text('transfer.title'.tr())),
     body: const Center(child: CircularProgressIndicator()),
   );
 }

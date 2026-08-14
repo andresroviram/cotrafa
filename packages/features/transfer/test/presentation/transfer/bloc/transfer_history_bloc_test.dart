@@ -80,7 +80,7 @@ void main() {
       TransferHistoryState(status: TransferHistoryStatus.loading),
       TransferHistoryState(
         status: TransferHistoryStatus.failure,
-        message: 'Error al leer los datos almacenados.',
+        message: 'transfer.errors.load_history',
       ),
     ],
   );

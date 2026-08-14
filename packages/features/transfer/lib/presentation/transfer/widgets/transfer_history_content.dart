@@ -1,6 +1,7 @@
+import 'package:components/localized_formatters.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 class TransferHistoryContent extends StatelessWidget {
   const TransferHistoryContent({
@@ -20,12 +21,12 @@ class TransferHistoryContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Transferencias')),
+    appBar: AppBar(title: Text('transfer.title'.tr())),
     floatingActionButton: FloatingActionButton.extended(
       key: const Key('transfer-create-fab'),
       onPressed: onCreate,
       icon: const Icon(Icons.add),
-      label: const Text('Transferir'),
+      label: Text('transfer.action'.tr()),
     ),
     body: SafeArea(
       child: RefreshIndicator(
@@ -47,13 +48,13 @@ class TransferHistoryContent extends StatelessWidget {
       ),
       const SizedBox(height: 16),
       Text(
-        'Aún no hay transferencias.',
+        'transfer.empty'.tr(),
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.titleMedium,
       ),
       const SizedBox(height: 8),
       Text(
-        'Tus operaciones aparecerán aquí.',
+        'transfer.empty_description'.tr(),
         textAlign: TextAlign.center,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -89,23 +90,16 @@ class _TransferHistoryCard extends StatelessWidget {
   final int actorUserId;
   final TransferReceipt transfer;
 
-  static final _currency = NumberFormat.currency(
-    locale: 'es_CO',
-    symbol: r'$',
-    decimalDigits: 0,
-  );
-  static final _date = DateFormat('dd/MM/yyyy · HH:mm');
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final outgoing = transfer.originUserId == actorUserId;
     final incoming = transfer.destinationUserId == actorUserId;
     final label = outgoing
-        ? 'Enviada'
+        ? 'transfer.history.sent'.tr()
         : incoming
-        ? 'Recibida'
-        : 'Transferencia';
+        ? 'transfer.history.received'.tr()
+        : 'transfer.history.default'.tr();
     final sign = outgoing
         ? '- '
         : incoming
@@ -151,7 +145,7 @@ class _TransferHistoryCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '$sign${_currency.format(transfer.amountCop)}',
+                        '$sign${localizedCop(context, transfer.amountCop)}',
                         style: theme.textTheme.titleMedium?.copyWith(
                           color: color,
                           fontWeight: FontWeight.w700,
@@ -178,7 +172,8 @@ class _TransferHistoryCard extends StatelessWidget {
                   ],
                   const SizedBox(height: 8),
                   Text(
-                    _date.format(
+                    localizedDateTime(
+                      context,
                       DateTime.fromMillisecondsSinceEpoch(transfer.createdAt),
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(

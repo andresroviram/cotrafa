@@ -169,7 +169,7 @@ void main() {
       TransferState(
         status: TransferStatus.failure,
         parties: [origin, destination],
-        message: 'Insufficient balance.',
+        message: 'transfer.errors.create',
       ),
     ],
   );

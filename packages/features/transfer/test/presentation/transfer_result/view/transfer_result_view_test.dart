@@ -43,7 +43,9 @@ void main() {
 
   testWidgets('shows the failed transfer widget', (tester) async {
     await tester.pumpWidget(
-      subject(const TransferOutcome.failure('Saldo insuficiente.')),
+      subject(
+        const TransferOutcome.failure('transfer.form.insufficient_balance'),
+      ),
     );
     await tester.pumpAndSettle();
 

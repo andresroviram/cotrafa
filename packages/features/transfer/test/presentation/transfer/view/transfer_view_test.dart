@@ -7,6 +7,7 @@ import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_sta
 import 'package:feature_transfer/presentation/transfer/view/transfer_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:responsive_framework/responsive_framework.dart';
@@ -53,6 +54,9 @@ void main() {
   Widget subject(TransferHistoryState state) {
     when(() => bloc.state).thenReturn(state);
     return MaterialApp(
+      locale: const Locale('es'),
+      supportedLocales: const [Locale('es'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       builder: (context, child) => ResponsiveBreakpoints.builder(
         child: child!,
         breakpoints: const [
