@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 abstract final class AppTheme {
   static const primaryColor = Color(0xFF004183);
-  static const secondaryColor = Color(0xFFFF8C00);
+  static const secondaryColor = Color(0xFFF79250);
   static const accentColor = Color(0xFF004EB5);
 
   static final lightColorScheme = _colorScheme(Brightness.light);
@@ -51,9 +51,13 @@ abstract final class AppTheme {
   static ThemeData _theme(ColorScheme colors) =>
       ThemeData.from(colorScheme: colors, useMaterial3: true).copyWith(
         scaffoldBackgroundColor: colors.surfaceContainerLow,
-        appBarTheme: AppBarThemeData(
-          backgroundColor: colors.surfaceContainerLow,
+        appBarTheme: const AppBarThemeData(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
+        ),
+        navigationBarTheme: const NavigationBarThemeData(
+          indicatorColor: secondaryColor,
         ),
         cardTheme: _cardTheme(colors),
         inputDecorationTheme: _inputDecorationTheme(colors),

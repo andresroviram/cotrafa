@@ -15,7 +15,6 @@ class NavigationAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final responsive = ResponsiveBreakpoints.of(context);
     return AppBar(
-      forceMaterialTransparency: true,
       shape: LinearBorder.bottom(
         side: BorderSide(color: Theme.of(context).colorScheme.secondary),
       ),
@@ -42,7 +41,7 @@ class NavigationAppBar extends StatelessWidget implements PreferredSizeWidget {
             //   color: Theme.of(context).colorScheme.background,
             // ),
             alignment: Alignment.center,
-            child: Icon(Icons.menu, color: Theme.of(context).hintColor),
+            child: const Icon(Icons.menu),
           ),
         ),
       ),

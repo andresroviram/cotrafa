@@ -16,6 +16,7 @@ class NavigationTitle extends StatelessWidget {
           child: Text(
             'app_title'.tr(),
             style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.appBarTheme.foregroundColor,
               fontWeight: FontWeight.w700,
             ),
           ),

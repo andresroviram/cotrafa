@@ -13,7 +13,7 @@ void main() {
   test('keeps complete Cotrafa accent color groups', () {
     final colors = AppTheme.light.colorScheme;
     final orange = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFFF8C00),
+      seedColor: const Color(0xFFF79250),
       dynamicSchemeVariant: DynamicSchemeVariant.tonalSpot,
     );
     final accent = ColorScheme.fromSeed(
@@ -22,7 +22,7 @@ void main() {
     );
 
     expect(colors.primary, const Color(0xFF004183));
-    expect(colors.secondary, const Color(0xFFFF8C00));
+    expect(colors.secondary, const Color(0xFFF79250));
     expect(colors.secondaryContainer, orange.primaryContainer);
     expect(colors.onSecondaryContainer, orange.onPrimaryContainer);
     expect(colors.tertiary, const Color(0xFF004EB5));
@@ -33,11 +33,11 @@ void main() {
 
     final darkColors = AppTheme.dark.colorScheme;
     final darkOrange = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFFF8C00),
+      seedColor: const Color(0xFFF79250),
       brightness: Brightness.dark,
       dynamicSchemeVariant: DynamicSchemeVariant.tonalSpot,
     );
-    expect(darkColors.secondary, const Color(0xFFFF8C00));
+    expect(darkColors.secondary, const Color(0xFFF79250));
     expect(darkColors.onSecondary, Colors.black);
     expect(darkColors.secondaryContainer, darkOrange.primaryContainer);
     expect(darkColors.onSecondaryContainer, darkOrange.onPrimaryContainer);
@@ -54,16 +54,20 @@ void main() {
       AppTheme.dark.scaffoldBackgroundColor,
       AppTheme.dark.colorScheme.surfaceContainerLow,
     );
-    expect(
-      AppTheme.light.appBarTheme.backgroundColor,
-      AppTheme.light.colorScheme.surfaceContainerLow,
-    );
-    expect(
-      AppTheme.dark.appBarTheme.backgroundColor,
-      AppTheme.dark.colorScheme.surfaceContainerLow,
-    );
+    expect(AppTheme.light.appBarTheme.backgroundColor, const Color(0xFF004183));
+    expect(AppTheme.dark.appBarTheme.backgroundColor, const Color(0xFF004183));
+    expect(AppTheme.light.appBarTheme.foregroundColor, Colors.white);
+    expect(AppTheme.dark.appBarTheme.foregroundColor, Colors.white);
     expect(AppTheme.light.appBarTheme.surfaceTintColor, Colors.transparent);
     expect(AppTheme.dark.appBarTheme.surfaceTintColor, Colors.transparent);
+    expect(
+      AppTheme.light.navigationBarTheme.indicatorColor,
+      const Color(0xFFF79250),
+    );
+    expect(
+      AppTheme.dark.navigationBarTheme.indicatorColor,
+      const Color(0xFFF79250),
+    );
     expect(AppTheme.light.inputDecorationTheme.filled, isTrue);
     expect(
       AppTheme.light.inputDecorationTheme.fillColor,

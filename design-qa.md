@@ -49,4 +49,55 @@ No actionable P0, P1, or P2 differences remain. The debug banner belongs to the 
 - [x] Omit Remember me and verbose demo explanation.
 - [x] Verify validation, both login actions, and Android rendering.
 
+---
+
+# Navigation Color Design QA
+
+## Evidence
+
+- Source orange: `/var/folders/ln/qbl138m51b78phv64b8cw2_00000gn/T/codex-clipboard-f2d3d904-2836-44c0-92fb-d90965f786a7.png` (75 × 36 pixels, dominant `#F79250`).
+- Source blue: the rendered login primary button in `/tmp/cotrafa-clean-start.png`; the user explicitly selected this existing `#004183` blue instead of the later swatch.
+- Light implementation: `/tmp/cotrafa-appbar-light.png`.
+- Dark implementation: `/tmp/cotrafa-appbar-dark.png`.
+- Combined focused comparison: `/tmp/cotrafa-navigation-color-comparison.png`.
+- Runtime viewport: Android emulator, 360 × 800 logical pixels at 3.0 DPR; implementation captures 1080 × 2400 pixels.
+- State: authenticated admin, Users branch, light and dark modes.
+
+## Full-view comparison
+
+Both application bars render the same login-primary blue (`#004183`) in light and dark modes. The Material navigation indicator renders the sampled orange (`#F79250`) in both modes. White AppBar content preserves contrast; the selected navigation icon adapts through the theme foreground.
+
+## Focused comparison
+
+The combined comparison places the login button beside both AppBar states and the source orange beside both navigation indicators. Direct pixel sampling confirms exact token equality, so density normalization does not affect the color verdict.
+
+## Fidelity surfaces
+
+- Typography: unchanged; AppBar titles keep their existing hierarchy and weights.
+- Spacing and layout: unchanged; only semantic color tokens changed.
+- Colors and tokens: exact `#004183` AppBar and `#F79250` navigation indicator in both modes.
+- Image quality: no image assets were introduced or modified.
+- Copy and content: unchanged.
+
+## Interaction evidence
+
+- Demo-admin login opened the authenticated shell.
+- Theme toggle switched between light and dark while preserving the AppBar blue and navigation orange.
+- Users and Transfers navigation remained visible and interactive.
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain.
+
+## Comparison history
+
+- Pass 1: exact token match in both modes; no visual correction loop required.
+
+## Implementation checklist
+
+- [x] Reuse the login button blue for every AppBar.
+- [x] Apply the sampled orange to the Material navigation indicator.
+- [x] Preserve readable AppBar foregrounds.
+- [x] Verify light and dark runtime states.
+
 final result: passed
