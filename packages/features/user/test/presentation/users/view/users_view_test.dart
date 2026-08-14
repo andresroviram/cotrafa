@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core/get_it.dart';
+import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
@@ -535,6 +536,65 @@ void main() {
     expect(issuedForEmail, 'sofia@cotrafa.local');
   });
 
+  testWidgets('admin confirms user deletion from the action menu', (
+    tester,
+  ) async {
+    final states = StreamController<UserState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    const user = UserProfile(
+      id: 2,
+      email: 'sofia@cotrafa.local',
+      fullName: 'Sofia Rovira',
+      role: 'client',
+      status: 'active',
+      balanceCop: 250000,
+    );
+    await tester.pumpWidget(
+      subject(const UserState(status: UserStatus.loaded, users: [user])),
+    );
+    clearInteractions(bloc);
+
+    await tester.tap(find.byKey(const Key('user-actions-2')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('delete-user-2')), findsOneWidget);
+    expect(find.widgetWithIcon(Row, Icons.delete_outline), findsOneWidget);
+
+    await tester.tap(find.text('Eliminar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Eliminar usuario'), findsOneWidget);
+    expect(
+      find.textContaining('se desactivará para conservar el historial'),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(TextButton, 'Cancelar'));
+    await tester.pumpAndSettle();
+    verifyNever(() => bloc.add(const UserEvent.deleteRequested(1, 2)));
+
+    await tester.tap(find.byKey(const Key('user-actions-2')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Eliminar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Eliminar'));
+    await tester.pump();
+
+    verify(() => bloc.add(const UserEvent.deleteRequested(1, 2))).called(1);
+    states
+      ..add(const UserState(status: UserStatus.loading, users: [user]))
+      ..add(
+        const UserState(
+          status: UserStatus.deleted,
+          deleteOutcome: DeleteOutcome.deactivated,
+        ),
+      );
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Usuario desactivado para conservar el historial'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('client edits only itself without admin actions', (tester) async {
     await tester.pumpWidget(
       subject(
@@ -568,5 +628,8 @@ void main() {
     expect(find.byKey(const Key('regenerate-code-2')), findsNothing);
     expect(find.byKey(const Key('user-actions-2')), findsOneWidget);
     expect(find.byKey(const Key('user-actions-3')), findsNothing);
+    await tester.tap(find.byKey(const Key('user-actions-2')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('delete-user-2')), findsNothing);
   });
 }

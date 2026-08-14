@@ -9,12 +9,14 @@ class UserCard extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onGenerateActivationCode,
+    this.onDelete,
   });
 
   final UserProfile user;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onGenerateActivationCode;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +86,9 @@ class UserCard extends StatelessWidget {
                 ),
               ),
             ),
-            if (onEdit != null || onGenerateActivationCode != null)
+            if (onEdit != null ||
+                onGenerateActivationCode != null ||
+                onDelete != null)
               PopupMenuButton<_UserCardAction>(
                 key: Key('user-actions-${user.id}'),
                 tooltip: 'Acciones del usuario',
@@ -110,6 +114,17 @@ class UserCard extends StatelessWidget {
                         label: 'Generar nuevo código',
                       ),
                     ),
+                  if (onDelete != null)
+                    PopupMenuItem(
+                      key: Key('delete-user-${user.id}'),
+                      value: _UserCardAction.delete,
+                      onTap: () => _afterMenuCloses(onDelete),
+                      child: _MenuItem(
+                        icon: Icons.delete_outline,
+                        label: 'Eliminar',
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
                 ],
               ),
           ],
@@ -119,24 +134,27 @@ class UserCard extends StatelessWidget {
   }
 }
 
-enum _UserCardAction { edit, regenerateCode }
+enum _UserCardAction { edit, regenerateCode, delete }
 
 void _afterMenuCloses(VoidCallback? callback) {
   WidgetsBinding.instance.addPostFrameCallback((_) => callback?.call());
 }
 
 class _MenuItem extends StatelessWidget {
-  const _MenuItem({required this.icon, required this.label});
+  const _MenuItem({required this.icon, required this.label, this.color});
 
   final IconData icon;
   final String label;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Icon(icon),
+      Icon(icon, color: color),
       const SizedBox(width: 12),
-      Flexible(child: Text(label)),
+      Flexible(
+        child: Text(label, style: TextStyle(color: color)),
+      ),
     ],
   );
 }

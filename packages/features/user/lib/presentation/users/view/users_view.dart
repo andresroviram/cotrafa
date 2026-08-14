@@ -1,4 +1,5 @@
 import 'package:core/get_it.dart';
+import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/activation_code_issuer.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
@@ -159,6 +160,54 @@ class UsersView extends StatelessWidget {
     if (context.mounted) _load(context);
   }
 
+  Future<void> _deleteUser(BuildContext context, UserProfile user) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar usuario'),
+        content: Text(
+          '¿Eliminar a ${user.displayName}? Si no tiene transferencias, '
+          'se eliminará definitivamente. Si tiene, se desactivará para '
+          'conservar el historial.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final bloc = context.read<UserBloc>();
+    final completed = bloc.stream.firstWhere(
+      (state) =>
+          state.status == UserStatus.deleted ||
+          state.status == UserStatus.failure,
+    );
+    bloc.add(UserEvent.deleteRequested(actorUserId, user.id));
+    final result = await completed;
+    if (!context.mounted) return;
+
+    final message = switch (result.deleteOutcome) {
+      DeleteOutcome.deleted => 'Usuario eliminado',
+      DeleteOutcome.deactivated =>
+        'Usuario desactivado para conservar el historial',
+      null => 'No pudimos eliminar el usuario',
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   List<UserProfile> _visibleUsers(UserState state) {
     if (state.searchQuery.isEmpty) return state.users;
     return state.users.where((user) {
@@ -191,6 +240,8 @@ class UsersView extends StatelessWidget {
             user.role == 'client' &&
             user.status == 'pendingActivation' &&
             issueActivationCode != null;
+        final canDelete =
+            isAdmin && user.role == 'client' && user.status != 'inactive';
         return UserCard(
           user: user,
           onTap: () => _openDetail(context, user),
@@ -200,6 +251,7 @@ class UsersView extends StatelessWidget {
           onGenerateActivationCode: canGenerateCode
               ? () => _generateActivationCode(context, user)
               : null,
+          onDelete: canDelete ? () => _deleteUser(context, user) : null,
         );
       },
     );
