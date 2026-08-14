@@ -121,4 +121,57 @@ void main() {
       ),
     ).called(1);
   });
+
+  testWidgets(
+    'dismisses keyboard on outside tap but keeps it while scrolling',
+    (tester) async {
+      tester.view.physicalSize = const Size(400, 600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      const user = UserProfile(
+        id: 2,
+        email: 'sofia@cotrafa.local',
+        fullName: 'Sofia Rovira',
+        firstName: 'Sofia',
+        lastName: 'Rovira',
+        role: 'client',
+        status: 'active',
+        balanceCop: 250000,
+      );
+      when(
+        () => bloc.state,
+      ).thenReturn(const UserState(status: UserStatus.loaded, users: [user]));
+
+      await tester.pumpWidget(
+        app(
+          BlocProvider<UserBloc>.value(
+            value: bloc,
+            child: const UserEditView(actorUserId: 1, userId: 2),
+          ),
+        ),
+      );
+      final firstName = find.byKey(const Key('edit-user-first-name'));
+      final lastName = find.byKey(const Key('edit-user-last-name'));
+      await tester.showKeyboard(firstName);
+      expect(tester.testTextInput.isVisible, isTrue);
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(SingleChildScrollView)),
+      );
+      await gesture.moveBy(const Offset(0, -100));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.testTextInput.isVisible, isTrue);
+      await gesture.up();
+      await tester.pump();
+
+      final gapY =
+          (tester.getBottomLeft(firstName).dy +
+              tester.getTopLeft(lastName).dy) /
+          2;
+      await tester.tapAt(Offset(200, gapY));
+      await tester.pump();
+      expect(tester.testTextInput.isVisible, isFalse);
+    },
+  );
 }
