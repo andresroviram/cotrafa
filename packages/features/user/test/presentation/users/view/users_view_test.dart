@@ -128,6 +128,79 @@ void main() {
     verify(() => bloc.add(const UserEvent.profileRequested(8, 8))).called(1);
   });
 
+  testWidgets('reloads users when the navigation shell returns to its branch', (
+    tester,
+  ) async {
+    when(
+      () => bloc.state,
+    ).thenReturn(const UserState(status: UserStatus.loaded));
+    late StatefulNavigationShell navigationShell;
+    final router = GoRouter(
+      initialLocation: '/users',
+      routes: [
+        StatefulShellRoute.indexedStack(
+          builder: (_, _, shell) {
+            navigationShell = shell;
+            return Scaffold(
+              body: shell,
+              bottomNavigationBar: Row(
+                children: [
+                  TextButton(
+                    key: const Key('open-users-branch'),
+                    onPressed: () =>
+                        navigationShell.goBranch(0, initialLocation: true),
+                    child: const Text('Usuarios'),
+                  ),
+                  TextButton(
+                    key: const Key('open-transfer-branch'),
+                    onPressed: () =>
+                        navigationShell.goBranch(1, initialLocation: true),
+                    child: const Text('Transferencias'),
+                  ),
+                ],
+              ),
+            );
+          },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/users',
+                  builder: (_, _) => BlocProvider<UserBloc>.value(
+                    value: bloc,
+                    child: const UsersView(actorUserId: 1, isAdmin: true),
+                  ),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/transfer',
+                  builder: (_, _) => const Scaffold(
+                    body: Center(child: Text('Transferencias')),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(routedApp(router));
+    await tester.pumpAndSettle();
+    clearInteractions(bloc);
+
+    await tester.tap(find.byKey(const Key('open-transfer-branch')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-users-branch')));
+    await tester.pumpAndSettle();
+
+    verify(() => bloc.add(const UserEvent.listRequested(1))).called(1);
+  });
+
   testWidgets('renders Cotrafa data using the reference card hierarchy', (
     tester,
   ) async {

@@ -10,9 +10,10 @@ import 'package:feature_user/presentation/users/view/users_web.dart';
 import 'package:feature_user/presentation/users/widgets/activation_code_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
-class UsersView extends StatelessWidget {
+class UsersView extends StatefulWidget {
   const UsersView({
     super.key,
     required this.actorUserId,
@@ -46,6 +47,54 @@ class UsersView extends StatelessWidget {
   }
 
   @override
+  State<UsersView> createState() => _UsersViewState();
+}
+
+class _UsersViewState extends State<UsersView> {
+  GoRouter? _router;
+  String? _previousRoutePath;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final router = GoRouter.maybeOf(context);
+      if (router == null) return;
+      _router = router;
+      _previousRoutePath = router.routerDelegate.currentConfiguration.uri.path;
+      router.routerDelegate.addListener(_onRouteChanged);
+    });
+  }
+
+  @override
+  void dispose() {
+    _router?.routerDelegate.removeListener(_onRouteChanged);
+    super.dispose();
+  }
+
+  void _onRouteChanged() {
+    if (!mounted) return;
+    final currentPath = _router!.routerDelegate.currentConfiguration.uri.path;
+    final previousPath = _previousRoutePath;
+    if (previousPath != null &&
+        !_isUsersRoute(previousPath) &&
+        currentPath == UsersView.path) {
+      _loadScope();
+    }
+    _previousRoutePath = currentPath;
+  }
+
+  bool _isUsersRoute(String path) =>
+      path == UsersView.path || path.startsWith('${UsersView.path}/');
+
+  void _loadScope() => context.read<UserBloc>().add(
+    widget.isAdmin
+        ? UserEvent.listRequested(widget.actorUserId)
+        : UserEvent.profileRequested(widget.actorUserId, widget.actorUserId),
+  );
+
+  @override
   Widget build(BuildContext context) {
     return BlocListener<UserBloc, UserState>(
       listenWhen: (previous, current) =>
@@ -55,14 +104,14 @@ class UsersView extends StatelessWidget {
       listener: _onStateChanged,
       child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
           ? UsersWeb(
-              actorUserId: actorUserId,
-              isAdmin: isAdmin,
-              issueActivationCode: issueActivationCode,
+              actorUserId: widget.actorUserId,
+              isAdmin: widget.isAdmin,
+              issueActivationCode: widget.issueActivationCode,
             )
           : UsersMobile(
-              actorUserId: actorUserId,
-              isAdmin: isAdmin,
-              issueActivationCode: issueActivationCode,
+              actorUserId: widget.actorUserId,
+              isAdmin: widget.isAdmin,
+              issueActivationCode: widget.issueActivationCode,
             ),
     );
   }
@@ -99,10 +148,10 @@ class UsersView extends StatelessWidget {
   }
 
   Future<void> _completeCreation(BuildContext context, UserState state) async {
-    final issuer = issueActivationCode;
+    final issuer = widget.issueActivationCode;
     if (issuer == null || state.users.isEmpty) return;
     final bloc = context.read<UserBloc>();
-    final code = await issuer(actorUserId, state.users.last.email);
+    final code = await issuer(widget.actorUserId, state.users.last.email);
     if (!context.mounted) return;
     if (code == null) {
       bloc.add(
