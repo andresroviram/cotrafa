@@ -195,6 +195,7 @@ El repositorio incluye `sqlite3.wasm`. Para descargar nuevamente la versión fij
 
 ```bash
 # Linux/macOS
+chmod +x scripts/setup_web.sh
 ./scripts/setup_web.sh
 
 # Windows PowerShell
