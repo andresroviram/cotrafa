@@ -114,6 +114,7 @@ void main() {
         'secret',
       );
       expect(activated, const AuthIdentity(userId: 2, role: 'client'));
+      expect(await database.currentSessionUserId(), 2);
       row = await _client(database);
       expect(row.read<String>('status'), 'active');
       expect(row.readNullable<String>('activation_code_hash'), isNull);

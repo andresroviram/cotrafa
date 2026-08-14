@@ -99,6 +99,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
       "UPDATE users SET password_hash=?,activation_code_hash=NULL,status='active',updated_at=? WHERE id=?",
       <Object?>[passwordHash, DateTime.now().millisecondsSinceEpoch, userId],
     );
+    await _database.setSessionUserId(userId);
     return AuthIdentity(userId: userId, role: 'client');
   });
 
