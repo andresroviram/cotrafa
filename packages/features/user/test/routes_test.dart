@@ -1,3 +1,4 @@
+import 'package:feature_user/presentation/users/view/user_detail_view.dart';
 import 'package:feature_user/presentation/users/view/user_edit_view.dart';
 import 'package:feature_user/presentation/users/view/users_view.dart';
 import 'package:feature_user/routes.dart';
@@ -19,7 +20,12 @@ void main() {
 
     expect(route.path, UsersView.path);
     expect(route.name, UsersView.name);
-    final editRoute = route.routes.single as GoRoute;
+    expect(route.routes, hasLength(2));
+    final detailRoute = route.routes.first as GoRoute;
+    expect(detailRoute.path, UserDetailView.path);
+    expect(detailRoute.name, UserDetailView.name);
+    expect(detailRoute.parentNavigatorKey, same(rootNavigatorKey));
+    final editRoute = route.routes.last as GoRoute;
     expect(editRoute.path, UserEditView.path);
     expect(editRoute.name, UserEditView.name);
     expect(editRoute.parentNavigatorKey, same(rootNavigatorKey));

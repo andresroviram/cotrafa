@@ -5,6 +5,7 @@ import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
+import 'package:feature_user/presentation/users/view/user_detail_view.dart';
 import 'package:feature_user/presentation/users/view/users_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -346,7 +347,7 @@ void main() {
     expect(issuedForEmail, 'sofia@cotrafa.local');
   });
 
-  testWidgets('opens the full edit route from the card and action menu', (
+  testWidgets('opens detail from the card and edit from the action menu', (
     tester,
   ) async {
     const user = UserProfile(
@@ -371,6 +372,13 @@ void main() {
           ),
           routes: [
             GoRoute(
+              path: ':userId',
+              name: UserDetailView.name,
+              builder: (_, state) => Scaffold(
+                body: Text('Detalle usuario ${state.pathParameters['userId']}'),
+              ),
+            ),
+            GoRoute(
               path: ':userId/edit',
               name: 'edit-user',
               builder: (_, state) => Scaffold(
@@ -386,7 +394,7 @@ void main() {
 
     await tester.tap(find.text('Sofia Rovira'));
     await tester.pumpAndSettle();
-    expect(find.text('Editar usuario 2'), findsOneWidget);
+    expect(find.text('Detalle usuario 2'), findsOneWidget);
 
     router.pop();
     await tester.pumpAndSettle();

@@ -4,6 +4,7 @@ import 'package:feature_user/presentation/users/activation_code_issuer.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
+import 'package:feature_user/presentation/users/view/user_detail_view.dart';
 import 'package:feature_user/presentation/users/view/user_edit_view.dart';
 import 'package:feature_user/presentation/users/view/users_mobile.dart';
 import 'package:feature_user/presentation/users/view/users_web.dart';
@@ -145,11 +146,20 @@ class UsersView extends StatelessWidget {
     ).showSnackBar(const SnackBar(content: Text('Usuario actualizado')));
   }
 
+  Future<void> _openDetail(BuildContext context, UserProfile user) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final updated = await context.pushNamed<bool>(
+      UserDetailView.name,
+      pathParameters: {'userId': '${user.id}'},
+    );
+    if (updated == true && context.mounted) _load(context);
+  }
+
   List<UserProfile> _visibleUsers(UserState state) {
     if (state.searchQuery.isEmpty) return state.users;
     return state.users.where((user) {
       final query = state.searchQuery;
-      return user.fullName.toLowerCase().contains(query) ||
+      return user.displayName.toLowerCase().contains(query) ||
           user.email.toLowerCase().contains(query);
     }).toList();
   }
@@ -178,6 +188,7 @@ class UsersView extends StatelessWidget {
             issueActivationCode != null;
         return UserCard(
           user: user,
+          onTap: () => _openDetail(context, user),
           onEdit: isAdmin || user.id == actorUserId
               ? () => _openEdit(context, user)
               : null,
