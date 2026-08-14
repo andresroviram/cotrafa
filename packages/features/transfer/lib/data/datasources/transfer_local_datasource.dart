@@ -1,85 +1,21 @@
 import 'package:cotrafa_database/cotrafa_database.dart';
+import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_transfer/domain/entities/receipt_action.dart';
+import 'package:feature_transfer/domain/entities/transfer_command.dart';
+import 'package:feature_transfer/domain/entities/transfer_party.dart';
+import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
 import 'package:injectable/injectable.dart';
 
-enum TransferError {
-  unauthorized,
-  notFound,
-  inactiveParty,
-  selfTransfer,
-  invalidAmount,
-  insufficientFunds,
-  concurrentChange,
-  unsupportedAction,
-  storageFailure,
+abstract interface class ITransferLocalDatasource {
+  Future<List<TransferParty>> listParties(int actorUserId);
+  Future<TransferReceipt> createTransfer(TransferCommand command);
+  Future<TransferReceipt> getReceipt(String id);
+  Future<void> requestReceiptAction(String id, ReceiptAction action);
 }
 
-enum ReceiptAction { mutate, delete, export, share }
-
-final class TransferResult<T> {
-  const TransferResult.ok(this.value) : error = null;
-  const TransferResult.failure(this.error) : value = null;
-  final T? value;
-  final TransferError? error;
-}
-
-final class TransferCommand {
-  const TransferCommand(
-    this.actorId,
-    this.originId,
-    this.destinationId,
-    this.amountCop,
-    this.description,
-  );
-  final int actorId, originId, destinationId, amountCop;
-  final String? description;
-}
-
-final class TransferReceipt {
-  const TransferReceipt({
-    required this.id,
-    required this.originUserId,
-    required this.destinationUserId,
-    required this.amountCop,
-    required this.status,
-    required this.description,
-    required this.createdAt,
-    required this.originSnapshot,
-    required this.destinationSnapshot,
-  });
-  final String id, status, originSnapshot, destinationSnapshot;
-  final int originUserId, destinationUserId, amountCop, createdAt;
-  final String? description;
-
-  @override
-  bool operator ==(Object other) =>
-      other is TransferReceipt &&
-      id == other.id &&
-      originUserId == other.originUserId &&
-      destinationUserId == other.destinationUserId &&
-      amountCop == other.amountCop &&
-      status == other.status &&
-      description == other.description &&
-      createdAt == other.createdAt &&
-      originSnapshot == other.originSnapshot &&
-      destinationSnapshot == other.destinationSnapshot;
-
-  @override
-  int get hashCode => Object.hash(
-    id,
-    originUserId,
-    destinationUserId,
-    amountCop,
-    status,
-    description,
-    createdAt,
-    originSnapshot,
-    destinationSnapshot,
-  );
-}
-
-@lazySingleton
-final class TransferLocalDatasource {
+@LazySingleton(as: ITransferLocalDatasource)
+final class TransferLocalDatasource implements ITransferLocalDatasource {
   TransferLocalDatasource(this._database)
     : idGenerator = _generateTransferId,
       _clock = DateTime.now,
@@ -91,6 +27,7 @@ final class TransferLocalDatasource {
     DateTime Function()? clock,
     this.afterRead,
   }) : _clock = clock ?? DateTime.now;
+
   final CotrafaDatabase _database;
   final String Function() idGenerator;
   final DateTime Function() _clock;
@@ -99,89 +36,124 @@ final class TransferLocalDatasource {
   static String _generateTransferId() =>
       DateTime.now().microsecondsSinceEpoch.toRadixString(36);
 
-  Future<TransferResult<TransferReceipt>> execute(
+  @override
+  Future<List<TransferParty>> listParties(int actorUserId) async {
+    final actor = await _user(actorUserId);
+    if (actor == null || actor.read<String>('status') != 'active') {
+      throw const UnauthorizedException();
+    }
+    final rows = await _database
+        .customSelect(
+          'SELECT id,email,full_name,balance_cop FROM users '
+          "WHERE status='active' ORDER BY full_name,email",
+        )
+        .get();
+    return rows.map(_party).toList();
+  }
+
+  @override
+  Future<TransferReceipt> createTransfer(
     TransferCommand command,
-  ) => _guard(
-    () => _database.transaction(() async {
-      if (command.amountCop <= 0) return _fail(TransferError.invalidAmount);
-      if (command.originId == command.destinationId) {
-        return _fail(TransferError.selfTransfer);
-      }
-      final actor = await _user(command.actorId);
-      if (actor == null || actor.read<String>('status') != 'active') {
-        return _fail(TransferError.unauthorized);
-      }
-      final origin = await _user(command.originId);
-      final destination = await _user(command.destinationId);
-      if (origin == null || destination == null) {
-        return _fail(TransferError.notFound);
-      }
-      if (origin.read<String>('status') != 'active' ||
-          destination.read<String>('status') != 'active') {
-        return _fail(TransferError.inactiveParty);
-      }
-      if (actor.read<String>('role') != 'admin' &&
-          command.actorId != command.originId) {
-        return _fail(TransferError.unauthorized);
-      }
-      if (origin.read<int>('balance_cop') < command.amountCop) {
-        return _fail(TransferError.insufficientFunds);
-      }
-      await afterRead?.call();
-      final debit = await _database.customUpdate(
-        "UPDATE users SET balance_cop=balance_cop-? WHERE id=? AND status='active' AND balance_cop>=?",
-        variables: <Variable<Object>>[
-          Variable<int>(command.amountCop),
-          Variable<int>(command.originId),
-          Variable<int>(command.amountCop),
-        ],
-        updates: <TableInfo<Table, Object?>>{_database.users},
+  ) => _database.transaction(() async {
+    _validateCommand(command);
+    final actor = await _user(command.actorId);
+    if (actor == null || actor.read<String>('status') != 'active') {
+      throw const UnauthorizedException();
+    }
+    final origin = await _user(command.originId);
+    final destination = await _user(command.destinationId);
+    if (origin == null || destination == null) {
+      throw const NotFoundException();
+    }
+    if (origin.read<String>('status') != 'active' ||
+        destination.read<String>('status') != 'active') {
+      throw const ValidationException(
+        message: 'Both transfer users must be active.',
       );
-      final credit = await _database.customUpdate(
-        "UPDATE users SET balance_cop=balance_cop+? WHERE id=? AND status='active'",
-        variables: <Variable<Object>>[
-          Variable<int>(command.amountCop),
-          Variable<int>(command.destinationId),
-        ],
-        updates: <TableInfo<Table, Object?>>{_database.users},
-      );
-      if (debit != 1 || credit != 1) {
-        throw const _ConcurrentChange();
-      }
-      final id = idGenerator();
-      final createdAt = _clock().millisecondsSinceEpoch;
-      await _database.customStatement(
-        'INSERT INTO transfers VALUES (?,?,?,?,?,?,?,?,?)',
-        <Object?>[
-          id,
-          command.originId,
-          command.destinationId,
-          command.amountCop,
-          'completed',
-          command.description,
-          createdAt,
-          _snapshot(origin),
-          _snapshot(destination),
-        ],
-      );
-      final row = await _receiptRow(id);
-      if (row == null) throw StateError('Inserted transfer is unreadable.');
-      return TransferResult.ok(_receipt(row));
-    }),
-  );
+    }
+    if (actor.read<String>('role') != 'admin' &&
+        command.actorId != command.originId) {
+      throw const UnauthorizedException();
+    }
+    if (origin.read<int>('balance_cop') < command.amountCop) {
+      throw const ValidationException(message: 'Insufficient balance.');
+    }
 
-  Future<TransferResult<TransferReceipt>> receipt(String id) =>
-      _guard(() async {
-        final row = await _receiptRow(id);
-        return row == null
-            ? _fail(TransferError.notFound)
-            : TransferResult.ok(_receipt(row));
-      });
+    await afterRead?.call();
+    final debit = await _database.customUpdate(
+      "UPDATE users SET balance_cop=balance_cop-? WHERE id=? AND status='active' AND balance_cop>=?",
+      variables: <Variable<Object>>[
+        Variable<int>(command.amountCop),
+        Variable<int>(command.originId),
+        Variable<int>(command.amountCop),
+      ],
+      updates: <TableInfo<Table, Object?>>{_database.users},
+    );
+    final credit = await _database.customUpdate(
+      "UPDATE users SET balance_cop=balance_cop+? WHERE id=? AND status='active'",
+      variables: <Variable<Object>>[
+        Variable<int>(command.amountCop),
+        Variable<int>(command.destinationId),
+      ],
+      updates: <TableInfo<Table, Object?>>{_database.users},
+    );
+    if (debit != 1 || credit != 1) {
+      throw const StorageException(
+        message: 'Concurrent balance change detected.',
+      );
+    }
 
-  Future<TransferResult<void>> requestReceiptAction(
-    String id,
-    ReceiptAction action,
-  ) async => const TransferResult.failure(TransferError.unsupportedAction);
+    final id = idGenerator();
+    final createdAt = _clock().millisecondsSinceEpoch;
+    await _database.customStatement(
+      'INSERT INTO transfers VALUES (?,?,?,?,?,?,?,?,?)',
+      <Object?>[
+        id,
+        command.originId,
+        command.destinationId,
+        command.amountCop,
+        'completed',
+        _optional(command.description),
+        createdAt,
+        _snapshot(origin),
+        _snapshot(destination),
+      ],
+    );
+    final row = await _receiptRow(id);
+    if (row == null) {
+      throw const StorageException(
+        message: 'Inserted transfer receipt is unreadable.',
+      );
+    }
+    return _receipt(row);
+  });
+
+  @override
+  Future<TransferReceipt> getReceipt(String id) async {
+    final row = await _receiptRow(id);
+    if (row == null) throw const NotFoundException();
+    return _receipt(row);
+  }
+
+  @override
+  Future<void> requestReceiptAction(String id, ReceiptAction action) async {
+    throw const ValidationException(
+      message: 'Transfer receipts are read-only.',
+    );
+  }
+
+  void _validateCommand(TransferCommand command) {
+    if (command.amountCop <= 0) {
+      throw const ValidationException(
+        message: 'Transfer amount must be greater than zero.',
+      );
+    }
+    if (command.originId == command.destinationId) {
+      throw const ValidationException(
+        message: 'Origin and destination must be different.',
+      );
+    }
+  }
 
   Future<QueryRow?> _user(int id) => _database
       .customSelect(
@@ -189,14 +161,24 @@ final class TransferLocalDatasource {
         variables: <Variable<Object>>[Variable<int>(id)],
       )
       .getSingleOrNull();
+
   Future<QueryRow?> _receiptRow(String id) => _database
       .customSelect(
         'SELECT * FROM transfers WHERE id=?',
         variables: <Variable<Object>>[Variable<String>(id)],
       )
       .getSingleOrNull();
+
+  TransferParty _party(QueryRow row) => TransferParty(
+    id: row.read<int>('id'),
+    fullName: row.read<String>('full_name'),
+    email: row.read<String>('email'),
+    balanceCop: row.read<int>('balance_cop'),
+  );
+
   String _snapshot(QueryRow row) =>
       '${row.read<String>('full_name')} <${row.read<String>('email')}>';
+
   TransferReceipt _receipt(QueryRow row) => TransferReceipt(
     id: row.read<String>('id'),
     originUserId: row.read<int>('origin_user_id'),
@@ -208,21 +190,9 @@ final class TransferLocalDatasource {
     originSnapshot: row.read<String>('origin_snapshot'),
     destinationSnapshot: row.read<String>('destination_snapshot'),
   );
-  TransferResult<T> _fail<T>(TransferError error) =>
-      TransferResult.failure(error);
-  Future<TransferResult<T>> _guard<T>(
-    Future<TransferResult<T>> Function() action,
-  ) async {
-    try {
-      return await action();
-    } on _ConcurrentChange {
-      return const TransferResult.failure(TransferError.concurrentChange);
-    } on Object {
-      return const TransferResult.failure(TransferError.storageFailure);
-    }
-  }
-}
 
-final class _ConcurrentChange implements Exception {
-  const _ConcurrentChange();
+  String? _optional(String? value) {
+    final normalized = value?.trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
+  }
 }
