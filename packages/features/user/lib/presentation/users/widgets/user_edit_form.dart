@@ -60,11 +60,6 @@ class _UserEditFormState extends State<UserEditForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  'Editar usuario',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 24),
                 TextFormField(
                   key: const Key('edit-user-full-name'),
                   controller: _fullNameController,

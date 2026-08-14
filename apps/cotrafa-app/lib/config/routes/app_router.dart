@@ -93,6 +93,7 @@ GoRouter createRouter(AuthBloc authBloc) {
         ),
         branches: [
           usersRoutes(
+            parentNavigatorKey: rootKey,
             actorUserId: () => authBloc.state.identity!.userId,
             isAdmin: () => authBloc.state.identity!.role == 'admin',
             issueActivationCode: (actorUserId, email) async {

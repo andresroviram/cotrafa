@@ -4,15 +4,16 @@ import 'package:feature_user/presentation/users/activation_code_issuer.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
+import 'package:feature_user/presentation/users/view/user_edit_view.dart';
 import 'package:feature_user/presentation/users/view/users_mobile.dart';
 import 'package:feature_user/presentation/users/view/users_web.dart';
 import 'package:feature_user/presentation/users/widgets/activation_code_dialog.dart';
 import 'package:feature_user/presentation/users/widgets/user_card.dart';
 import 'package:feature_user/presentation/users/widgets/user_create_form.dart';
-import 'package:feature_user/presentation/users/widgets/user_edit_form.dart';
 import 'package:feature_user/presentation/users/widgets/user_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:responsive_framework/responsive_framework.dart';
 
 class UsersView extends StatelessWidget {
@@ -132,19 +133,13 @@ class UsersView extends StatelessWidget {
   }
 
   Future<void> _openEdit(BuildContext context, UserProfile user) async {
-    final bloc = context.read<UserBloc>();
-    final updated = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      builder: (_) => BlocProvider.value(
-        value: bloc,
-        child: UserEditForm(actorUserId: actorUserId, user: user),
-      ),
+    FocusManager.instance.primaryFocus?.unfocus();
+    final updated = await context.pushNamed<bool>(
+      UserEditView.name,
+      pathParameters: {'userId': '${user.id}'},
     );
     if (updated != true || !context.mounted) return;
+    _load(context);
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Usuario actualizado')));

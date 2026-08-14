@@ -4,6 +4,7 @@ import 'package:feature_transfer/presentation/transfer/view/transfer_view.dart';
 import 'package:feature_transfer/routes.dart';
 import 'package:feature_user/presentation/users/view/users_view.dart';
 import 'package:feature_user/routes.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,6 +26,7 @@ void main() {
     );
     expect(
       (usersRoutes(
+                parentNavigatorKey: GlobalKey<NavigatorState>(),
                 actorUserId: () => 1,
                 isAdmin: () => true,
                 issueActivationCode: (_, _) async => null,
