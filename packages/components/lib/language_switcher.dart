@@ -5,15 +5,15 @@ class LanguageSwitcherButton extends StatelessWidget {
   const LanguageSwitcherButton({super.key});
 
   static const _languages = [
-    (locale: Locale('es'), label: 'Español', flag: '🇪🇸'),
-    (locale: Locale('en'), label: 'English', flag: '🇬🇧'),
+    (locale: Locale('es'), labelKey: 'language.spanish', flag: '🇪🇸'),
+    (locale: Locale('en'), labelKey: 'language.english', flag: '🇬🇧'),
   ];
 
   @override
   Widget build(BuildContext context) {
     final current = context.locale;
     return PopupMenuButton<Locale>(
-      tooltip: 'Idioma / Language',
+      tooltip: 'language.tooltip'.tr(),
       offset: const Offset(0, 45),
       padding: EdgeInsets.zero,
       icon: Text(
@@ -34,7 +34,7 @@ class LanguageSwitcherButton extends StatelessWidget {
                 children: [
                   Text(l.flag, style: const TextStyle(fontSize: 18)),
                   const SizedBox(width: 10),
-                  Text(l.label),
+                  Text(l.labelKey.tr()),
                   if (l.locale.languageCode == current.languageCode) ...[
                     const Spacer(),
                     Icon(

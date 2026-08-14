@@ -1,10 +1,250 @@
 {
   "app_title": "Cotrafa",
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "retry": "Retry",
+    "copy": "Copy",
+    "done": "Done",
+    "not_registered": "Not provided",
+    "errors": {
+      "unauthorized": "You do not have permission to perform this action.",
+      "unexpected": "An unexpected error occurred."
+    }
+  },
   "nav": {
     "home": "Users",
-    "transactions": "Transfers"
+    "transactions": "Transfers",
+    "logout": "Sign out"
   },
   "dashboard": "Menu",
+  "language": {
+    "tooltip": "Change language",
+    "spanish": "Spanish",
+    "english": "English"
+  },
   "switch_to_dark": "Switch to dark mode",
-  "switch_to_light": "Switch to light mode"
+  "switch_to_light": "Switch to light mode",
+  "performance_toggle": {
+    "label": "Isolation",
+    "active_tooltip": "Isolated processing is enabled",
+    "inactive_tooltip": "Isolated processing is disabled"
+  },
+  "auth": {
+    "login": {
+      "logo_semantics": "Cotrafa logo",
+      "title": "Welcome",
+      "identifier_label": "Email or username",
+      "identifier_hint": "you@email.com",
+      "identifier_required": "Enter your email or username.",
+      "password_label": "Password",
+      "password_hint": "Enter your password",
+      "password_required": "Enter your password.",
+      "show_password": "Show password",
+      "hide_password": "Hide password",
+      "submit": "Sign in",
+      "admin_submit": "Sign in as Admin",
+      "activate": "Activate account"
+    },
+    "activation": {
+      "title": "Activate your account",
+      "subtitle": "Use the code provided by the administrator and create your credentials.",
+      "email": "Email",
+      "code": "Activation code",
+      "code_required": "Enter the 6-digit code.",
+      "username": "Username",
+      "new_password": "New password",
+      "submit": "Activate account",
+      "back": "Back to sign in"
+    },
+    "validation": {
+      "email_required": "Enter your email.",
+      "email_invalid": "Enter a valid email.",
+      "username_min": "Use at least 3 characters.",
+      "username_chars": "Use letters, numbers, periods, hyphens, or underscores.",
+      "password_min": "Use at least 8 characters."
+    },
+    "errors": {
+      "restore": "We could not restore your session.",
+      "sign_in": "We could not sign you in.",
+      "activate": "We could not activate the account.",
+      "sign_out": "We could not sign you out."
+    }
+  },
+  "user": {
+    "list": {
+      "title": "User list",
+      "new": "New user",
+      "empty": "There are no users yet",
+      "search_hint": "Search by name or email...",
+      "load_error": "We could not load the users"
+    },
+    "actions": {
+      "tooltip": "User actions",
+      "regenerate_code": "Generate a new code"
+    },
+    "status": {
+      "pending": "Pending activation",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "notifications": {
+      "created": "User created",
+      "updated": "User updated",
+      "deleted": "User deleted",
+      "deactivated": "User deactivated to preserve transfer history",
+      "created_code_pending": "User created. Generate their code from the user list.",
+      "code_error": "We could not generate the code",
+      "code_copied": "Code copied"
+    },
+    "activation_code": {
+      "title": "Activation code",
+      "instructions": "Share this code securely with the user."
+    },
+    "form": {
+      "create_title": "New user",
+      "edit_title": "Edit user",
+      "first_name": "First name",
+      "last_name": "Last name",
+      "birth_date": "Date of birth",
+      "clear_birth_date": "Clear date",
+      "phone": "Phone",
+      "email": "Email",
+      "email_locked": "The email cannot be changed",
+      "initial_balance": "Initial balance",
+      "balance_helper": "Amount in Colombian pesos",
+      "create": "Create user",
+      "save": "Save changes",
+      "first_name_required": "Enter the first name",
+      "last_name_required": "Enter the last name",
+      "email_required": "Enter the email",
+      "email_invalid": "Enter a valid email",
+      "balance_invalid": "Enter a valid balance"
+    },
+    "detail": {
+      "personal_information": "Personal information",
+      "first_name": "First name",
+      "last_name": "Last name",
+      "birth_date": "Date of birth",
+      "age": "Age",
+      "age_value": "{age} years",
+      "contact": "Contact",
+      "email": "Email",
+      "phone": "Phone",
+      "available_balance": "Available balance",
+      "addresses": "Addresses"
+    },
+    "delete": {
+      "title": "Delete user",
+      "confirmation": "Delete {name}? If the user has no transfers, they will be permanently deleted. Otherwise, they will be deactivated to preserve the history."
+    },
+    "load_error": "We could not load the user",
+    "errors": {
+      "load_list": "We could not load the users.",
+      "load_profile": "We could not load the user.",
+      "create": "We could not create the user.",
+      "update": "We could not update the user.",
+      "delete": "We could not delete the user.",
+      "reload": "We could not refresh the user list."
+    }
+  },
+  "address": {
+    "title": "Addresses",
+    "new": "New address",
+    "edit": "Edit address",
+    "create": "Create address",
+    "save": "Save changes",
+    "default_country": "Colombia",
+    "type": "Address type",
+    "types": {
+      "home": "Home",
+      "work": "Work",
+      "other": "Other"
+    },
+    "line1": "Address",
+    "line1_hint": "E.g. 10 Main Street",
+    "line1_required": "Enter the address",
+    "line2": "Neighborhood or additional details",
+    "city": "City",
+    "city_required": "Enter the city",
+    "state": "State or department",
+    "postal_code": "Postal code",
+    "postal_code_short": "ZIP: {code}",
+    "country": "Country",
+    "country_required": "Enter the country",
+    "primary": "Primary",
+    "actions_tooltip": "Address actions",
+    "set_primary": "Set as primary",
+    "empty": "No addresses have been added",
+    "empty_action": "Add the first address",
+    "load_error": "We could not load the addresses",
+    "notifications": {
+      "created": "Address created",
+      "updated": "Address updated",
+      "primary_updated": "Primary address updated",
+      "deleted": "Address deleted"
+    },
+    "delete": {
+      "title": "Delete address",
+      "confirmation": "Delete {address}?",
+      "primary_confirmation": "This is the primary address. If other addresses exist, the next one will become primary."
+    },
+    "errors": {
+      "load_list": "We could not load the addresses.",
+      "not_found": "We could not find the address.",
+      "load": "We could not load the address.",
+      "create": "We could not create the address.",
+      "update": "We could not update the address.",
+      "set_primary": "We could not change the primary address.",
+      "delete": "We could not delete the address.",
+      "reload_after_delete": "The address was deleted, but we could not refresh the list."
+    }
+  },
+  "transfer": {
+    "title": "Transfers",
+    "new": "New transfer",
+    "action": "Transfer",
+    "empty": "There are no transfers yet.",
+    "empty_description": "Your transactions will appear here.",
+    "history": {
+      "sent": "Sent",
+      "received": "Received",
+      "default": "Transfer"
+    },
+    "form": {
+      "no_users": "There are no users available for transfers.",
+      "origin": "Origin user",
+      "origin_required": "Select the origin user.",
+      "unavailable_user": "User unavailable",
+      "destination": "Destination user",
+      "destination_required": "Select the destination user.",
+      "amount": "Amount",
+      "description": "Description (optional)",
+      "amount_invalid": "Enter a valid amount.",
+      "insufficient_balance": "Insufficient balance."
+    },
+    "result": {
+      "title": "Result",
+      "receipt_title": "Receipt",
+      "success": "Transfer successful",
+      "failure": "Transfer failed",
+      "retry": "Try again",
+      "back_to_history": "Back to transfer history"
+    },
+    "receipt": {
+      "title": "Receipt",
+      "number": "Number",
+      "date": "Date",
+      "origin": "Origin",
+      "destination": "Destination",
+      "amount": "Amount",
+      "description": "Description"
+    },
+    "errors": {
+      "load_parties": "We could not load the available users.",
+      "load_history": "We could not load the transfers.",
+      "create": "We could not complete the transfer."
+    }
+  }
 }

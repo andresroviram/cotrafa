@@ -20,6 +20,7 @@ dependencies:
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   gap: ^3.0.1
+  intl: ^0.20.2
 
   # Navigation
   go_router: ^17.1.0
@@ -36,6 +37,8 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
   flutter_lints: ^6.0.0
   shared_preferences_platform_interface: ^2.4.2

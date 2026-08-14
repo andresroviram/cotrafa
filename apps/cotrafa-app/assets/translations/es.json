@@ -1,10 +1,250 @@
 {
   "app_title": "Cotrafa",
+  "common": {
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "retry": "Reintentar",
+    "copy": "Copiar",
+    "done": "Entendido",
+    "not_registered": "Sin registrar",
+    "errors": {
+      "unauthorized": "No tienes permiso para realizar esta acción.",
+      "unexpected": "Ocurrió un error inesperado."
+    }
+  },
   "nav": {
     "home": "Usuarios",
-    "transactions": "Transferencias"
+    "transactions": "Transferencias",
+    "logout": "Cerrar sesión"
   },
   "dashboard": "Menú",
+  "language": {
+    "tooltip": "Cambiar idioma",
+    "spanish": "Español",
+    "english": "Inglés"
+  },
   "switch_to_dark": "Cambiar a modo oscuro",
-  "switch_to_light": "Cambiar a modo claro"
+  "switch_to_light": "Cambiar a modo claro",
+  "performance_toggle": {
+    "label": "Aislamiento",
+    "active_tooltip": "Procesamiento aislado activo",
+    "inactive_tooltip": "Procesamiento aislado inactivo"
+  },
+  "auth": {
+    "login": {
+      "logo_semantics": "Logo de Cotrafa",
+      "title": "Bienvenido",
+      "identifier_label": "Correo o nombre de usuario",
+      "identifier_hint": "tu@correo.com",
+      "identifier_required": "Ingresa tu correo o nombre de usuario.",
+      "password_label": "Contraseña",
+      "password_hint": "Ingresa tu contraseña",
+      "password_required": "Ingresa tu contraseña.",
+      "show_password": "Mostrar contraseña",
+      "hide_password": "Ocultar contraseña",
+      "submit": "Iniciar sesión",
+      "admin_submit": "Iniciar como Admin",
+      "activate": "Activar cuenta"
+    },
+    "activation": {
+      "title": "Activa tu cuenta",
+      "subtitle": "Usa el código entregado por el administrador y crea tus credenciales.",
+      "email": "Correo electrónico",
+      "code": "Código de activación",
+      "code_required": "Ingresa el código de 6 dígitos.",
+      "username": "Nombre de usuario",
+      "new_password": "Nueva contraseña",
+      "submit": "Activar cuenta",
+      "back": "Volver al inicio de sesión"
+    },
+    "validation": {
+      "email_required": "Ingresa tu correo electrónico.",
+      "email_invalid": "Ingresa un correo válido.",
+      "username_min": "Usa al menos 3 caracteres.",
+      "username_chars": "Usa letras, números, punto, guion o guion bajo.",
+      "password_min": "Usa al menos 8 caracteres."
+    },
+    "errors": {
+      "restore": "No fue posible restaurar la sesión.",
+      "sign_in": "No fue posible iniciar sesión.",
+      "activate": "No fue posible activar la cuenta.",
+      "sign_out": "No fue posible cerrar la sesión."
+    }
+  },
+  "user": {
+    "list": {
+      "title": "Lista de usuarios",
+      "new": "Nuevo usuario",
+      "empty": "Aún no hay usuarios",
+      "search_hint": "Buscar por nombre o correo...",
+      "load_error": "No pudimos cargar los usuarios"
+    },
+    "actions": {
+      "tooltip": "Acciones del usuario",
+      "regenerate_code": "Generar nuevo código"
+    },
+    "status": {
+      "pending": "Pendiente de activación",
+      "active": "Activo",
+      "inactive": "Inactivo"
+    },
+    "notifications": {
+      "created": "Usuario creado",
+      "updated": "Usuario actualizado",
+      "deleted": "Usuario eliminado",
+      "deactivated": "Usuario desactivado para conservar el historial",
+      "created_code_pending": "Usuario creado. Genera su código desde la lista de usuarios.",
+      "code_error": "No pudimos generar el código",
+      "code_copied": "Código copiado"
+    },
+    "activation_code": {
+      "title": "Código de activación",
+      "instructions": "Comparte este código con el usuario de forma segura."
+    },
+    "form": {
+      "create_title": "Nuevo usuario",
+      "edit_title": "Editar usuario",
+      "first_name": "Nombre",
+      "last_name": "Apellido",
+      "birth_date": "Fecha de nacimiento",
+      "clear_birth_date": "Borrar fecha",
+      "phone": "Teléfono",
+      "email": "Correo electrónico",
+      "email_locked": "El correo no se puede modificar",
+      "initial_balance": "Saldo inicial",
+      "balance_helper": "Valor en pesos colombianos",
+      "create": "Crear usuario",
+      "save": "Guardar cambios",
+      "first_name_required": "Ingresa el nombre",
+      "last_name_required": "Ingresa el apellido",
+      "email_required": "Ingresa el correo electrónico",
+      "email_invalid": "Ingresa un correo válido",
+      "balance_invalid": "Ingresa un saldo válido"
+    },
+    "detail": {
+      "personal_information": "Información personal",
+      "first_name": "Nombre",
+      "last_name": "Apellido",
+      "birth_date": "Fecha de nacimiento",
+      "age": "Edad",
+      "age_value": "{age} años",
+      "contact": "Contacto",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "available_balance": "Saldo disponible",
+      "addresses": "Direcciones"
+    },
+    "delete": {
+      "title": "Eliminar usuario",
+      "confirmation": "¿Eliminar a {name}? Si no tiene transferencias, se eliminará definitivamente. Si tiene, se desactivará para conservar el historial."
+    },
+    "load_error": "No pudimos cargar el usuario",
+    "errors": {
+      "load_list": "No pudimos cargar los usuarios.",
+      "load_profile": "No pudimos cargar el usuario.",
+      "create": "No pudimos crear el usuario.",
+      "update": "No pudimos actualizar el usuario.",
+      "delete": "No pudimos eliminar el usuario.",
+      "reload": "No pudimos actualizar la lista de usuarios."
+    }
+  },
+  "address": {
+    "title": "Direcciones",
+    "new": "Nueva dirección",
+    "edit": "Editar dirección",
+    "create": "Crear dirección",
+    "save": "Guardar cambios",
+    "default_country": "Colombia",
+    "type": "Tipo de dirección",
+    "types": {
+      "home": "Casa",
+      "work": "Trabajo",
+      "other": "Otra"
+    },
+    "line1": "Dirección",
+    "line1_hint": "Ej: Calle 10 # 20-30",
+    "line1_required": "Ingresa la dirección",
+    "line2": "Barrio o complemento",
+    "city": "Ciudad",
+    "city_required": "Ingresa la ciudad",
+    "state": "Departamento",
+    "postal_code": "Código postal",
+    "postal_code_short": "CP: {code}",
+    "country": "País",
+    "country_required": "Ingresa el país",
+    "primary": "Principal",
+    "actions_tooltip": "Acciones de la dirección",
+    "set_primary": "Marcar como principal",
+    "empty": "No hay direcciones registradas",
+    "empty_action": "Agrega la primera dirección",
+    "load_error": "No pudimos cargar las direcciones",
+    "notifications": {
+      "created": "Dirección creada",
+      "updated": "Dirección actualizada",
+      "primary_updated": "Dirección principal actualizada",
+      "deleted": "Dirección eliminada"
+    },
+    "delete": {
+      "title": "Eliminar dirección",
+      "confirmation": "¿Deseas eliminar {address}?",
+      "primary_confirmation": "Esta es la dirección principal. Si existen otras, la siguiente se marcará como principal."
+    },
+    "errors": {
+      "load_list": "No pudimos cargar las direcciones.",
+      "not_found": "No encontramos la dirección.",
+      "load": "No pudimos cargar la dirección.",
+      "create": "No pudimos crear la dirección.",
+      "update": "No pudimos actualizar la dirección.",
+      "set_primary": "No pudimos cambiar la dirección principal.",
+      "delete": "No pudimos eliminar la dirección.",
+      "reload_after_delete": "La dirección se eliminó, pero no pudimos actualizar la lista."
+    }
+  },
+  "transfer": {
+    "title": "Transferencias",
+    "new": "Nueva transferencia",
+    "action": "Transferir",
+    "empty": "Aún no hay transferencias.",
+    "empty_description": "Tus operaciones aparecerán aquí.",
+    "history": {
+      "sent": "Enviada",
+      "received": "Recibida",
+      "default": "Transferencia"
+    },
+    "form": {
+      "no_users": "No hay usuarios disponibles para transferir.",
+      "origin": "Usuario origen",
+      "origin_required": "Selecciona el usuario origen.",
+      "unavailable_user": "Usuario no disponible",
+      "destination": "Usuario destino",
+      "destination_required": "Selecciona el usuario destino.",
+      "amount": "Valor",
+      "description": "Descripción (opcional)",
+      "amount_invalid": "Ingresa un valor válido.",
+      "insufficient_balance": "Saldo insuficiente."
+    },
+    "result": {
+      "title": "Resultado",
+      "receipt_title": "Comprobante",
+      "success": "Transferencia exitosa",
+      "failure": "Transferencia fallida",
+      "retry": "Intentar nuevamente",
+      "back_to_history": "Volver al historial"
+    },
+    "receipt": {
+      "title": "Comprobante",
+      "number": "Número",
+      "date": "Fecha",
+      "origin": "Origen",
+      "destination": "Destino",
+      "amount": "Valor",
+      "description": "Descripción"
+    },
+    "errors": {
+      "load_parties": "No pudimos cargar los usuarios disponibles.",
+      "load_history": "No pudimos cargar las transferencias.",
+      "create": "No fue posible realizar la transferencia."
+    }
+  }
 }
