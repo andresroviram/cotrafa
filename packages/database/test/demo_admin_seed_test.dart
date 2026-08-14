@@ -13,6 +13,8 @@ void main() {
     expect(seed.userId, 1);
     expect(seed.email, 'admin@cotrafa.local');
     expect(seed.username, 'admin');
+    expect(seed.firstName, 'Cotrafa Demo');
+    expect(seed.lastName, 'Admin');
     expect(seed.fullName, 'Cotrafa Demo Admin');
     expect(seed.password, 'CotrafaDemo2026!');
   });
@@ -34,9 +36,14 @@ void main() {
     expect(seeded.read<int>('id'), seed.userId);
     expect(seeded.read<String>('email'), seed.email);
     expect(seeded.read<String>('full_name'), seed.fullName);
+    expect(seeded.read<String>('first_name'), seed.firstName);
+    expect(seeded.read<String>('last_name'), seed.lastName);
     expect(encoded, isNot(seed.password));
     expect(await hasher.verify(seed.password, encoded), isTrue);
     expect(await hasher.verify('wrong-password', encoded), isFalse);
+    await first.customStatement(
+      'UPDATE users SET first_name = NULL, last_name = NULL WHERE id = 1',
+    );
     await first.close();
 
     final reopened = CotrafaDatabase.forTesting(
@@ -49,6 +56,9 @@ void main() {
         .get();
     expect(rows, hasLength(1));
     expect(rows.single.read<String>('password_hash'), encoded);
+    final restored = await _admin(reopened);
+    expect(restored.read<String>('first_name'), seed.firstName);
+    expect(restored.read<String>('last_name'), seed.lastName);
     final identifiers = await reopened
         .customSelect(
           'SELECT normalized,kind FROM login_identifiers '
@@ -82,6 +92,7 @@ CredentialHasher _fastHasher() => CredentialHasher(
 
 Future<QueryRow> _admin(CotrafaDatabase database) => database
     .customSelect(
-      'SELECT id,email,full_name,password_hash FROM users WHERE id = 1',
+      'SELECT id,email,full_name,first_name,last_name,password_hash '
+      'FROM users WHERE id = 1',
     )
     .getSingle();

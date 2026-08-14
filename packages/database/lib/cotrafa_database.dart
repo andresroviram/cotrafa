@@ -69,21 +69,51 @@ class CotrafaDatabase extends _$CotrafaDatabase {
   );
 
   Future<void> _seedDemoAdmin() => transaction(() async {
-    final int count = await customSelect(
-      'SELECT COUNT(*) AS count FROM users WHERE id = ?',
+    final QueryRow? existing = await customSelect(
+      'SELECT full_name,first_name,last_name FROM users WHERE id = ?',
       variables: <Variable<Object>>[Variable<int>(_seed.userId)],
-    ).map((QueryRow row) => row.read<int>('count')).getSingle();
-    if (count == 1) return;
+    ).getSingleOrNull();
+    if (existing != null) {
+      final String firstName = _seedName(
+        existing.readNullable<String>('first_name'),
+        _seed.firstName,
+      );
+      final String lastName = _seedName(
+        existing.readNullable<String>('last_name'),
+        _seed.lastName,
+      );
+      final String fullName = '$firstName $lastName';
+      if (existing.readNullable<String>('first_name') == firstName &&
+          existing.readNullable<String>('last_name') == lastName &&
+          existing.read<String>('full_name') == fullName) {
+        return;
+      }
+      await customStatement(
+        'UPDATE users SET full_name = ?, first_name = ?, last_name = ?, '
+        'updated_at = ? WHERE id = ?',
+        <Object?>[
+          fullName,
+          firstName,
+          lastName,
+          DateTime.now().millisecondsSinceEpoch,
+          _seed.userId,
+        ],
+      );
+      return;
+    }
     final String passwordHash = await _credentialHasher.hash(_seed.password);
     final int now = DateTime.now().millisecondsSinceEpoch;
     await customStatement(
       'INSERT INTO users '
-      '(id, email, full_name, role, status, password_hash, balance_cop, created_at, updated_at) '
-      "VALUES (?, ?, ?, 'admin', 'active', ?, 0, ?, ?)",
+      '(id, email, full_name, first_name, last_name, role, status, '
+      'password_hash, balance_cop, created_at, updated_at) '
+      "VALUES (?, ?, ?, ?, ?, 'admin', 'active', ?, 0, ?, ?)",
       <Object?>[
         _seed.userId,
         _seed.email,
         _seed.fullName,
+        _seed.firstName,
+        _seed.lastName,
         passwordHash,
         now,
         now,
@@ -98,6 +128,11 @@ class CotrafaDatabase extends _$CotrafaDatabase {
       <Object?>[_seed.username, _seed.userId],
     );
   });
+
+  String _seedName(String? stored, String fallback) {
+    final String normalized = stored?.trim() ?? '';
+    return normalized.isEmpty ? fallback : normalized;
+  }
 
   Future<void> setSessionUserId(int userId) => customStatement(
     'INSERT INTO local_session (slot, user_id) VALUES (1, ?) '
@@ -118,7 +153,8 @@ class CotrafaDatabaseSeed {
         userId: 1,
         email: 'admin@cotrafa.local',
         username: 'admin',
-        fullName: 'Cotrafa Demo Admin',
+        firstName: 'Cotrafa Demo',
+        lastName: 'Admin',
         password: 'CotrafaDemo2026!',
       );
 
@@ -126,7 +162,8 @@ class CotrafaDatabaseSeed {
     required this.userId,
     required this.email,
     required this.username,
-    required this.fullName,
+    required this.firstName,
+    required this.lastName,
     required this.password,
   });
 
@@ -134,13 +171,17 @@ class CotrafaDatabaseSeed {
     userId: 1,
     email: 'test-admin@cotrafa.local',
     username: 'test-admin',
-    fullName: 'Test Admin',
+    firstName: 'Test',
+    lastName: 'Admin',
     password: 'test-password',
   );
 
   final int userId;
   final String email;
   final String username;
-  final String fullName;
+  final String firstName;
+  final String lastName;
   final String password;
+
+  String get fullName => '$firstName $lastName';
 }

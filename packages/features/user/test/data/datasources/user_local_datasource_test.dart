@@ -26,6 +26,15 @@ void main() {
   });
   tearDown(() => database.close());
 
+  test('maps the demo administrator canonical name fields', () async {
+    final admin = await users.getUser(_demoSeed.userId, _demoSeed.userId);
+
+    expect(admin.firstName, _demoSeed.firstName);
+    expect(admin.lastName, _demoSeed.lastName);
+    expect(admin.fullName, _demoSeed.fullName);
+    expect(admin.displayName, _demoSeed.fullName);
+  });
+
   test('admin CRUD rejects invalid identifiers or balance', () async {
     final created = await _create(users, ' CLIENT@EXAMPLE.COM ', 250);
     expect(created.email, 'client@example.com');
