@@ -4,7 +4,7 @@ Prueba técnica de banca local construida con Flutter 3.44.9, BLoC, Drift y Clea
 
 Arquitectura de **monorepo con Melos**, Clean Architecture por feature y soporte para Mobile, Web y Desktop.
 
-[![CI](https://github.com/andresroviram/cotrafa/actions/workflows/ci.yml/badge.svg)](https://github.com/andresroviram/cotrafa/actions/workflows/ci.yml)
+[![CI](https://github.com/andresroviram/cotrafa/actions/workflows/ci.yml/badge.svg)](https://github.com/andresroviram/cotrafa/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/andresroviram/cotrafa/graph/badge.svg)](https://codecov.io/gh/andresroviram/cotrafa)
 
 ## Screenshots
 
@@ -25,89 +25,6 @@ Arquitectura de **monorepo con Melos**, Clean Architecture por feature y soporte
 <img src="apps/cotrafa-app/screenshots/mobile/cotrafa-dark-users.png" width="30%" alt="Lista de usuarios en modo oscuro">
 <img src="apps/cotrafa-app/screenshots/mobile/cotrafa-dark-transfers.png" width="30%" alt="Historial de transferencias en modo oscuro">
 </p>
-
-## 🧪 Cobertura de Tests
-
-[![codecov](https://codecov.io/gh/andresroviram/cotrafa/graph/badge.svg)](https://codecov.io/gh/andresroviram/cotrafa)
-
-El proyecto mantiene un umbral mínimo de cobertura del **60%** en el CI/CD. Los archivos generados por Drift, Freezed e Injectable no se incluyen en la medición.
-
-### Estado actual
-
-```text
-Total:                    80.34% ✅ (2677/3332 líneas)
-├─ features/              83.00% ✅ (2451/2953 líneas)
-├─ components/            85.71% ✅ (24/28 líneas)
-├─ apps/cotrafa-app/      78.36% ✅ (105/134 líneas)
-├─ core/                  45.45% ⚠️ (40/88 líneas)
-└─ database/              44.19% ⚠️ (57/129 líneas)
-```
-
-El umbral se aplica al **total consolidado del workspace**. Core y Database quedan identificados como las áreas prioritarias para elevar la cobertura por package.
-
-### Resumen de tests
-
-- **189 tests** ejecutándose exitosamente.
-- **1 prueba de integración móvil** para el recorrido crítico completo en Android.
-- **50 tests de widgets** para vistas, formularios, navegación y componentes.
-- **36 tests de BLoC** para eventos, estados y transiciones.
-- **103 tests adicionales** de dominio, datasources, repositorios, persistencia, DI y arquitectura.
-- **80.34% de cobertura total**, 20.34 puntos por encima del umbral del 60%.
-
-### Scripts de cobertura
-
-```powershell
-# Windows
-.\scripts\check_coverage.ps1
-.\scripts\check_coverage.ps1 -Threshold 70
-```
-
-```bash
-# Linux/macOS
-./scripts/check_coverage.sh
-./scripts/check_coverage.sh 70
-```
-
-### Generar y abrir el reporte HTML
-
-El reporte consolidado que usa CI se genera desde la raíz del proyecto con:
-
-```bash
-# Ejecuta los tests, consolida coverage/lcov.info y valida el umbral del 60 %
-./scripts/check_coverage.sh 60
-```
-
-Este script ejecuta internamente `fvm dart run melos run test:coverage` para crear
-los reportes LCOV de cada package. Si `genhtml` está instalado, también genera
-`coverage/html/index.html`.
-
-```bash
-# macOS (instalación y apertura)
-brew install lcov
-open coverage/html/index.html
-
-# Linux (instalación y apertura)
-sudo apt-get install lcov
-xdg-open coverage/html/index.html
-```
-
-En Windows, el reporte HTML puede generarse con el script Bash desde WSL o Git
-Bash y abrirse desde PowerShell:
-
-```powershell
-Start-Process .\coverage\html\index.html
-```
-
-Los scripts verifican automáticamente:
-
-- ✅ Ejecutan todos los tests del monorepo.
-- ✅ Generan reportes LCOV por package.
-- ✅ Consolidan las rutas de fuentes sin colisiones entre packages.
-- ✅ Excluyen código generado de la medición.
-- ✅ Comparan el resultado con el umbral configurado.
-- ✅ Fallan con un código de salida distinto de cero cuando no se cumple.
-
-Además, el pipeline valida formato, análisis estático y builds reproducibles con Flutter 3.44.9, FVM, Melos y JDK 17.
 
 ## Stack tecnológico
 
@@ -327,6 +244,87 @@ Configura estos grupos en **Codemagic → App Settings → Environment variables
 | `codecov` | `CODECOV_TOKEN` |
 
 > Antes de publicar en las tiendas, reemplaza los identificadores `com.example.*` por los identificadores definitivos y registra las aplicaciones en Google Play y App Store Connect.
+
+## Cobertura de Tests
+
+El proyecto mantiene un umbral mínimo de cobertura del **60%** en el CI/CD. Los archivos generados por Drift, Freezed e Injectable no se incluyen en la medición.
+
+### Estado actual
+
+```text
+Total:                    80.34% ✅ (2677/3332 líneas)
+├─ features/              83.00% ✅ (2451/2953 líneas)
+├─ components/            85.71% ✅ (24/28 líneas)
+├─ apps/cotrafa-app/      78.36% ✅ (105/134 líneas)
+├─ core/                  45.45% ⚠️ (40/88 líneas)
+└─ database/              44.19% ⚠️ (57/129 líneas)
+```
+
+El umbral se aplica al **total consolidado del workspace**. Core y Database quedan identificados como las áreas prioritarias para elevar la cobertura por package.
+
+### Resumen de tests
+
+- **189 tests** ejecutándose exitosamente.
+- **1 prueba de integración móvil** para el recorrido crítico completo en Android.
+- **50 tests de widgets** para vistas, formularios, navegación y componentes.
+- **36 tests de BLoC** para eventos, estados y transiciones.
+- **103 tests adicionales** de dominio, datasources, repositorios, persistencia, DI y arquitectura.
+- **80.34% de cobertura total**, 20.34 puntos por encima del umbral del 60%.
+
+### Scripts de cobertura
+
+```powershell
+# Windows
+.\scripts\check_coverage.ps1
+.\scripts\check_coverage.ps1 -Threshold 70
+```
+
+```bash
+# Linux/macOS
+./scripts/check_coverage.sh
+./scripts/check_coverage.sh 70
+```
+
+### Generar y abrir el reporte HTML
+
+El reporte consolidado que usa CI se genera desde la raíz del proyecto con:
+
+```bash
+# Ejecuta los tests, consolida coverage/lcov.info y valida el umbral del 60 %
+./scripts/check_coverage.sh 60
+```
+
+Este script ejecuta internamente `fvm dart run melos run test:coverage` para crear
+los reportes LCOV de cada package. Si `genhtml` está instalado, también genera
+`coverage/html/index.html`.
+
+```bash
+# macOS (instalación y apertura)
+brew install lcov
+open coverage/html/index.html
+
+# Linux (instalación y apertura)
+sudo apt-get install lcov
+xdg-open coverage/html/index.html
+```
+
+En Windows, el reporte HTML puede generarse con el script Bash desde WSL o Git
+Bash y abrirse desde PowerShell:
+
+```powershell
+Start-Process .\coverage\html\index.html
+```
+
+Los scripts verifican automáticamente:
+
+- ✅ Ejecutan todos los tests del monorepo.
+- ✅ Generan reportes LCOV por package.
+- ✅ Consolidan las rutas de fuentes sin colisiones entre packages.
+- ✅ Excluyen código generado de la medición.
+- ✅ Comparan el resultado con el umbral configurado.
+- ✅ Fallan con un código de salida distinto de cero cuando no se cumple.
+
+Además, el pipeline valida formato, análisis estático y builds reproducibles con Flutter 3.44.9, FVM, Melos y JDK 17.
 
 ## Features
 
