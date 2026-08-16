@@ -7,6 +7,12 @@ analyzer:
     - "**/generated/**"
     - "build/**"
     - "build_web/**"
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
   language:
     strict-casts: true
     strict-inference: true
