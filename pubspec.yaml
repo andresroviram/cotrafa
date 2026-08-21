@@ -136,8 +136,8 @@ melos:
       description: Generate coverage and enforce a 60 percent workspace threshold.
 
     run:mobile:
-      run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm flutter run --dart-define=FLAVOR=dev
-      description: Run the Cotrafa application on a mobile target.
+      run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm flutter run -d "${MOBILE_DEVICE_ID:-emulator}" --device-connection=attached --dart-define=FLAVOR=dev
+      description: Run Cotrafa on the Android emulator by default, or on MOBILE_DEVICE_ID when provided.
 
     run:web:
       run: cd "$MELOS_ROOT_PATH/apps/cotrafa-app" && fvm flutter run -d chrome --web-port 4002 --dart-define=FLAVOR=dev

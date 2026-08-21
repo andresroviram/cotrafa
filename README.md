@@ -123,6 +123,13 @@ fvm dart run melos run build:cotrafa-all
 fvm dart run melos run run:mobile
 ```
 
+`run:mobile` selecciona por defecto el emulador Android y excluye Desktop y
+Web. Para usar otro dispositivo móvil conectado, indica su ID:
+
+```bash
+MOBILE_DEVICE_ID=<device-id> fvm dart run melos run run:mobile
+```
+
 También puedes seleccionar un flavor directamente:
 
 ```bash
@@ -178,7 +185,7 @@ fvm dart run melos run run:web
 | `fvm dart run melos run clean:generated` | Elimina fuentes generadas. |
 | `fvm dart run melos run setup:web` | Instala SQLite WASM y compila el worker Drift. |
 | `fvm dart run melos run ci` | Ejecuta formato, análisis y pruebas. |
-| `fvm dart run melos run run:mobile` | Ejecuta Cotrafa en iOS o Android. |
+| `fvm dart run melos run run:mobile` | Ejecuta Cotrafa en el emulador Android o en `MOBILE_DEVICE_ID`. |
 | `fvm dart run melos run run:web` | Ejecuta Cotrafa en Chrome, puerto 4002. |
 | `fvm dart run melos run run:desktop` | Ejecuta Cotrafa en macOS. |
 
