@@ -40,40 +40,39 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
   @override
   Future<List<TransferParty>> listParties(int actorUserId) async {
     final actor = await _user(actorUserId);
-    if (actor == null || actor.read<String>('status') != 'active') {
+    if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
     }
-    final rows = await _database
-        .customSelect(
-          'SELECT id,email,full_name,balance_cop FROM users '
-          "WHERE status='active' ORDER BY full_name,email",
-        )
-        .get();
+    final rows =
+        await (_database.select(_database.users)
+              ..where((table) => table.status.equals('active'))
+              ..orderBy([
+                (table) => OrderingTerm.asc(table.fullName),
+                (table) => OrderingTerm.asc(table.email),
+              ]))
+            .get();
     return rows.map(_party).toList();
   }
 
   @override
   Future<List<TransferReceipt>> listTransfers(int actorUserId) async {
     final actor = await _user(actorUserId);
-    if (actor == null || actor.read<String>('status') != 'active') {
+    if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
     }
-    final isAdmin = actor.read<String>('role') == 'admin';
-    final rows = await _database
-        .customSelect(
-          isAdmin
-              ? 'SELECT * FROM transfers ORDER BY created_at DESC, id DESC'
-              : 'SELECT * FROM transfers '
-                    'WHERE origin_user_id=? OR destination_user_id=? '
-                    'ORDER BY created_at DESC, id DESC',
-          variables: isAdmin
-              ? const <Variable<Object>>[]
-              : <Variable<Object>>[
-                  Variable<int>(actorUserId),
-                  Variable<int>(actorUserId),
-                ],
-        )
-        .get();
+    final query = _database.select(_database.transfers);
+    if (actor.role != 'admin') {
+      query.where(
+        (table) =>
+            table.originUserId.equals(actorUserId) |
+            table.destinationUserId.equals(actorUserId),
+      );
+    }
+    query.orderBy([
+      (table) => OrderingTerm.desc(table.createdAt),
+      (table) => OrderingTerm.desc(table.id),
+    ]);
+    final rows = await query.get();
     return rows.map(_receipt).toList();
   }
 
@@ -83,7 +82,7 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
   ) => _database.transaction(() async {
     _validateCommand(command);
     final actor = await _user(command.actorId);
-    if (actor == null || actor.read<String>('status') != 'active') {
+    if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
     }
     final origin = await _user(command.originId);
@@ -91,38 +90,44 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
     if (origin == null || destination == null) {
       throw const NotFoundException();
     }
-    if (origin.read<String>('status') != 'active' ||
-        destination.read<String>('status') != 'active') {
+    if (origin.status != 'active' || destination.status != 'active') {
       throw const ValidationException(
         message: 'Both transfer users must be active.',
       );
     }
-    if (actor.read<String>('role') != 'admin' &&
-        command.actorId != command.originId) {
+    if (actor.role != 'admin' && command.actorId != command.originId) {
       throw const UnauthorizedException();
     }
-    if (origin.read<int>('balance_cop') < command.amountCop) {
+    if (origin.balanceCop < command.amountCop) {
       throw const ValidationException(message: 'Insufficient balance.');
     }
 
     await afterRead?.call();
-    final debit = await _database.customUpdate(
-      "UPDATE users SET balance_cop=balance_cop-? WHERE id=? AND status='active' AND balance_cop>=?",
-      variables: <Variable<Object>>[
-        Variable<int>(command.amountCop),
-        Variable<int>(command.originId),
-        Variable<int>(command.amountCop),
-      ],
-      updates: <TableInfo<Table, Object?>>{_database.users},
-    );
-    final credit = await _database.customUpdate(
-      "UPDATE users SET balance_cop=balance_cop+? WHERE id=? AND status='active'",
-      variables: <Variable<Object>>[
-        Variable<int>(command.amountCop),
-        Variable<int>(command.destinationId),
-      ],
-      updates: <TableInfo<Table, Object?>>{_database.users},
-    );
+    final debit =
+        await (_database.update(_database.users)..where(
+              (table) =>
+                  table.id.equals(command.originId) &
+                  table.status.equals('active') &
+                  table.balanceCop.isBiggerOrEqualValue(command.amountCop),
+            ))
+            .write(
+              UsersCompanion.custom(
+                balanceCop:
+                    _database.users.balanceCop - Variable(command.amountCop),
+              ),
+            );
+    final credit =
+        await (_database.update(_database.users)..where(
+              (table) =>
+                  table.id.equals(command.destinationId) &
+                  table.status.equals('active'),
+            ))
+            .write(
+              UsersCompanion.custom(
+                balanceCop:
+                    _database.users.balanceCop + Variable(command.amountCop),
+              ),
+            );
     if (debit != 1 || credit != 1) {
       throw const StorageException(
         message: 'Concurrent balance change detected.',
@@ -131,20 +136,21 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
 
     final id = idGenerator();
     final createdAt = _clock().millisecondsSinceEpoch;
-    await _database.customStatement(
-      'INSERT INTO transfers VALUES (?,?,?,?,?,?,?,?,?)',
-      <Object?>[
-        id,
-        command.originId,
-        command.destinationId,
-        command.amountCop,
-        'completed',
-        _optional(command.description),
-        createdAt,
-        _snapshot(origin),
-        _snapshot(destination),
-      ],
-    );
+    await _database
+        .into(_database.transfers)
+        .insert(
+          TransfersCompanion.insert(
+            id: id,
+            originUserId: command.originId,
+            destinationUserId: command.destinationId,
+            amountCop: command.amountCop,
+            status: 'completed',
+            description: Value(_optional(command.description)),
+            createdAt: createdAt,
+            originSnapshot: _snapshot(origin),
+            destinationSnapshot: _snapshot(destination),
+          ),
+        );
     final row = await _receiptRow(id);
     if (row == null) {
       throw const StorageException(
@@ -181,40 +187,33 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
     }
   }
 
-  Future<QueryRow?> _user(int id) => _database
-      .customSelect(
-        'SELECT id,email,full_name,role,status,balance_cop FROM users WHERE id=?',
-        variables: <Variable<Object>>[Variable<int>(id)],
-      )
-      .getSingleOrNull();
+  Future<User?> _user(int id) => (_database.select(
+    _database.users,
+  )..where((table) => table.id.equals(id))).getSingleOrNull();
 
-  Future<QueryRow?> _receiptRow(String id) => _database
-      .customSelect(
-        'SELECT * FROM transfers WHERE id=?',
-        variables: <Variable<Object>>[Variable<String>(id)],
-      )
-      .getSingleOrNull();
+  Future<Transfer?> _receiptRow(String id) => (_database.select(
+    _database.transfers,
+  )..where((table) => table.id.equals(id))).getSingleOrNull();
 
-  TransferParty _party(QueryRow row) => TransferParty(
-    id: row.read<int>('id'),
-    fullName: row.read<String>('full_name'),
-    email: row.read<String>('email'),
-    balanceCop: row.read<int>('balance_cop'),
+  TransferParty _party(User user) => TransferParty(
+    id: user.id,
+    fullName: user.fullName,
+    email: user.email,
+    balanceCop: user.balanceCop,
   );
 
-  String _snapshot(QueryRow row) =>
-      '${row.read<String>('full_name')} <${row.read<String>('email')}>';
+  String _snapshot(User user) => '${user.fullName} <${user.email}>';
 
-  TransferReceipt _receipt(QueryRow row) => TransferReceipt(
-    id: row.read<String>('id'),
-    originUserId: row.read<int>('origin_user_id'),
-    destinationUserId: row.read<int>('destination_user_id'),
-    amountCop: row.read<int>('amount_cop'),
-    status: row.read<String>('status'),
-    description: row.readNullable<String>('description'),
-    createdAt: row.read<int>('created_at'),
-    originSnapshot: row.read<String>('origin_snapshot'),
-    destinationSnapshot: row.read<String>('destination_snapshot'),
+  TransferReceipt _receipt(Transfer transfer) => TransferReceipt(
+    id: transfer.id,
+    originUserId: transfer.originUserId,
+    destinationUserId: transfer.destinationUserId,
+    amountCop: transfer.amountCop,
+    status: transfer.status,
+    description: transfer.description,
+    createdAt: transfer.createdAt,
+    originSnapshot: transfer.originSnapshot,
+    destinationSnapshot: transfer.destinationSnapshot,
   );
 
   String? _optional(String? value) {

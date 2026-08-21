@@ -40,12 +40,9 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     if (!await _isActiveAdmin(actorUserId)) {
       throw const UnauthorizedException();
     }
-    final rows = await _database
-        .customSelect(
-          'SELECT id,email,full_name,first_name,last_name,birth_date,phone,'
-          'role,status,balance_cop FROM users ORDER BY id',
-        )
-        .get();
+    final rows = await (_database.select(
+      _database.users,
+    )..orderBy([(table) => OrderingTerm.asc(table.id)])).get();
     return rows.map(_profile).toList();
   }
 
@@ -85,32 +82,33 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     if (await _identifierExists(normalized)) {
       throw const DuplicateException();
     }
-    final id = await _database
-        .customSelect('SELECT COALESCE(MAX(id),0)+1 AS id FROM users')
-        .map((row) => row.read<int>('id'))
-        .getSingle();
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _database.customStatement(
-      'INSERT INTO users (id,email,full_name,first_name,last_name,birth_date,'
-      'phone,role,status,balance_cop,created_at,updated_at) '
-      "VALUES (?, ?, ?, ?, ?, ?, ?, 'client', 'pendingActivation', ?, ?, ?)",
-      <Object?>[
-        id,
-        normalized,
-        '$normalizedFirstName $normalizedLastName',
-        normalizedFirstName,
-        normalizedLastName,
-        _date(birthDate),
-        normalizedPhone,
-        initialBalanceCop,
-        now,
-        now,
-      ],
-    );
-    await _database.customStatement(
-      "INSERT INTO login_identifiers VALUES (?,?,'email')",
-      <Object?>[normalized, id],
-    );
+    final id = await _database
+        .into(_database.users)
+        .insert(
+          UsersCompanion.insert(
+            email: normalized,
+            fullName: '$normalizedFirstName $normalizedLastName',
+            firstName: Value(normalizedFirstName),
+            lastName: Value(normalizedLastName),
+            birthDate: Value(_date(birthDate)),
+            phone: Value(normalizedPhone),
+            role: 'client',
+            status: 'pendingActivation',
+            balanceCop: Value(initialBalanceCop),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+    await _database
+        .into(_database.loginIdentifiers)
+        .insert(
+          LoginIdentifiersCompanion.insert(
+            normalized: normalized,
+            userId: id,
+            kind: 'email',
+          ),
+        );
     return _profile((await _user(id))!);
   });
 
@@ -134,18 +132,17 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     final normalizedFirstName = _requiredName(firstName);
     final normalizedLastName = _requiredName(lastName);
     final normalizedPhone = _optional(phone);
-    await _database.customStatement(
-      'UPDATE users SET full_name=?,first_name=?,last_name=?,birth_date=?,'
-      'phone=?,updated_at=? WHERE id=?',
-      <Object?>[
-        '$normalizedFirstName $normalizedLastName',
-        normalizedFirstName,
-        normalizedLastName,
-        _date(birthDate),
-        normalizedPhone,
-        DateTime.now().millisecondsSinceEpoch,
-        userId,
-      ],
+    await (_database.update(
+      _database.users,
+    )..where((table) => table.id.equals(userId))).write(
+      UsersCompanion(
+        fullName: Value('$normalizedFirstName $normalizedLastName'),
+        firstName: Value(normalizedFirstName),
+        lastName: Value(normalizedLastName),
+        birthDate: Value(_date(birthDate)),
+        phone: Value(normalizedPhone),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
     );
     return _profile((await _user(userId))!);
   });
@@ -164,82 +161,75 @@ final class UserLocalDatasource implements IUserLocalDatasource {
         if (await _user(userId) == null) {
           throw const NotFoundException();
         }
-        final references = await _database
-            .customSelect(
-              'SELECT COUNT(*) AS count FROM transfers '
-              'WHERE origin_user_id=? OR destination_user_id=?',
-              variables: <Variable<Object>>[
-                Variable<int>(userId),
-                Variable<int>(userId),
-              ],
-            )
-            .map((row) => row.read<int>('count'))
-            .getSingle();
-        await _database.customStatement(
-          'DELETE FROM local_session WHERE user_id=?',
-          <Object?>[userId],
-        );
+        final transferCount = _database.transfers.id.count();
+        final countRow =
+            await (_database.selectOnly(_database.transfers)
+                  ..addColumns(<Expression<Object>>[transferCount])
+                  ..where(
+                    _database.transfers.originUserId.equals(userId) |
+                        _database.transfers.destinationUserId.equals(userId),
+                  ))
+                .getSingle();
+        final references = countRow.read(transferCount) ?? 0;
+        await (_database.delete(
+          _database.localSession,
+        )..where((table) => table.userId.equals(userId))).go();
         if (references > 0) {
-          await _database.customStatement(
-            "UPDATE users SET status='inactive',password_hash=NULL,"
-            'activation_code_hash=NULL,updated_at=? WHERE id=?',
-            <Object?>[DateTime.now().millisecondsSinceEpoch, userId],
+          await (_database.update(
+            _database.users,
+          )..where((table) => table.id.equals(userId))).write(
+            UsersCompanion(
+              status: const Value('inactive'),
+              passwordHash: const Value(null),
+              activationCodeHash: const Value(null),
+              updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
           );
           return DeleteOutcome.deactivated;
         }
-        await _database.customStatement(
-          'DELETE FROM users WHERE id=?',
-          <Object?>[userId],
-        );
+        await (_database.delete(
+          _database.users,
+        )..where((table) => table.id.equals(userId))).go();
         return DeleteOutcome.deleted;
       });
 
-  Future<QueryRow?> _user(int id) => _database
-      .customSelect(
-        'SELECT id,email,full_name,first_name,last_name,birth_date,phone,'
-        'role,status,balance_cop FROM users WHERE id=?',
-        variables: <Variable<Object>>[Variable<int>(id)],
-      )
-      .getSingleOrNull();
+  Future<User?> _user(int id) => (_database.select(
+    _database.users,
+  )..where((table) => table.id.equals(id))).getSingleOrNull();
 
   Future<bool> _isActiveAdmin(int id) async {
     final actor = await _user(id);
-    return actor != null &&
-        actor.read<String>('role') == 'admin' &&
-        actor.read<String>('status') == 'active';
+    return actor != null && actor.role == 'admin' && actor.status == 'active';
   }
 
-  bool _canAccess(QueryRow? actor, int targetId) =>
+  bool _canAccess(User? actor, int targetId) =>
       actor != null &&
-      actor.read<String>('status') == 'active' &&
-      (actor.read<String>('role') == 'admin' ||
-          actor.read<int>('id') == targetId);
+      actor.status == 'active' &&
+      (actor.role == 'admin' || actor.id == targetId);
 
-  Future<bool> _identifierExists(String normalized) => _database
-      .customSelect(
-        'SELECT 1 FROM login_identifiers WHERE normalized=?',
-        variables: <Variable<Object>>[Variable<String>(normalized)],
-      )
-      .getSingleOrNull()
-      .then((row) => row != null);
+  Future<bool> _identifierExists(String normalized) =>
+      (_database.select(_database.loginIdentifiers)
+            ..where((table) => table.normalized.equals(normalized)))
+          .getSingleOrNull()
+          .then((identifier) => identifier != null);
 
-  UserProfile _profile(QueryRow row) => UserProfile(
-    id: row.read<int>('id'),
-    email: row.read<String>('email'),
-    fullName: row.read<String>('full_name'),
-    firstName: row.readNullable<String>('first_name'),
-    lastName: row.readNullable<String>('last_name'),
-    birthDate: switch (row.readNullable<int>('birth_date')) {
+  UserProfile _profile(User user) => UserProfile(
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    birthDate: switch (user.birthDate) {
       final milliseconds? => DateTime.fromMillisecondsSinceEpoch(
         milliseconds,
         isUtc: true,
       ),
       null => null,
     },
-    phone: row.readNullable<String>('phone'),
-    role: row.read<String>('role'),
-    status: row.read<String>('status'),
-    balanceCop: row.read<int>('balance_cop'),
+    phone: user.phone,
+    role: user.role,
+    status: user.status,
+    balanceCop: user.balanceCop,
   );
 
   String _normalize(String value) => value.trim().toLowerCase();

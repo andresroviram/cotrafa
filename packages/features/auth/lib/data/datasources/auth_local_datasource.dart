@@ -41,8 +41,8 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
       _database.transaction(() async {
         final actor = await _userById(actorUserId);
         if (actor == null ||
-            actor.read<String>('role') != 'admin' ||
-            actor.read<String>('status') != 'active') {
+            actor.role != 'admin' ||
+            actor.status != 'active') {
           throw const UnauthorizedException();
         }
         final client = await _userByIdentifier(
@@ -50,21 +50,21 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
           kind: 'email',
         );
         if (client == null ||
-            client.read<String>('role') != 'client' ||
-            client.read<String>('status') != 'pendingActivation') {
+            client.role != 'client' ||
+            client.status != 'pendingActivation') {
           throw const ValidationException(
             message: 'Client is not pending activation.',
           );
         }
         final code = _activationCodeGenerator.generate();
         final hash = await _credentialHasher.hash(code);
-        await _database.customStatement(
-          'UPDATE users SET activation_code_hash=?,updated_at=? WHERE id=?',
-          <Object?>[
-            hash,
-            DateTime.now().millisecondsSinceEpoch,
-            client.read<int>('id'),
-          ],
+        await (_database.update(
+          _database.users,
+        )..where((table) => table.id.equals(client.id))).write(
+          UsersCompanion(
+            activationCodeHash: Value(hash),
+            updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          ),
         );
         return code;
       });
@@ -77,10 +77,10 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
     String password,
   ) => _database.transaction(() async {
     final client = await _userByIdentifier(_normalize(email), kind: 'email');
-    final codeHash = client?.readNullable<String>('activation_code_hash');
+    final codeHash = client?.activationCodeHash;
     if (client == null ||
-        client.read<String>('role') != 'client' ||
-        client.read<String>('status') != 'pendingActivation' ||
+        client.role != 'client' ||
+        client.status != 'pendingActivation' ||
         codeHash == null ||
         !await _credentialHasher.verify(code, codeHash)) {
       throw const AuthException();
@@ -89,15 +89,26 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
     if (await _userByIdentifier(normalizedUsername) != null) {
       throw const DuplicateException();
     }
-    final userId = client.read<int>('id');
+    final userId = client.id;
     final passwordHash = await _credentialHasher.hash(password);
-    await _database.customStatement(
-      "INSERT INTO login_identifiers VALUES (?,?,'username')",
-      <Object?>[normalizedUsername, userId],
-    );
-    await _database.customStatement(
-      "UPDATE users SET password_hash=?,activation_code_hash=NULL,status='active',updated_at=? WHERE id=?",
-      <Object?>[passwordHash, DateTime.now().millisecondsSinceEpoch, userId],
+    await _database
+        .into(_database.loginIdentifiers)
+        .insert(
+          LoginIdentifiersCompanion.insert(
+            normalized: normalizedUsername,
+            userId: userId,
+            kind: 'username',
+          ),
+        );
+    await (_database.update(
+      _database.users,
+    )..where((table) => table.id.equals(userId))).write(
+      UsersCompanion(
+        passwordHash: Value(passwordHash),
+        activationCodeHash: const Value(null),
+        status: const Value('active'),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
     );
     await _database.setSessionUserId(userId);
     return AuthIdentity(userId: userId, role: 'client');
@@ -107,9 +118,9 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
   Future<AuthIdentity> login(String identifier, String password) =>
       _database.transaction(() async {
         final user = await _userByIdentifier(_normalize(identifier));
-        final passwordHash = user?.readNullable<String>('password_hash');
+        final passwordHash = user?.passwordHash;
         if (user == null ||
-            user.read<String>('status') != 'active' ||
+            user.status != 'active' ||
             passwordHash == null ||
             !await _credentialHasher.verify(password, passwordHash)) {
           throw const AuthException();
@@ -127,43 +138,37 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
   Future<AuthIdentity?> restore() async {
     final userId = await _database.currentSessionUserId();
     final user = userId == null ? null : await _userById(userId);
-    if (user == null || user.read<String>('status') != 'active') {
-      await _database.customStatement('DELETE FROM local_session');
+    if (user == null || user.status != 'active') {
+      await _database.delete(_database.localSession).go();
       return null;
     }
     return _identity(user);
   }
 
   @override
-  Future<void> logout() =>
-      _database.customStatement('DELETE FROM local_session');
+  Future<void> logout() async {
+    await _database.delete(_database.localSession).go();
+  }
 
-  Future<QueryRow?> _userById(int id) => _database
-      .customSelect(
-        'SELECT id,role,status,password_hash,activation_code_hash FROM users WHERE id=?',
-        variables: <Variable<Object>>[Variable<int>(id)],
-      )
-      .getSingleOrNull();
+  Future<User?> _userById(int id) => (_database.select(
+    _database.users,
+  )..where((table) => table.id.equals(id))).getSingleOrNull();
 
-  Future<QueryRow?> _userByIdentifier(
-    String normalized, {
-    String? kind,
-  }) => _database
-      .customSelect(
-        'SELECT u.id,u.role,u.status,u.password_hash,u.activation_code_hash '
-        'FROM login_identifiers i JOIN users u ON u.id=i.user_id '
-        'WHERE i.normalized=?${kind == null ? '' : ' AND i.kind=?'}',
-        variables: <Variable<Object>>[
-          Variable<String>(normalized),
-          if (kind != null) Variable<String>(kind),
-        ],
-      )
-      .getSingleOrNull();
+  Future<User?> _userByIdentifier(String normalized, {String? kind}) async {
+    final identifiers = _database.loginIdentifiers;
+    final users = _database.users;
+    final predicate = kind == null
+        ? identifiers.normalized.equals(normalized)
+        : identifiers.normalized.equals(normalized) &
+              identifiers.kind.equals(kind);
+    final query = _database.select(users).join([
+      innerJoin(identifiers, identifiers.userId.equalsExp(users.id)),
+    ])..where(predicate);
+    return (await query.getSingleOrNull())?.readTable(users);
+  }
 
-  AuthIdentity _identity(QueryRow user) => AuthIdentity(
-    userId: user.read<int>('id'),
-    role: user.read<String>('role'),
-  );
+  AuthIdentity _identity(User user) =>
+      AuthIdentity(userId: user.id, role: user.role);
 
   String _normalize(String value) => value.trim().toLowerCase();
 }
