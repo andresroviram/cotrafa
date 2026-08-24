@@ -124,6 +124,7 @@
     },
     "detail": {
       "personal_information": "Personal information",
+      "username": "Username",
       "first_name": "First name",
       "last_name": "Last name",
       "birth_date": "Date of birth",

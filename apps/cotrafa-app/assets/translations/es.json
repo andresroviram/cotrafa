@@ -124,6 +124,7 @@
     },
     "detail": {
       "personal_information": "Información personal",
+      "username": "Nombre de usuario",
       "first_name": "Nombre",
       "last_name": "Apellido",
       "birth_date": "Fecha de nacimiento",

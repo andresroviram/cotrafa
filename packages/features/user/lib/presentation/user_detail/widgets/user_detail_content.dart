@@ -101,6 +101,11 @@ class UserDetailContent extends StatelessWidget {
                     _InfoCard(
                       items: [
                         _InfoItem(
+                          icon: Icons.alternate_email,
+                          label: 'user.detail.username'.tr(),
+                          value: _optional(context, user.username),
+                        ),
+                        _InfoItem(
                           icon: Icons.badge_outlined,
                           label: 'user.detail.first_name'.tr(),
                           value: _optional(context, user.firstName),

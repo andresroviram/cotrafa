@@ -66,6 +66,7 @@ void main() {
       id: 2,
       email: 'sofia@cotrafa.local',
       fullName: 'Sofia Rovira',
+      username: 'sofia.rovira',
       firstName: 'Sofia',
       lastName: 'Rovira',
       birthDate: DateTime(2000, 8, 14),
@@ -92,6 +93,8 @@ void main() {
     expect((header.decoration as BoxDecoration).color, const Color(0xFF004183));
     expect(find.text('Sofia Rovira'), findsOneWidget);
     expect(find.text('Información personal'), findsOneWidget);
+    expect(find.text('Nombre de usuario'), findsOneWidget);
+    expect(find.text('sofia.rovira'), findsOneWidget);
     expect(find.text('Nombre'), findsOneWidget);
     expect(find.text('Sofia'), findsOneWidget);
     expect(find.text('Apellido'), findsOneWidget);
@@ -104,6 +107,10 @@ void main() {
     expect(find.text('300 123 4567'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Editar'), findsOneWidget);
     expect(find.text('Direcciones'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Nombre de usuario')).dy,
+      lessThan(tester.getTopLeft(find.text('Nombre')).dy),
+    );
   });
 
   testWidgets('shows safe placeholders for missing optional data', (
@@ -121,7 +128,7 @@ void main() {
     await tester.pumpWidget(subject(user));
 
     expect(find.text('client@cotrafa.local'), findsWidgets);
-    expect(find.text('Sin registrar'), findsNWidgets(5));
+    expect(find.text('Sin registrar'), findsNWidgets(6));
   });
 
   testWidgets('shows available balance and opens the shared edit modal', (

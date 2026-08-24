@@ -3,6 +3,7 @@ final class UserProfile {
     required this.id,
     required this.email,
     required this.fullName,
+    this.username,
     this.firstName,
     this.lastName,
     this.birthDate,
@@ -15,6 +16,7 @@ final class UserProfile {
   final int id;
   final String email;
   final String fullName;
+  final String? username;
   final String? firstName;
   final String? lastName;
   final DateTime? birthDate;

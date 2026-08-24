@@ -40,9 +40,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     if (!await _isActiveAdmin(actorUserId)) {
       throw const UnauthorizedException();
     }
-    final rows = await (_database.select(
-      _database.users,
-    )..orderBy([(table) => OrderingTerm.asc(table.id)])).get();
+    final rows = await _profileRows();
     return rows.map(_profile).toList();
   }
 
@@ -52,9 +50,9 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     if (!_canAccess(actor, userId)) {
       throw const UnauthorizedException();
     }
-    final target = await _user(userId);
+    final target = await _profileById(userId);
     if (target == null) throw const NotFoundException();
-    return _profile(target);
+    return target;
   }
 
   @override
@@ -109,7 +107,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
             kind: 'email',
           ),
         );
-    return _profile((await _user(id))!);
+    return (await _profileById(id))!;
   });
 
   @override
@@ -144,7 +142,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
     );
-    return _profile((await _user(userId))!);
+    return (await _profileById(userId))!;
   });
 
   @override
@@ -213,24 +211,52 @@ final class UserLocalDatasource implements IUserLocalDatasource {
           .getSingleOrNull()
           .then((identifier) => identifier != null);
 
-  UserProfile _profile(User user) => UserProfile(
-    id: user.id,
-    email: user.email,
-    fullName: user.fullName,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    birthDate: switch (user.birthDate) {
-      final milliseconds? => DateTime.fromMillisecondsSinceEpoch(
-        milliseconds,
-        isUtc: true,
+  Future<List<TypedResult>> _profileRows({int? userId}) {
+    final query = _database.select(_database.users).join([
+      leftOuterJoin(
+        _database.loginIdentifiers,
+        _database.loginIdentifiers.userId.equalsExp(_database.users.id) &
+            _database.loginIdentifiers.kind.equals('username'),
       ),
-      null => null,
-    },
-    phone: user.phone,
-    role: user.role,
-    status: user.status,
-    balanceCop: user.balanceCop,
-  );
+    ]);
+    if (userId == null) {
+      query.orderBy(<OrderingTerm>[OrderingTerm.asc(_database.users.id)]);
+    } else {
+      query.where(_database.users.id.equals(userId));
+    }
+    return query.get();
+  }
+
+  Future<UserProfile?> _profileById(int userId) async {
+    final rows = await _profileRows(userId: userId);
+    return rows.isEmpty ? null : _profile(rows.single);
+  }
+
+  UserProfile _profile(TypedResult row) {
+    final user = row.readTable(_database.users);
+    final username = row
+        .readTableOrNull(_database.loginIdentifiers)
+        ?.normalized;
+    return UserProfile(
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      username: username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      birthDate: switch (user.birthDate) {
+        final milliseconds? => DateTime.fromMillisecondsSinceEpoch(
+          milliseconds,
+          isUtc: true,
+        ),
+        null => null,
+      },
+      phone: user.phone,
+      role: user.role,
+      status: user.status,
+      balanceCop: user.balanceCop,
+    );
+  }
 
   String _normalize(String value) => value.trim().toLowerCase();
 

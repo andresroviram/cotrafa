@@ -32,6 +32,7 @@ void main() {
     expect(admin.firstName, _demoSeed.firstName);
     expect(admin.lastName, _demoSeed.lastName);
     expect(admin.fullName, _demoSeed.fullName);
+    expect(admin.username, _demoSeed.username);
     expect(admin.displayName, _demoSeed.fullName);
   });
 
@@ -68,6 +69,7 @@ void main() {
     await database.customStatement(
       "INSERT INTO login_identifiers VALUES ('reserved',${created.id},'username')",
     );
+    expect((await users.getUser(1, created.id)).username, 'reserved');
     await expectLater(
       _create(users, 'RESERVED', 0),
       throwsA(isA<DuplicateException>()),
