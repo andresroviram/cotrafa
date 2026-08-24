@@ -1,5 +1,10 @@
 part of '../cotrafa_database.dart';
 
+@TableIndex(name: 'transfers_origin_idx', columns: <Symbol>{#originUserId})
+@TableIndex(
+  name: 'transfers_destination_idx',
+  columns: <Symbol>{#destinationUserId},
+)
 class Transfers extends Table {
   TextColumn get id => text()();
   @ReferenceName('originTransfers')

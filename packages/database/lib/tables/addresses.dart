@@ -1,5 +1,10 @@
 part of '../cotrafa_database.dart';
 
+@TableIndex.sql(
+  'CREATE UNIQUE INDEX one_primary_address_per_user '
+  'ON addresses (user_id) WHERE is_primary = 1',
+)
+@TableIndex(name: 'addresses_user_idx', columns: <Symbol>{#userId})
 class Addresses extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get userId =>

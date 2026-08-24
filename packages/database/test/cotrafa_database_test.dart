@@ -52,6 +52,23 @@ void main() {
     }
     expect(databaseSource, isNot(contains('class Users extends Table')));
   });
+  test('uses typed Drift APIs for database data access', () {
+    final databaseSource = File(
+      '${_packageRoot().path}/lib/cotrafa_database.dart',
+    ).readAsStringSync();
+
+    expect(databaseSource, isNot(contains('customSelect(')));
+    expect(databaseSource, isNot(contains('customUpdate(')));
+    expect(
+      RegExp(r'customStatement\(').allMatches(databaseSource),
+      hasLength(1),
+    );
+    expect(
+      databaseSource,
+      contains("customStatement('PRAGMA foreign_keys = ON')"),
+    );
+    expect(databaseSource, contains('insertOnConflictUpdate('));
+  });
   group('schema', () {
     late CotrafaDatabase database;
     setUp(() async {

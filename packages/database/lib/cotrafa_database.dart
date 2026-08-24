@@ -32,22 +32,7 @@ class CotrafaDatabase extends _$CotrafaDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (Migrator migrator) async {
-      await migrator.createAll();
-      await customStatement(
-        'CREATE UNIQUE INDEX one_primary_address_per_user '
-        'ON addresses (user_id) WHERE is_primary = 1',
-      );
-      await customStatement(
-        'CREATE INDEX addresses_user_idx ON addresses (user_id)',
-      );
-      await customStatement(
-        'CREATE INDEX transfers_origin_idx ON transfers (origin_user_id)',
-      );
-      await customStatement(
-        'CREATE INDEX transfers_destination_idx ON transfers (destination_user_id)',
-      );
-    },
+    onCreate: (Migrator migrator) => migrator.createAll(),
     onUpgrade: (Migrator migrator, int from, int to) async {
       if (from < 2) {
         await migrator.addColumn(addresses, addresses.line2);
@@ -69,63 +54,60 @@ class CotrafaDatabase extends _$CotrafaDatabase {
   );
 
   Future<void> _seedDemoAdmin() => transaction(() async {
-    final QueryRow? existing = await customSelect(
-      'SELECT full_name,first_name,last_name FROM users WHERE id = ?',
-      variables: <Variable<Object>>[Variable<int>(_seed.userId)],
-    ).getSingleOrNull();
+    final User? existing = await (select(
+      users,
+    )..where((table) => table.id.equals(_seed.userId))).getSingleOrNull();
     if (existing != null) {
-      final String firstName = _seedName(
-        existing.readNullable<String>('first_name'),
-        _seed.firstName,
-      );
-      final String lastName = _seedName(
-        existing.readNullable<String>('last_name'),
-        _seed.lastName,
-      );
+      final String firstName = _seedName(existing.firstName, _seed.firstName);
+      final String lastName = _seedName(existing.lastName, _seed.lastName);
       final String fullName = '$firstName $lastName';
-      if (existing.readNullable<String>('first_name') == firstName &&
-          existing.readNullable<String>('last_name') == lastName &&
-          existing.read<String>('full_name') == fullName) {
+      if (existing.firstName == firstName &&
+          existing.lastName == lastName &&
+          existing.fullName == fullName) {
         return;
       }
-      await customStatement(
-        'UPDATE users SET full_name = ?, first_name = ?, last_name = ?, '
-        'updated_at = ? WHERE id = ?',
-        <Object?>[
-          fullName,
-          firstName,
-          lastName,
-          DateTime.now().millisecondsSinceEpoch,
-          _seed.userId,
-        ],
+      await (update(
+        users,
+      )..where((table) => table.id.equals(_seed.userId))).write(
+        UsersCompanion(
+          fullName: Value<String>(fullName),
+          firstName: Value<String>(firstName),
+          lastName: Value<String>(lastName),
+          updatedAt: Value<int>(DateTime.now().millisecondsSinceEpoch),
+        ),
       );
       return;
     }
     final String passwordHash = await _credentialHasher.hash(_seed.password);
     final int now = DateTime.now().millisecondsSinceEpoch;
-    await customStatement(
-      'INSERT INTO users '
-      '(id, email, full_name, first_name, last_name, role, status, '
-      'password_hash, balance_cop, created_at, updated_at) '
-      "VALUES (?, ?, ?, ?, ?, 'admin', 'active', ?, 0, ?, ?)",
-      <Object?>[
-        _seed.userId,
-        _seed.email,
-        _seed.fullName,
-        _seed.firstName,
-        _seed.lastName,
-        passwordHash,
-        now,
-        now,
-      ],
+    await into(users).insert(
+      UsersCompanion.insert(
+        id: Value<int>(_seed.userId),
+        email: _seed.email,
+        fullName: _seed.fullName,
+        firstName: Value<String>(_seed.firstName),
+        lastName: Value<String>(_seed.lastName),
+        role: 'admin',
+        status: 'active',
+        passwordHash: Value<String>(passwordHash),
+        balanceCop: const Value<int>(0),
+        createdAt: now,
+        updatedAt: now,
+      ),
     );
-    await customStatement(
-      "INSERT INTO login_identifiers (normalized, user_id, kind) VALUES (?, ?, 'email')",
-      <Object?>[_seed.email, _seed.userId],
+    await into(loginIdentifiers).insert(
+      LoginIdentifiersCompanion.insert(
+        normalized: _seed.email,
+        userId: _seed.userId,
+        kind: 'email',
+      ),
     );
-    await customStatement(
-      "INSERT INTO login_identifiers (normalized, user_id, kind) VALUES (?, ?, 'username')",
-      <Object?>[_seed.username, _seed.userId],
+    await into(loginIdentifiers).insert(
+      LoginIdentifiersCompanion.insert(
+        normalized: _seed.username,
+        userId: _seed.userId,
+        kind: 'username',
+      ),
     );
   });
 
@@ -134,15 +116,15 @@ class CotrafaDatabase extends _$CotrafaDatabase {
     return normalized.isEmpty ? fallback : normalized;
   }
 
-  Future<void> setSessionUserId(int userId) => customStatement(
-    'INSERT INTO local_session (slot, user_id) VALUES (1, ?) '
-    'ON CONFLICT(slot) DO UPDATE SET user_id = excluded.user_id',
-    <Object?>[userId],
-  );
+  Future<void> setSessionUserId(int userId) =>
+      into(localSession).insertOnConflictUpdate(
+        LocalSessionCompanion.insert(slot: const Value<int>(1), userId: userId),
+      );
 
-  Future<int?> currentSessionUserId() => customSelect(
-    'SELECT user_id FROM local_session WHERE slot = 1',
-  ).map((QueryRow row) => row.read<int>('user_id')).getSingleOrNull();
+  Future<int?> currentSessionUserId() =>
+      (select(localSession)..where((table) => table.slot.equals(1)))
+          .map((row) => row.userId)
+          .getSingleOrNull();
 }
 
 @singleton
