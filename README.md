@@ -109,7 +109,7 @@ fvm install 3.47.1
 fvm use 3.47.1
 
 # 3. Bootstrap del workspace
-fvm dart run melos bootstrap
+melos bootstrap
 
 # 4. Crear los archivos de entorno
 cp apps/cotrafa-app/.env.example apps/cotrafa-app/.env.dev
@@ -169,7 +169,7 @@ fvm dart run melos run run:web
 
 | Comando | Descripción |
 | --- | --- |
-| `fvm dart run melos bootstrap` | Instala y enlaza todas las dependencias del workspace. |
+| `melos bootstrap` | Instala y enlaza todas las dependencias del workspace. |
 | `fvm dart run melos run build:cotrafa-all` | Genera Core → Database → Auth → User → Transfer → App → worker web. |
 | `fvm dart run melos run generate` | Ejecuta build_runner en los packages que lo requieren. |
 | `fvm dart run melos run build:watch` | Mantiene build_runner en modo watch. |

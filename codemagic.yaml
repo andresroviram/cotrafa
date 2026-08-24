@@ -9,7 +9,7 @@ definitions:
 
     bootstrap: &bootstrap
       name: Bootstrap workspace
-      script: fvm dart run melos bootstrap
+      script: melos bootstrap
 
     generate: &generate
       name: Generate code

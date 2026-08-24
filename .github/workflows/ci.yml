@@ -58,7 +58,7 @@ jobs:
           done
 
       - name: Bootstrap workspace
-        run: fvm dart run melos bootstrap
+        run: melos bootstrap
 
       - name: Generate code
         run: fvm dart run melos run build:cotrafa-all
@@ -132,7 +132,7 @@ jobs:
           done
 
       - name: Bootstrap workspace
-        run: fvm dart run melos bootstrap
+        run: melos bootstrap
 
       - name: Generate code
         run: fvm dart run melos run build:cotrafa-all
@@ -191,7 +191,7 @@ jobs:
 
       - name: Bootstrap and generate
         run: |
-          fvm dart run melos bootstrap
+          melos bootstrap
           fvm dart run melos run build:cotrafa-all
 
       - name: Build QA APK
@@ -237,7 +237,7 @@ jobs:
 
       - name: Bootstrap and generate
         run: |
-          fvm dart run melos bootstrap
+          melos bootstrap
           fvm dart run melos run build:cotrafa-all
 
       - name: Build web QA artifact
