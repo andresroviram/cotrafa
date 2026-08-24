@@ -1,6 +1,6 @@
 {
   "yaml.schemaStore.enable": false,
-  "dart.flutterSdkPath": ".fvm/versions/3.47.0",
+  "dart.flutterSdkPath": ".fvm/versions/3.47.1",
   "avdmanager.executable": "c:\\Android\\sdk\\cmdline-tools\\latest\\bin\\avdmanager.bat",
   "avdmanager.sdkManager": "c:\\Android\\sdk\\cmdline-tools\\latest\\bin\\sdkmanager.bat",
   "avdmanager.sdkPath": "c:\\Android\\sdk"

@@ -5,7 +5,7 @@ definitions:
       script: |
         dart pub global activate fvm
         dart pub global activate melos
-        fvm use 3.44.9 --force
+        fvm use 3.47.1 --force
 
     bootstrap: &bootstrap
       name: Bootstrap workspace
@@ -75,7 +75,7 @@ workflows:
           include: true
       cancel_previous_builds: true
     environment:
-      flutter: 3.44.9
+      flutter: 3.47.1
       groups: [env_dev, codecov]
     scripts:
       - *install_tools
@@ -106,7 +106,7 @@ workflows:
         - pattern: develop
           include: true
     environment:
-      flutter: 3.44.9
+      flutter: 3.47.1
       java: 17
       groups: [env_dev, android_signing, google_play]
     scripts:
@@ -136,7 +136,7 @@ workflows:
         - pattern: main
           include: true
     environment:
-      flutter: 3.44.9
+      flutter: 3.47.1
       java: 17
       groups: [env_qa, android_signing, google_play]
     scripts:
@@ -169,7 +169,7 @@ workflows:
         - pattern: "v*"
           include: true
     environment:
-      flutter: 3.44.9
+      flutter: 3.47.1
       java: 17
       groups: [env_prod, android_signing, google_play]
     scripts:
@@ -199,7 +199,7 @@ workflows:
         - pattern: develop
           include: true
     environment:
-      flutter: 3.44.9
+      flutter: 3.47.1
       xcode: latest
       groups: [env_dev, ios_signing]
       ios_signing:
@@ -236,7 +236,7 @@ workflows:
         - pattern: main
           include: true
     environment:
-      flutter: 3.44.9
+      flutter: 3.47.1
       xcode: latest
       groups: [env_qa, ios_signing]
       ios_signing:
@@ -276,7 +276,7 @@ workflows:
         - pattern: "v*"
           include: true
     environment:
-      flutter: 3.44.9
+      flutter: 3.47.1
       xcode: latest
       groups: [env_prod, ios_signing]
       ios_signing:
@@ -313,7 +313,7 @@ workflows:
         - pattern: develop
           include: true
     environment:
-      flutter: 3.44.9
+      flutter: 3.47.1
       groups: [env_dev]
     scripts:
       - *install_tools
@@ -336,7 +336,7 @@ workflows:
         - pattern: "release/*"
           include: true
     environment:
-      flutter: 3.44.9
+      flutter: 3.47.1
       groups: [env_prod]
     scripts:
       - *install_tools

@@ -1,6 +1,6 @@
 # Prueba Tecnica Cotrafa
 
-Prueba técnica de banca local construida con Flutter 3.44.9, BLoC, Drift y Clean Architecture. La aplicación cubre autenticación, gestión de usuarios, direcciones y transferencias con persistencia transaccional.
+Prueba técnica de banca local construida con Flutter 3.47.1, BLoC, Drift y Clean Architecture. La aplicación cubre autenticación, gestión de usuarios, direcciones y transferencias con persistencia transaccional.
 
 Arquitectura de **monorepo con Melos**, Clean Architecture por feature y soporte para Mobile, Web y Desktop.
 
@@ -28,7 +28,7 @@ Arquitectura de **monorepo con Melos**, Clean Architecture por feature y soporte
 
 ## Stack tecnológico
 
-- Flutter 3.44.9 y Dart 3.12.2 mediante FVM
+- Flutter 3.47.1 y Dart 3.13.1 mediante FVM
 - Clean Architecture por feature
 - Melos para administración del monorepo
 - BLoC (`flutter_bloc`) con eventos y estados Freezed
@@ -94,7 +94,7 @@ cotrafa/
 ### Requisitos
 
 - FVM
-- Flutter 3.44.9
+- Flutter 3.47.1
 - Android Studio/JDK 17 para Android
 - Xcode y CocoaPods para iOS/macOS
 
@@ -105,8 +105,8 @@ cd cotrafa
 
 # 2. Instalar FVM y la versión fijada de Flutter
 dart pub global activate fvm
-fvm install 3.44.9
-fvm use 3.44.9
+fvm install 3.47.1
+fvm use 3.47.1
 
 # 3. Bootstrap del workspace
 fvm dart run melos bootstrap
@@ -213,7 +213,7 @@ Cada entorno tiene su archivo local, excluido de Git:
 
 `.github/workflows/ci.yml` ejecuta en cada push y pull request:
 
-1. Flutter 3.44.9 con FVM y JDK 17.
+1. Flutter 3.47.1 con FVM y JDK 17.
 2. Bootstrap y generación de código.
 3. Formato y análisis estático.
 4. Pruebas con umbral de cobertura del 60 %.
@@ -331,7 +331,7 @@ Los scripts verifican automáticamente:
 - ✅ Comparan el resultado con el umbral configurado.
 - ✅ Fallan con un código de salida distinto de cero cuando no se cumple.
 
-Además, el pipeline valida formato, análisis estático y builds reproducibles con Flutter 3.44.9, FVM, Melos y JDK 17.
+Además, el pipeline valida formato, análisis estático y builds reproducibles con Flutter 3.47.1, FVM, Melos y JDK 17.
 
 ## Features
 
