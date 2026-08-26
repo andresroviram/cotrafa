@@ -36,8 +36,8 @@ void main() {
     expect(admin.displayName, _demoSeed.fullName);
   });
 
-  test('admin CRUD rejects invalid identifiers or balance', () async {
-    final created = await _create(users, ' CLIENT@EXAMPLE.COM ', 250);
+  test('admin CRUD persists normalized use-case input', () async {
+    final created = await _create(users, 'client@example.com', 250);
     expect(created.email, 'client@example.com');
     expect(created.firstName, 'Client');
     expect(created.lastName, 'User');
@@ -63,7 +63,7 @@ void main() {
     expect(updated.birthDate, DateTime.utc(2000, 6, 15));
     expect(updated.phone, '3001234567');
     await expectLater(
-      _create(users, CotrafaDatabaseSeed.test.email.toUpperCase(), 0),
+      _create(users, CotrafaDatabaseSeed.test.email, 0),
       throwsA(isA<DuplicateException>()),
     );
     await database.customStatement(
@@ -71,30 +71,8 @@ void main() {
     );
     expect((await users.getUser(1, created.id)).username, 'reserved');
     await expectLater(
-      _create(users, 'RESERVED', 0),
+      _create(users, 'reserved', 0),
       throwsA(isA<DuplicateException>()),
-    );
-    await expectLater(
-      _create(users, 'negative@example.com', -1),
-      throwsA(
-        isA<ValidationException>().having(
-          (error) => error.message,
-          'message',
-          'Initial balance cannot be negative.',
-        ),
-      ),
-    );
-    await expectLater(
-      users.createClient(
-        1,
-        email: 'missing-name@example.com',
-        firstName: ' ',
-        lastName: 'User',
-        birthDate: null,
-        phone: null,
-        initialBalanceCop: 0,
-      ),
-      throwsA(isA<ValidationException>()),
     );
     expect((await users.listUsers(1)).length, 2);
   });

@@ -46,7 +46,10 @@ void main() {
       ).thenAnswer((_) async => throw const UnauthorizedException());
       final repository = AddressRepositoryImpl(datasource);
 
-      expect(await repository.list(2, 3), const Error(UnauthorizedFailure()));
+      expect(
+        await repository.list(2, 3),
+        const Error(UnauthorizedFailure(message: 'Unauthorized operation')),
+      );
     },
   );
 
@@ -69,5 +72,57 @@ void main() {
       await CreateAddress(repository)(1, 2, draft),
       const Success(address),
     );
+  });
+
+  test('use case validates and normalizes address input', () async {
+    final repository = _Repository();
+    const normalized = AddressDraft(
+      line1: 'Calle 10',
+      line2: null,
+      city: 'Medellín',
+      state: null,
+      postalCode: null,
+      country: 'Colombia',
+      label: 'Casa',
+    );
+    when(
+      () => repository.create(1, 2, normalized),
+    ).thenAnswer((_) async => const Success(address));
+
+    expect(
+      await CreateAddress(repository)(
+        1,
+        2,
+        const AddressDraft(
+          line1: ' Calle 10 ',
+          line2: ' ',
+          city: ' Medellín ',
+          state: null,
+          postalCode: null,
+          country: ' Colombia ',
+          label: ' Casa ',
+        ),
+      ),
+      const Success(address),
+    );
+    expect(
+      await CreateAddress(repository)(
+        1,
+        2,
+        const AddressDraft(
+          line1: ' ',
+          line2: null,
+          city: 'Medellín',
+          state: null,
+          postalCode: null,
+          country: 'Colombia',
+          label: 'Casa',
+        ),
+      ),
+      const Error<UserAddress>(
+        ValidationFailure(message: 'Address is required.'),
+      ),
+    );
+    verify(() => repository.create(1, 2, normalized)).called(1);
   });
 }

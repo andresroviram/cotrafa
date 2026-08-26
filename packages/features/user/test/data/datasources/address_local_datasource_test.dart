@@ -106,26 +106,6 @@ void main() {
     expect(await addresses.list(2, 2), isEmpty);
   });
 
-  test('validates required fields before persistence', () async {
-    await expectLater(
-      addresses.create(
-        2,
-        2,
-        const AddressDraft(
-          line1: ' ',
-          line2: null,
-          city: 'Medellín',
-          state: null,
-          postalCode: null,
-          country: 'Colombia',
-          label: 'Casa',
-        ),
-      ),
-      throwsA(isA<ValidationException>()),
-    );
-    expect(await addresses.list(2, 2), isEmpty);
-  });
-
   test(
     'address changes never affect transfer creation or receipt snapshots',
     () async {

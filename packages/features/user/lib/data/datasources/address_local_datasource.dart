@@ -36,7 +36,6 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
   Future<UserAddress> create(int actorUserId, int userId, AddressDraft draft) =>
       _database.transaction(() async {
         await _authorize(actorUserId, userId);
-        final normalized = _normalize(draft);
         final existing =
             await (_database.select(_database.addresses)
                   ..where((table) => table.userId.equals(userId))
@@ -47,13 +46,13 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
             .insert(
               AddressesCompanion.insert(
                 userId: userId,
-                line1: normalized.line1,
-                line2: Value(normalized.line2),
-                city: normalized.city,
-                state: Value(normalized.state),
-                postalCode: Value(normalized.postalCode),
-                country: Value(normalized.country),
-                label: normalized.label,
+                line1: draft.line1,
+                line2: Value(draft.line2),
+                city: draft.city,
+                state: Value(draft.state),
+                postalCode: Value(draft.postalCode),
+                country: Value(draft.country),
+                label: draft.label,
                 isPrimary: Value(existing == null),
               ),
             );
@@ -69,7 +68,6 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
   ) => _database.transaction(() async {
     await _authorize(actorUserId, userId);
     await _requireAddress(addressId, userId);
-    final normalized = _normalize(draft);
     final affected =
         await (_database.update(_database.addresses)..where(
               (table) =>
@@ -77,13 +75,13 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
             ))
             .write(
               AddressesCompanion(
-                line1: Value(normalized.line1),
-                line2: Value(normalized.line2),
-                city: Value(normalized.city),
-                state: Value(normalized.state),
-                postalCode: Value(normalized.postalCode),
-                country: Value(normalized.country),
-                label: Value(normalized.label),
+                line1: Value(draft.line1),
+                line2: Value(draft.line2),
+                city: Value(draft.city),
+                state: Value(draft.state),
+                postalCode: Value(draft.postalCode),
+                country: Value(draft.country),
+                label: Value(draft.label),
               ),
             );
     if (affected != 1) throw const StorageException();
@@ -174,29 +172,6 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
     final address = await _find(id, userId);
     if (address == null) throw const NotFoundException();
     return address;
-  }
-
-  AddressDraft _normalize(AddressDraft draft) => AddressDraft(
-    line1: _required(draft.line1, 'Address'),
-    line2: _optional(draft.line2),
-    city: _required(draft.city, 'City'),
-    state: _optional(draft.state),
-    postalCode: _optional(draft.postalCode),
-    country: _required(draft.country, 'Country'),
-    label: _required(draft.label, 'Label'),
-  );
-
-  String _required(String value, String field) {
-    final normalized = value.trim();
-    if (normalized.isEmpty) {
-      throw ValidationException(message: '$field is required.');
-    }
-    return normalized;
-  }
-
-  String? _optional(String? value) {
-    final normalized = value?.trim();
-    return normalized == null || normalized.isEmpty ? null : normalized;
   }
 
   UserAddress _toEntity(AddressesData row) => UserAddress(

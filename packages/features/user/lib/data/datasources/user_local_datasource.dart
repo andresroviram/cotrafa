@@ -68,16 +68,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     if (!await _isActiveAdmin(actorUserId)) {
       throw const UnauthorizedException();
     }
-    if (initialBalanceCop < 0) {
-      throw const ValidationException(
-        message: 'Initial balance cannot be negative.',
-      );
-    }
-    final normalizedFirstName = _requiredName(firstName);
-    final normalizedLastName = _requiredName(lastName);
-    final normalizedPhone = _optional(phone);
-    final normalized = _normalize(email);
-    if (await _identifierExists(normalized)) {
+    if (await _identifierExists(email)) {
       throw const DuplicateException();
     }
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -85,12 +76,12 @@ final class UserLocalDatasource implements IUserLocalDatasource {
         .into(_database.users)
         .insert(
           UsersCompanion.insert(
-            email: normalized,
-            fullName: '$normalizedFirstName $normalizedLastName',
-            firstName: Value(normalizedFirstName),
-            lastName: Value(normalizedLastName),
+            email: email,
+            fullName: '$firstName $lastName',
+            firstName: Value(firstName),
+            lastName: Value(lastName),
             birthDate: Value(_date(birthDate)),
-            phone: Value(normalizedPhone),
+            phone: Value(phone),
             role: 'client',
             status: 'pendingActivation',
             balanceCop: Value(initialBalanceCop),
@@ -102,7 +93,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
         .into(_database.loginIdentifiers)
         .insert(
           LoginIdentifiersCompanion.insert(
-            normalized: normalized,
+            normalized: email,
             userId: id,
             kind: 'email',
           ),
@@ -127,18 +118,15 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     if (target == null) {
       throw const NotFoundException();
     }
-    final normalizedFirstName = _requiredName(firstName);
-    final normalizedLastName = _requiredName(lastName);
-    final normalizedPhone = _optional(phone);
     await (_database.update(
       _database.users,
     )..where((table) => table.id.equals(userId))).write(
       UsersCompanion(
-        fullName: Value('$normalizedFirstName $normalizedLastName'),
-        firstName: Value(normalizedFirstName),
-        lastName: Value(normalizedLastName),
+        fullName: Value('$firstName $lastName'),
+        firstName: Value(firstName),
+        lastName: Value(lastName),
         birthDate: Value(_date(birthDate)),
-        phone: Value(normalizedPhone),
+        phone: Value(phone),
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
     );
@@ -256,23 +244,6 @@ final class UserLocalDatasource implements IUserLocalDatasource {
       status: user.status,
       balanceCop: user.balanceCop,
     );
-  }
-
-  String _normalize(String value) => value.trim().toLowerCase();
-
-  String? _optional(String? value) {
-    final normalized = value?.trim();
-    return normalized == null || normalized.isEmpty ? null : normalized;
-  }
-
-  String _requiredName(String value) {
-    final normalized = value.trim();
-    if (normalized.isEmpty) {
-      throw const ValidationException(
-        message: 'First name and last name are required.',
-      );
-    }
-    return normalized;
   }
 
   int? _date(DateTime? value) => value == null
