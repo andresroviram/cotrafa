@@ -14,7 +14,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     this._loginDemoAdminUseCase,
     this._activateClient,
     this._logout,
-  ) : super(const AuthState()) {
+  ) : super(const AuthState.initial()) {
     on<AuthRestoreRequested>(_restore);
     on<DemoAdminLoginRequested>(_loginDemoAdmin);
     on<AuthLoginRequested>(_loginClient);
@@ -28,25 +28,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ActivateClient _activateClient;
   final Logout _logout;
 
-  AuthState _next(
-    AuthStatus status, {
-    AuthIdentity? identity,
-    String? message,
-  }) => state.copyWith(status: status, identity: identity, message: message);
-
   Future<void> _restore(
     AuthRestoreRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(_next(AuthStatus.loading));
+    emit(const AuthState.loading());
     final result = await _restoreSession();
     emit(
       result.fold(
         onSuccess: (identity) => identity == null
-            ? _next(AuthStatus.unauthenticated)
-            : _next(AuthStatus.authenticated, identity: identity),
-        onFailure: (_) =>
-            _next(AuthStatus.failure, message: 'auth.errors.restore'),
+            ? const AuthState.unauthenticated()
+            : AuthState.authenticated(identity),
+        onFailure: (error) => AuthState.failure(error.message),
       ),
     );
   }
@@ -54,22 +47,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _loginDemoAdmin(
     DemoAdminLoginRequested event,
     Emitter<AuthState> emit,
-  ) => _authenticate(
-    _loginDemoAdminUseCase.call,
-    'auth.errors.sign_in',
-    AuthStatus.authenticated,
-    emit,
-  );
+  ) => _authenticate(_loginDemoAdminUseCase.call, emit);
 
   Future<void> _loginClient(
     AuthLoginRequested event,
     Emitter<AuthState> emit,
-  ) => _authenticate(
-    () => _login(event.identifier, event.password),
-    'auth.errors.sign_in',
-    AuthStatus.authenticated,
-    emit,
-  );
+  ) => _authenticate(() => _login(event.identifier, event.password), emit);
 
   Future<void> _activate(
     AuthActivationRequested event,
@@ -81,23 +64,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       event.username,
       event.password,
     ),
-    'auth.errors.activate',
-    AuthStatus.activationSuccess,
     emit,
+    activation: true,
   );
 
   Future<void> _authenticate(
     Future<Result<AuthIdentity>> Function() request,
-    String failureMessage,
-    AuthStatus successStatus,
-    Emitter<AuthState> emit,
-  ) async {
-    emit(_next(AuthStatus.loading));
+    Emitter<AuthState> emit, {
+    bool activation = false,
+  }) async {
+    emit(const AuthState.loading());
     final result = await request();
     emit(
       result.fold(
-        onSuccess: (identity) => _next(successStatus, identity: identity),
-        onFailure: (_) => _next(AuthStatus.failure, message: failureMessage),
+        onSuccess: (identity) => activation
+            ? AuthState.activationSuccess(identity)
+            : AuthState.authenticated(identity),
+        onFailure: (error) => AuthState.failure(error.message),
       ),
     );
   }
@@ -106,13 +89,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthLogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    emit(_next(AuthStatus.loading));
+    emit(const AuthState.loading());
     final result = await _logout();
     emit(
       result.fold(
-        onSuccess: (_) => _next(AuthStatus.unauthenticated),
-        onFailure: (_) =>
-            _next(AuthStatus.failure, message: 'auth.errors.sign_out'),
+        onSuccess: (_) => const AuthState.unauthenticated(),
+        onFailure: (error) => AuthState.failure(error.message),
       ),
     );
   }

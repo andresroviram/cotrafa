@@ -6,6 +6,7 @@ import 'package:core/enum/navigation_item.dart';
 import 'package:core/errors/result.dart';
 import 'package:core/get_it.dart';
 import 'package:feature_auth/domain/usecases/auth_usecases.dart';
+import 'package:feature_auth/domain/entities/auth_identity.dart';
 import 'package:feature_auth/presentation/activation/view/activation_view.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
@@ -39,10 +40,14 @@ GoRouter createRouter(AuthBloc authBloc) {
     refreshListenable: authRefresh,
     observers: [BotToastNavigatorObserver()],
     redirect: (_, state) {
-      final isAuthenticated = switch (authBloc.state.status) {
-        AuthStatus.authenticated || AuthStatus.activationSuccess => true,
-        _ => false,
-      };
+      final isAuthenticated = authBloc.state.when(
+        initial: () => false,
+        loading: () => false,
+        unauthenticated: () => false,
+        authenticated: (_) => true,
+        activationSuccess: (_) => true,
+        failure: (_) => false,
+      );
       final isPublicAuth =
           state.matchedLocation == LoginView.path ||
           state.matchedLocation == ActivationView.path;
@@ -65,13 +70,15 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder: (context, _, navigationShell) => BlocProvider.value(
           value: authBloc,
           child: BlocListener<AuthBloc, AuthState>(
-            listenWhen: (previous, current) =>
-                previous.status != current.status,
-            listener: (context, state) {
-              if (state.status == AuthStatus.unauthenticated) {
-                context.go(LoginView.path);
-              }
-            },
+            listenWhen: (previous, current) => previous != current,
+            listener: (context, state) => state.when<void>(
+              initial: () {},
+              loading: () {},
+              unauthenticated: () => context.go(LoginView.path),
+              authenticated: (_) {},
+              activationSuccess: (_) {},
+              failure: (_) {},
+            ),
             child: ScaffoldWithNavigation(
               navigationShell: navigationShell,
               logoPath: 'assets/img/logo.png',
@@ -97,8 +104,8 @@ GoRouter createRouter(AuthBloc authBloc) {
         branches: [
           usersRoutes(
             parentNavigatorKey: rootKey,
-            actorUserId: () => authBloc.state.identity?.userId ?? -1,
-            isAdmin: () => authBloc.state.identity?.role == 'admin',
+            actorUserId: () => _identity(authBloc.state)?.userId ?? -1,
+            isAdmin: () => _identity(authBloc.state)?.role == 'admin',
             issueActivationCode: (actorUserId, email) async {
               final result = await getIt<IssueActivationCode>()(
                 actorUserId,
@@ -109,14 +116,23 @@ GoRouter createRouter(AuthBloc authBloc) {
           ),
           transferRoutes(
             parentNavigatorKey: rootKey,
-            actorUserId: () => authBloc.state.identity?.userId ?? -1,
-            isAdmin: () => authBloc.state.identity?.role == 'admin',
+            actorUserId: () => _identity(authBloc.state)?.userId ?? -1,
+            isAdmin: () => _identity(authBloc.state)?.role == 'admin',
           ),
         ],
       ),
     ],
   );
 }
+
+AuthIdentity? _identity(AuthState state) => state.when(
+  initial: () => null,
+  loading: () => null,
+  unauthenticated: () => null,
+  authenticated: (identity) => identity,
+  activationSuccess: (identity) => identity,
+  failure: (_) => null,
+);
 
 final class _AuthRouterRefresh extends ChangeNotifier {
   _AuthRouterRefresh(Stream<AuthState> states) {

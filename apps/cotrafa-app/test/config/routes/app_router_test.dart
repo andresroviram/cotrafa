@@ -13,9 +13,7 @@ final class MockAuthBloc extends Mock implements AuthBloc {}
 void main() {
   test('starts at login and exposes the authenticated shell', () {
     final authBloc = MockAuthBloc();
-    when(
-      () => authBloc.state,
-    ).thenReturn(const AuthState(status: AuthStatus.unauthenticated));
+    when(() => authBloc.state).thenReturn(const AuthState.unauthenticated());
     when(
       () => authBloc.stream,
     ).thenAnswer((_) => const Stream<AuthState>.empty());

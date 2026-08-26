@@ -1,6 +1,5 @@
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
@@ -41,9 +40,7 @@ class LoginView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocListener<AuthBloc, AuthState>(
-    listenWhen: (previous, current) =>
-        previous.status != current.status ||
-        previous.message != current.message,
+    listenWhen: (previous, current) => previous != current,
     listener: _onStateChanged,
     child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
         ? LoginWeb(
@@ -57,15 +54,14 @@ class LoginView extends StatelessWidget {
   );
 
   void _onStateChanged(BuildContext context, AuthState state) {
-    if (state.status == AuthStatus.authenticated) {
-      context.go(authenticatedLocation);
-      return;
-    }
-    if (state.status == AuthStatus.failure) {
-      AppNotification.showNotificationError(
-        context,
-        title: (state.message ?? 'auth.errors.sign_in').tr(),
-      );
-    }
+    state.when(
+      initial: () {},
+      loading: () {},
+      unauthenticated: () {},
+      authenticated: (_) => context.go(authenticatedLocation),
+      activationSuccess: (_) {},
+      failure: (message) =>
+          AppNotification.showNotificationError(context, title: message),
+    );
   }
 }

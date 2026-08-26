@@ -20,9 +20,7 @@ void main() {
 
   setUp(() {
     bloc = _MockAuthBloc();
-    when(
-      () => bloc.state,
-    ).thenReturn(const AuthState(status: AuthStatus.unauthenticated));
+    when(() => bloc.state).thenReturn(const AuthState.unauthenticated());
     when(() => bloc.stream).thenAnswer((_) => const Stream<AuthState>.empty());
     when(() => bloc.add(any())).thenReturn(null);
   });

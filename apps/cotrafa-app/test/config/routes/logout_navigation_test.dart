@@ -44,16 +44,15 @@ void main() {
   testWidgets('logout action returns the authenticated shell to login', (
     tester,
   ) async {
-    var currentState = const AuthState(
-      status: AuthStatus.authenticated,
-      identity: AuthIdentity(userId: 1, role: 'admin'),
+    var currentState = const AuthState.authenticated(
+      AuthIdentity(userId: 1, role: 'admin'),
     );
     final states = StreamController<AuthState>.broadcast();
     final authBloc = MockAuthBloc();
     when(() => authBloc.state).thenAnswer((_) => currentState);
     when(() => authBloc.stream).thenAnswer((_) => states.stream);
     when(() => authBloc.add(const AuthEvent.logoutRequested())).thenAnswer((_) {
-      currentState = const AuthState(status: AuthStatus.loading);
+      currentState = const AuthState.loading();
       states.add(currentState);
     });
     final userBloc = MockUserBloc();
@@ -105,7 +104,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
 
-    currentState = const AuthState(status: AuthStatus.unauthenticated);
+    currentState = const AuthState.unauthenticated();
     states.add(currentState);
     await tester.pumpAndSettle();
 

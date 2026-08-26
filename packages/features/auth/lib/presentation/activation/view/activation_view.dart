@@ -1,6 +1,5 @@
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_auth/presentation/activation/view/activation_mobile.dart';
 import 'package:feature_auth/presentation/activation/view/activation_web.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
@@ -40,9 +39,7 @@ class ActivationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocListener<AuthBloc, AuthState>(
-    listenWhen: (previous, current) =>
-        previous.status != current.status ||
-        previous.message != current.message,
+    listenWhen: (previous, current) => previous != current,
     listener: _onStateChanged,
     child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
         ? ActivationWeb(
@@ -56,15 +53,14 @@ class ActivationView extends StatelessWidget {
   );
 
   void _onStateChanged(BuildContext context, AuthState state) {
-    if (state.status == AuthStatus.activationSuccess) {
-      context.go(authenticatedLocation);
-      return;
-    }
-    if (state.status == AuthStatus.failure) {
-      AppNotification.showNotificationError(
-        context,
-        title: (state.message ?? 'auth.errors.activate').tr(),
-      );
-    }
+    state.when(
+      initial: () {},
+      loading: () {},
+      unauthenticated: () {},
+      authenticated: (_) {},
+      activationSuccess: (_) => context.go(authenticatedLocation),
+      failure: (message) =>
+          AppNotification.showNotificationError(context, title: message),
+    );
   }
 }
