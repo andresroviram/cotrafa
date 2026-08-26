@@ -42,10 +42,7 @@ void main() {
   late _MockDatasource datasource;
   late TransferRepositoryImpl repository;
 
-  setUpAll(() {
-    registerFallbackValue(command);
-    registerFallbackValue(ReceiptAction.mutate);
-  });
+  setUpAll(() => registerFallbackValue(command));
 
   setUp(() {
     datasource = _MockDatasource();
@@ -97,16 +94,49 @@ void main() {
   });
 
   test('receipt actions remain denied through the use case', () async {
-    when(
-      () => datasource.requestReceiptAction('receipt-1', ReceiptAction.share),
-    ).thenThrow(
-      const ValidationException(message: 'Transfer receipts are read-only.'),
-    );
-
     expect(
-      await RequestReceiptAction(repository)('receipt-1', ReceiptAction.share),
+      await const RequestReceiptAction()('receipt-1', ReceiptAction.share),
       const Error<void>(
         ValidationFailure(message: 'Transfer receipts are read-only.'),
+      ),
+    );
+  });
+
+  test('create use case validates and normalizes the command', () async {
+    const normalized = TransferCommand(
+      actorId: 2,
+      originId: 2,
+      destinationId: 3,
+      amountCop: 100,
+      description: 'Rent',
+    );
+    when(
+      () => datasource.createTransfer(normalized),
+    ).thenAnswer((_) async => receipt);
+
+    expect(
+      await CreateTransfer(repository)(
+        const TransferCommand(
+          actorId: 2,
+          originId: 2,
+          destinationId: 3,
+          amountCop: 100,
+          description: ' Rent ',
+        ),
+      ),
+      const Success(receipt),
+    );
+    expect(
+      await CreateTransfer(repository)(
+        const TransferCommand(
+          actorId: 2,
+          originId: 2,
+          destinationId: 2,
+          amountCop: 100,
+        ),
+      ),
+      const Error<TransferReceipt>(
+        ValidationFailure(message: 'Origin and destination must be different.'),
       ),
     );
   });

@@ -1,7 +1,6 @@
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_transfer/data/datasources/transfer_local_datasource.dart';
-import 'package:feature_transfer/domain/entities/receipt_action.dart';
 import 'package:feature_transfer/domain/entities/transfer_command.dart';
 import 'package:feature_transfer/domain/entities/transfer_party.dart';
 import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
@@ -37,10 +36,4 @@ final class TransferRepositoryImpl implements ITransferRepository {
       Future<TransferReceipt>.sync(
         () => _datasource.getReceipt(id),
       ).toResult(fallback: const StorageReadFailure());
-
-  @override
-  Future<Result<void>> requestReceiptAction(String id, ReceiptAction action) =>
-      Future<void>.sync(
-        () => _datasource.requestReceiptAction(id, action),
-      ).toResult(fallback: const StorageFailure());
 }

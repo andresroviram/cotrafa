@@ -1,7 +1,6 @@
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
-import 'package:feature_transfer/domain/entities/receipt_action.dart';
 import 'package:feature_transfer/domain/entities/transfer_command.dart';
 import 'package:feature_transfer/domain/entities/transfer_party.dart';
 import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
@@ -12,7 +11,6 @@ abstract interface class ITransferLocalDatasource {
   Future<List<TransferReceipt>> listTransfers(int actorUserId);
   Future<TransferReceipt> createTransfer(TransferCommand command);
   Future<TransferReceipt> getReceipt(String id);
-  Future<void> requestReceiptAction(String id, ReceiptAction action);
 }
 
 @LazySingleton(as: ITransferLocalDatasource)
@@ -80,7 +78,6 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
   Future<TransferReceipt> createTransfer(
     TransferCommand command,
   ) => _database.transaction(() async {
-    _validateCommand(command);
     final actor = await _user(command.actorId);
     if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
@@ -145,7 +142,7 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
             destinationUserId: command.destinationId,
             amountCop: command.amountCop,
             status: 'completed',
-            description: Value(_optional(command.description)),
+            description: Value(command.description),
             createdAt: createdAt,
             originSnapshot: _snapshot(origin),
             destinationSnapshot: _snapshot(destination),
@@ -165,26 +162,6 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
     final row = await _receiptRow(id);
     if (row == null) throw const NotFoundException();
     return _receipt(row);
-  }
-
-  @override
-  Future<void> requestReceiptAction(String id, ReceiptAction action) async {
-    throw const ValidationException(
-      message: 'Transfer receipts are read-only.',
-    );
-  }
-
-  void _validateCommand(TransferCommand command) {
-    if (command.amountCop <= 0) {
-      throw const ValidationException(
-        message: 'Transfer amount must be greater than zero.',
-      );
-    }
-    if (command.originId == command.destinationId) {
-      throw const ValidationException(
-        message: 'Origin and destination must be different.',
-      );
-    }
   }
 
   Future<User?> _user(int id) => (_database.select(
@@ -215,9 +192,4 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
     originSnapshot: transfer.originSnapshot,
     destinationSnapshot: transfer.destinationSnapshot,
   );
-
-  String? _optional(String? value) {
-    final normalized = value?.trim();
-    return normalized == null || normalized.isEmpty ? null : normalized;
-  }
 }

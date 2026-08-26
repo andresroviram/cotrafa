@@ -3,7 +3,6 @@ import 'package:core/security/credential_hasher.dart';
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:drift/native.dart';
 import 'package:feature_transfer/data/datasources/transfer_local_datasource.dart';
-import 'package:feature_transfer/domain/entities/receipt_action.dart';
 import 'package:feature_transfer/domain/entities/transfer_command.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -151,24 +150,6 @@ void main() {
         const TransferCommand(
           actorId: 2,
           originId: 2,
-          destinationId: 2,
-          amountCop: 10,
-        ),
-        isA<ValidationException>(),
-      ),
-      (
-        const TransferCommand(
-          actorId: 2,
-          originId: 2,
-          destinationId: 3,
-          amountCop: 0,
-        ),
-        isA<ValidationException>(),
-      ),
-      (
-        const TransferCommand(
-          actorId: 2,
-          originId: 2,
           destinationId: 3,
           amountCop: 101,
         ),
@@ -291,7 +272,7 @@ void main() {
     expect(await _count(db, 'transfers'), 0);
   });
 
-  test('receipt is read-only and mutation/export/sharing are denied', () async {
+  test('persisted receipts remain readable', () async {
     await transfers.createTransfer(
       const TransferCommand(
         actorId: 2,
@@ -300,12 +281,6 @@ void main() {
         amountCop: 10,
       ),
     );
-    for (final action in ReceiptAction.values) {
-      await expectLater(
-        transfers.requestReceiptAction('transfer-1', action),
-        throwsA(isA<ValidationException>()),
-      );
-    }
     expect((await transfers.getReceipt('transfer-1')).amountCop, 10);
   });
 }
