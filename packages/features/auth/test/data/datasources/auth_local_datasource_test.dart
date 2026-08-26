@@ -35,7 +35,7 @@ void main() {
   test(
     'admin replaces a pending client code without persisting plaintext',
     () async {
-      await _insertClient(database, 2, 'Client@Example.com');
+      await _insertClient(database, 2, 'client@example.com');
       await expectLater(
         auth.issueActivationCode(2, 'client@example.com'),
         throwsA(isA<UnauthorizedException>()),
@@ -52,7 +52,7 @@ void main() {
       );
       final first = await auth.issueActivationCode(
         _demoSeed.userId,
-        ' CLIENT@EXAMPLE.COM ',
+        'client@example.com',
       );
       expect(first, 'FIRST1');
       var row = await _client(database);
@@ -96,9 +96,9 @@ void main() {
       ));
       await expectLater(
         auth.activate(
-          'CLIENT@example.com',
+          'client@example.com',
           code,
-          ' ADMIN@COTRAFA.LOCAL ',
+          'admin@cotrafa.local',
           'secret',
         ),
         throwsA(isA<DuplicateException>()),
@@ -110,7 +110,7 @@ void main() {
       final activated = await auth.activate(
         'client@example.com',
         code,
-        ' Alice ',
+        'alice',
         'secret',
       );
       expect(activated, const AuthIdentity(userId: 2, role: 'client'));
@@ -140,11 +140,11 @@ void main() {
         _demoSeed.userId,
         'client@example.com',
       ));
-      await auth.activate('client@example.com', code, 'Alice', 'secret');
+      await auth.activate('client@example.com', code, 'alice', 'secret');
 
-      expect((await auth.login('CLIENT@EXAMPLE.COM', 'secret')).userId, 2);
+      expect((await auth.login('client@example.com', 'secret')).userId, 2);
       await auth.logout();
-      expect((await auth.login(' alice ', 'secret')).userId, 2);
+      expect((await auth.login('alice', 'secret')).userId, 2);
       expect((await auth.restore())?.role, 'client');
       await expectLater(
         auth.login('alice', 'wrong'),

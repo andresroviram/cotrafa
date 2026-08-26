@@ -45,10 +45,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
             actor.status != 'active') {
           throw const UnauthorizedException();
         }
-        final client = await _userByIdentifier(
-          _normalize(clientEmail),
-          kind: 'email',
-        );
+        final client = await _userByIdentifier(clientEmail, kind: 'email');
         if (client == null ||
             client.role != 'client' ||
             client.status != 'pendingActivation') {
@@ -76,7 +73,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
     String username,
     String password,
   ) => _database.transaction(() async {
-    final client = await _userByIdentifier(_normalize(email), kind: 'email');
+    final client = await _userByIdentifier(email, kind: 'email');
     final codeHash = client?.activationCodeHash;
     if (client == null ||
         client.role != 'client' ||
@@ -85,8 +82,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
         !await _credentialHasher.verify(code, codeHash)) {
       throw const AuthException();
     }
-    final normalizedUsername = _normalize(username);
-    if (await _userByIdentifier(normalizedUsername) != null) {
+    if (await _userByIdentifier(username) != null) {
       throw const DuplicateException();
     }
     final userId = client.id;
@@ -95,7 +91,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
         .into(_database.loginIdentifiers)
         .insert(
           LoginIdentifiersCompanion.insert(
-            normalized: normalizedUsername,
+            normalized: username,
             userId: userId,
             kind: 'username',
           ),
@@ -117,7 +113,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
   @override
   Future<AuthIdentity> login(String identifier, String password) =>
       _database.transaction(() async {
-        final user = await _userByIdentifier(_normalize(identifier));
+        final user = await _userByIdentifier(identifier);
         final passwordHash = user?.passwordHash;
         if (user == null ||
             user.status != 'active' ||
@@ -169,6 +165,4 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
 
   AuthIdentity _identity(User user) =>
       AuthIdentity(userId: user.id, role: user.role);
-
-  String _normalize(String value) => value.trim().toLowerCase();
 }
