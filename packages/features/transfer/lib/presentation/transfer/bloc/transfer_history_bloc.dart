@@ -9,7 +9,7 @@ import 'package:injectable/injectable.dart';
 class TransferHistoryBloc
     extends Bloc<TransferHistoryEvent, TransferHistoryState> {
   TransferHistoryBloc(this._listTransfers)
-    : super(const TransferHistoryState()) {
+    : super(const TransferHistoryState.initial()) {
     on<TransferHistoryLoadRequested>(_load);
   }
 
@@ -19,18 +19,14 @@ class TransferHistoryBloc
     TransferHistoryLoadRequested event,
     Emitter<TransferHistoryState> emit,
   ) async {
-    emit(const TransferHistoryState(status: TransferHistoryStatus.loading));
+    emit(const TransferHistoryState.loading());
     final result = await _listTransfers(event.actorUserId);
     emit(
       result.fold(
-        onSuccess: (transfers) => TransferHistoryState(
-          status: TransferHistoryStatus.loaded,
-          transfers: transfers,
-        ),
-        onFailure: (_) => const TransferHistoryState(
-          status: TransferHistoryStatus.failure,
-          message: 'transfer.errors.load_history',
-        ),
+        onSuccess: (transfers) =>
+            TransferHistoryState.loaded(transfers: transfers),
+        onFailure: (error) =>
+            TransferHistoryState.failure(message: error.message),
       ),
     );
   }

@@ -73,7 +73,7 @@ void main() {
 
   testWidgets('renders the empty history and transfer action', (tester) async {
     await tester.pumpWidget(
-      subject(const TransferHistoryState(status: TransferHistoryStatus.loaded)),
+      subject(const TransferHistoryState.loaded(transfers: [])),
     );
     await tester.pumpAndSettle();
 
@@ -87,10 +87,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       subject(
-        const TransferHistoryState(
-          status: TransferHistoryStatus.loaded,
-          transfers: [outgoing, incoming],
-        ),
+        const TransferHistoryState.loaded(transfers: [outgoing, incoming]),
       ),
     );
     await tester.pumpAndSettle();
@@ -110,7 +107,7 @@ void main() {
 
   testWidgets('refreshes the actor history', (tester) async {
     await tester.pumpWidget(
-      subject(const TransferHistoryState(status: TransferHistoryStatus.loaded)),
+      subject(const TransferHistoryState.loaded(transfers: [])),
     );
     await tester.pumpAndSettle();
 

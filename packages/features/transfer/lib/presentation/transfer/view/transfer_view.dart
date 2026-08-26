@@ -27,9 +27,7 @@ class TransferView extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       BlocListener<TransferHistoryBloc, TransferHistoryState>(
-        listenWhen: (previous, current) =>
-            previous.status != current.status ||
-            previous.message != current.message,
+        listenWhen: (previous, current) => previous != current,
         listener: _onStateChanged,
         child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
             ? TransferWeb(actorUserId: actorUserId)
@@ -38,9 +36,12 @@ class TransferView extends StatelessWidget {
 
   void _onStateChanged(BuildContext context, TransferHistoryState state) {
     if (!context.mounted) return;
-    if (state.status == TransferHistoryStatus.failure &&
-        state.message != null) {
-      AppNotification.showNotificationError(context, title: state.message!);
-    }
+    state.when<void>(
+      initial: () {},
+      loading: () {},
+      loaded: (_) {},
+      failure: (message) =>
+          AppNotification.showNotificationError(context, title: message),
+    );
   }
 }

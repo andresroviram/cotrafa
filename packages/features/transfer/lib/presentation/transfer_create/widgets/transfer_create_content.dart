@@ -2,8 +2,6 @@ import 'package:components/localized_formatters.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_transfer/domain/entities/transfer_party.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_state_x.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -13,7 +11,8 @@ class TransferCreateContent extends StatefulWidget {
   const TransferCreateContent({
     required this.actorUserId,
     required this.isAdmin,
-    required this.state,
+    required this.parties,
+    required this.isSubmitting,
     required this.maxWidth,
     required this.onReload,
     required this.onSubmit,
@@ -22,7 +21,8 @@ class TransferCreateContent extends StatefulWidget {
 
   final int actorUserId;
   final bool isAdmin;
-  final TransferState state;
+  final List<TransferParty> parties;
+  final bool isSubmitting;
   final double maxWidth;
   final VoidCallback onReload;
   final TransferSubmit onSubmit;
@@ -49,13 +49,6 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
     super.didUpdateWidget(oldWidget);
     if (!_hasParty(_originId)) _originId = _initialOriginId();
     if (!_hasParty(_destinationId) || _destinationId == _originId) {
-      _destinationId = null;
-    }
-    final previousReceipt = oldWidget.state.receipt;
-    final currentReceipt = widget.state.receipt;
-    if (currentReceipt != null && currentReceipt.id != previousReceipt?.id) {
-      _amountController.clear();
-      _descriptionController.clear();
       _destinationId = null;
     }
   }
@@ -116,7 +109,7 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
                   labelText: 'transfer.form.origin'.tr(),
                   prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
                 ),
-                items: widget.state.parties
+                items: widget.parties
                     .map(
                       (party) => DropdownMenuItem(
                         value: party.id,
@@ -124,7 +117,7 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
                       ),
                     )
                     .toList(),
-                onChanged: widget.state.isSubmitting
+                onChanged: widget.isSubmitting
                     ? null
                     : (value) => setState(() {
                         _originId = value;
@@ -154,7 +147,7 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
                 labelText: 'transfer.form.destination'.tr(),
                 prefixIcon: const Icon(Icons.person_outline),
               ),
-              items: widget.state.parties
+              items: widget.parties
                   .where((party) => party.id != _originId)
                   .map(
                     (party) => DropdownMenuItem(
@@ -163,7 +156,7 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
                     ),
                   )
                   .toList(),
-              onChanged: widget.state.isSubmitting
+              onChanged: widget.isSubmitting
                   ? null
                   : (value) => setState(() => _destinationId = value),
               validator: (value) => value == null
@@ -174,7 +167,7 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
             TextFormField(
               key: const Key('transfer-amount'),
               controller: _amountController,
-              enabled: !widget.state.isSubmitting,
+              enabled: !widget.isSubmitting,
               keyboardType: TextInputType.number,
               textInputAction: TextInputAction.next,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -188,7 +181,7 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
             TextFormField(
               key: const Key('transfer-description'),
               controller: _descriptionController,
-              enabled: !widget.state.isSubmitting,
+              enabled: !widget.isSubmitting,
               textInputAction: TextInputAction.done,
               maxLength: 160,
               decoration: InputDecoration(
@@ -200,8 +193,8 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
             const SizedBox(height: 8),
             FilledButton.icon(
               key: const Key('transfer-submit'),
-              onPressed: widget.state.isSubmitting ? null : _submit,
-              icon: widget.state.isSubmitting
+              onPressed: widget.isSubmitting ? null : _submit,
+              icon: widget.isSubmitting
                   ? const SizedBox.square(
                       dimension: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
@@ -255,7 +248,7 @@ class _TransferCreateContentState extends State<TransferCreateContent> {
 
   TransferParty? _party(int? id) {
     if (id == null) return null;
-    for (final party in widget.state.parties) {
+    for (final party in widget.parties) {
       if (party.id == id) return party;
     }
     return null;

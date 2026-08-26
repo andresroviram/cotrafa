@@ -44,10 +44,7 @@ void main() {
   setUpAll(() => registerFallbackValue(const TransferEvent.loadRequested(0)));
 
   setUp(() {
-    current = const TransferState(
-      status: TransferStatus.loaded,
-      parties: [party],
-    );
+    current = const TransferState.loaded(parties: [party]);
     states = StreamController<TransferState>.broadcast();
     bloc = _MockTransferBloc();
     when(() => bloc.state).thenAnswer((_) => current);
@@ -100,17 +97,10 @@ void main() {
     await tester.pumpWidget(subject());
     await tester.pumpAndSettle();
 
+    await emit(tester, const TransferState.submitting(parties: [party]));
     await emit(
       tester,
-      const TransferState(status: TransferStatus.submitting, parties: [party]),
-    );
-    await emit(
-      tester,
-      const TransferState(
-        status: TransferStatus.completed,
-        parties: [party],
-        receipt: receipt,
-      ),
+      const TransferState.completed(parties: [party], receipt: receipt),
     );
     await tester.pumpAndSettle();
 
@@ -122,22 +112,18 @@ void main() {
     await tester.pumpWidget(subject());
     await tester.pumpAndSettle();
 
+    await emit(tester, const TransferState.submitting(parties: [party]));
     await emit(
       tester,
-      const TransferState(status: TransferStatus.submitting, parties: [party]),
-    );
-    await emit(
-      tester,
-      const TransferState(
-        status: TransferStatus.failure,
+      const TransferState.failure(
         parties: [party],
-        message: 'transfer.form.insufficient_balance',
+        message: 'Insufficient balance.',
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('transfer-result-failure')), findsOneWidget);
-    expect(find.text('Saldo insuficiente.'), findsOneWidget);
+    expect(find.text('Insufficient balance.'), findsOneWidget);
     expect(find.byKey(const Key('transfer-create-content')), findsNothing);
   });
 }

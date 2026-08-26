@@ -63,9 +63,9 @@ void main() {
     when(() => userBloc.add(any())).thenReturn(null);
     when(() => userBloc.close()).thenAnswer((_) async {});
     final transferBloc = MockTransferHistoryBloc();
-    when(() => transferBloc.state).thenReturn(
-      const TransferHistoryState(status: TransferHistoryStatus.loaded),
-    );
+    when(
+      () => transferBloc.state,
+    ).thenReturn(const TransferHistoryState.loaded(transfers: []));
     when(
       () => transferBloc.stream,
     ).thenAnswer((_) => const Stream<TransferHistoryState>.empty());

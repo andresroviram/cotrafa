@@ -57,10 +57,7 @@ void main() {
   Future<void> pumpLoaded(WidgetTester tester, {bool isAdmin = false}) async {
     await tester.pumpWidget(
       subject(
-        const TransferState(
-          status: TransferStatus.loaded,
-          parties: [origin, destination],
-        ),
+        const TransferState.loaded(parties: [origin, destination]),
         isAdmin: isAdmin,
       ),
     );

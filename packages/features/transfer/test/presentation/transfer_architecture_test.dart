@@ -33,7 +33,7 @@ void main() {
 
       for (final responsiveView in [mobile, web]) {
         expect(responsiveView, contains('BlocBuilder<${contract.bloc},'));
-        expect(responsiveView, contains('state.resolve('));
+        expect(responsiveView, contains('state.when('));
         expect(responsiveView, isNot(contains('AppNotification')));
         expect(responsiveView, isNot(contains('ScaffoldMessenger')));
       }

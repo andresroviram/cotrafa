@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:core/get_it.dart';
 import 'package:core/utils/notifications.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
@@ -39,11 +38,7 @@ class TransferCreateView extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       BlocListener<TransferBloc, TransferState>(
-        listenWhen: (previous, current) =>
-            previous.status == TransferStatus.submitting &&
-                (current.status == TransferStatus.completed ||
-                    current.status == TransferStatus.failure) ||
-            current.status == TransferStatus.failure && current.parties.isEmpty,
+        listenWhen: _shouldListen,
         listener: _onStateChanged,
         child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
             ? TransferCreateWeb(actorUserId: actorUserId, isAdmin: isAdmin)
@@ -52,22 +47,59 @@ class TransferCreateView extends StatelessWidget {
 
   void _onStateChanged(BuildContext context, TransferState state) {
     if (!context.mounted) return;
-    final outcome = switch (state.status) {
-      TransferStatus.completed when state.receipt != null =>
-        TransferOutcome.success(state.receipt!),
-      TransferStatus.failure when state.parties.isNotEmpty =>
-        TransferOutcome.failure(state.message ?? 'transfer.errors.create'),
-      _ => null,
-    };
+    final outcome = state.when<TransferOutcome?>(
+      initial: (_) => null,
+      loading: (_) => null,
+      loaded: (_) => null,
+      submitting: (_) => null,
+      completed: (_, receipt) => TransferOutcome.success(receipt),
+      failure: (message, parties) =>
+          parties.isEmpty ? null : TransferOutcome.failure(message),
+    );
     if (outcome != null) {
       unawaited(_openResult(context, outcome));
-    } else if (state.status == TransferStatus.failure &&
-        state.message != null) {
-      AppNotification.showNotificationError(
-        context,
-        title: state.message!.tr(),
+    } else {
+      state.when<void>(
+        initial: (_) {},
+        loading: (_) {},
+        loaded: (_) {},
+        submitting: (_) {},
+        completed: (_, _) {},
+        failure: (message, parties) {
+          if (parties.isEmpty) {
+            AppNotification.showNotificationError(context, title: message);
+          }
+        },
       );
     }
+  }
+
+  bool _shouldListen(TransferState previous, TransferState current) {
+    final wasSubmitting = previous.when(
+      initial: (_) => false,
+      loading: (_) => false,
+      loaded: (_) => false,
+      submitting: (_) => true,
+      completed: (_, _) => false,
+      failure: (_, _) => false,
+    );
+    final isSubmissionResult = current.when(
+      initial: (_) => false,
+      loading: (_) => false,
+      loaded: (_) => false,
+      submitting: (_) => false,
+      completed: (_, _) => true,
+      failure: (_, _) => true,
+    );
+    final isInitialLoadFailure = current.when(
+      initial: (_) => false,
+      loading: (_) => false,
+      loaded: (_) => false,
+      submitting: (_) => false,
+      completed: (_, _) => false,
+      failure: (_, parties) => parties.isEmpty,
+    );
+    return wasSubmitting && isSubmissionResult || isInitialLoadFailure;
   }
 
   Future<void> _openResult(
