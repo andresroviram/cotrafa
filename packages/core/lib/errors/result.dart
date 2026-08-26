@@ -88,15 +88,21 @@ extension FutureResultExtensions<T> on Future<T> {
 
 Failure _failureFrom(Object error, Failure fallback) => switch (error) {
   Failure() => error,
-  AuthException() => const AuthFailure(),
-  UnauthorizedException() => const UnauthorizedFailure(),
+  AuthException(message: final message) => AuthFailure(message: message),
+  UnauthorizedException(message: final message) => UnauthorizedFailure(
+    message: message,
+  ),
   ValidationException(message: final message) => ValidationFailure(
     message: message,
   ),
-  DuplicateException() => const DuplicateFailure(),
-  NotFoundException() => const NotFoundFailure(),
-  StorageException() => const StorageFailure(),
-  NetworkException() => const NetworkFailure(),
-  ServerException() => const ServerFailure(),
+  DuplicateException(message: final message) => DuplicateFailure(
+    message: message,
+  ),
+  NotFoundException(message: final message) => NotFoundFailure(
+    message: message,
+  ),
+  StorageException(message: final message) => StorageFailure(message: message),
+  NetworkException(message: final message) => NetworkFailure(message: message),
+  ServerException(message: final message) => ServerFailure(message: message),
   _ => fallback,
 };

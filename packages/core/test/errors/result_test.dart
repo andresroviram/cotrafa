@@ -7,22 +7,44 @@ void main() {
     expect(await Future<int>.value(7).toResult(), const Success<int>(7));
   });
 
-  test('Result maps Core exceptions to their matching Failure', () async {
-    final cases = <Object, Type>{
-      const AuthException(): AuthFailure,
-      const UnauthorizedException(): UnauthorizedFailure,
-      const ValidationException(message: 'Not pending'): ValidationFailure,
-      const DuplicateException(): DuplicateFailure,
-      const NotFoundException(): NotFoundFailure,
-      const StorageException(): StorageFailure,
-      const NetworkException(): NetworkFailure,
-      const ServerException(): ServerFailure,
+  test('Result maps Core exceptions and preserves their messages', () async {
+    final cases = <Object, (Type, String)>{
+      const AuthException(message: 'Invalid credentials'): (
+        AuthFailure,
+        'Invalid credentials',
+      ),
+      const UnauthorizedException(message: 'Admin only'): (
+        UnauthorizedFailure,
+        'Admin only',
+      ),
+      const ValidationException(message: 'Not pending'): (
+        ValidationFailure,
+        'Not pending',
+      ),
+      const DuplicateException(message: 'Email already exists'): (
+        DuplicateFailure,
+        'Email already exists',
+      ),
+      const NotFoundException(message: 'User not found'): (
+        NotFoundFailure,
+        'User not found',
+      ),
+      const StorageException(message: 'Write failed'): (
+        StorageFailure,
+        'Write failed',
+      ),
+      const NetworkException(message: 'Offline'): (NetworkFailure, 'Offline'),
+      const ServerException(message: 'Unavailable'): (
+        ServerFailure,
+        'Unavailable',
+      ),
     };
 
     for (final entry in cases.entries) {
       final result = await Future<void>.error(entry.key).toResult();
 
-      expect(result.errorOrNull.runtimeType, entry.value);
+      expect(result.errorOrNull.runtimeType, entry.value.$1);
+      expect(result.errorOrNull?.message, entry.value.$2);
     }
   });
 
