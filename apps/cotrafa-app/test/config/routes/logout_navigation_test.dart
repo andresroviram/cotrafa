@@ -56,9 +56,7 @@ void main() {
       states.add(currentState);
     });
     final userBloc = MockUserBloc();
-    when(
-      () => userBloc.state,
-    ).thenReturn(const UserState(status: UserStatus.loaded));
+    when(() => userBloc.state).thenReturn(const UserState.loaded());
     when(
       () => userBloc.stream,
     ).thenAnswer((_) => const Stream<UserState>.empty());

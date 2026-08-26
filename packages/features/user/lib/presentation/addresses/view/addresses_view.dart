@@ -33,9 +33,7 @@ class AddressesView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocListener<AddressBloc, AddressState>(
-    listenWhen: (previous, current) =>
-        previous.status != current.status ||
-        previous.message != current.message,
+    listenWhen: (previous, current) => previous != current,
     listener: _onStateChanged,
     child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
         ? AddressesWeb(actorUserId: actorUserId, userId: userId)
@@ -43,20 +41,25 @@ class AddressesView extends StatelessWidget {
   );
 
   void _onStateChanged(BuildContext context, AddressState state) {
-    if (state.status == AddressStatus.actionFailure && state.message != null) {
-      AppNotification.showNotificationError(
+    state.when<void>(
+      initial: (_, _) {},
+      loading: (_, _) {},
+      loaded: (_, _) {},
+      ready: (_, _) {},
+      saving: (_, _) {},
+      created: (_, _) {},
+      updated: (_, _) {},
+      primaryUpdated: (_, _) => AppNotification.showNotification(
         context,
-        title: state.message!.tr(),
-      );
-      return;
-    }
-    final message = switch (state.status) {
-      AddressStatus.primaryUpdated => 'address.notifications.primary_updated',
-      AddressStatus.deleted => 'address.notifications.deleted',
-      _ => null,
-    };
-    if (message != null) {
-      AppNotification.showNotification(context, title: message.tr());
-    }
+        title: 'address.notifications.primary_updated'.tr(),
+      ),
+      deleted: (_, _) => AppNotification.showNotification(
+        context,
+        title: 'address.notifications.deleted'.tr(),
+      ),
+      loadFailure: (_, _, _) {},
+      actionFailure: (message, _, _) =>
+          AppNotification.showNotificationError(context, title: message),
+    );
   }
 }

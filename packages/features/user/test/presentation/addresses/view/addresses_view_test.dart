@@ -68,9 +68,7 @@ void main() {
   }
 
   testWidgets('renders the empty state and create action', (tester) async {
-    await tester.pumpWidget(
-      subject(const AddressState(status: AddressStatus.loaded)),
-    );
+    await tester.pumpWidget(subject(const AddressState.loaded(addresses: [])));
 
     expect(find.text('Direcciones'), findsOneWidget);
     expect(find.text('No hay direcciones registradas'), findsOneWidget);
@@ -79,9 +77,7 @@ void main() {
 
   testWidgets('renders the reference address card hierarchy', (tester) async {
     await tester.pumpWidget(
-      subject(
-        const AddressState(status: AddressStatus.loaded, addresses: [address]),
-      ),
+      subject(const AddressState.loaded(addresses: [address])),
     );
 
     expect(find.byKey(const Key('address-card-10')), findsOneWidget);
@@ -100,12 +96,7 @@ void main() {
       addTearDown(states.close);
       when(() => bloc.stream).thenAnswer((_) => states.stream);
       await tester.pumpWidget(
-        subject(
-          const AddressState(
-            status: AddressStatus.loaded,
-            addresses: [address],
-          ),
-        ),
+        subject(const AddressState.loaded(addresses: [address])),
       );
 
       final refresh = tester
@@ -114,13 +105,8 @@ void main() {
 
       verify(() => bloc.add(const AddressEvent.listRequested(1, 2))).called(1);
       states
-        ..add(const AddressState(status: AddressStatus.loading))
-        ..add(
-          const AddressState(
-            status: AddressStatus.loaded,
-            addresses: [address],
-          ),
-        );
+        ..add(const AddressState.loading())
+        ..add(const AddressState.loaded(addresses: [address]));
       await refresh;
       await tester.pumpAndSettle();
     },
@@ -130,12 +116,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      subject(
-        const AddressState(
-          status: AddressStatus.loaded,
-          addresses: [address, secondary],
-        ),
-      ),
+      subject(const AddressState.loaded(addresses: [address, secondary])),
     );
 
     await tester.tap(find.byKey(const Key('address-actions-11')));

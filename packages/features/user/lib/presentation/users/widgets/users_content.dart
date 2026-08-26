@@ -116,8 +116,8 @@ class UsersContent extends StatelessWidget {
   Future<void> _refresh(BuildContext context) async {
     final bloc = context.read<UserBloc>();
     final completed = bloc.stream
-        .skipWhile((state) => state.status != UserStatus.loading)
-        .firstWhere((state) => state.status != UserStatus.loading);
+        .skipWhile((state) => !_isLoading(state))
+        .firstWhere((state) => !_isLoading(state));
     _load(context);
     await completed;
   }
@@ -169,6 +169,17 @@ class UsersContent extends StatelessWidget {
     slivers: [SliverFillRemaining(hasScrollBody: false, child: child)],
   );
 }
+
+bool _isLoading(UserState state) => state.when(
+  initial: (_, _) => false,
+  loading: (_, _) => true,
+  loaded: (_, _) => false,
+  created: (_, _) => false,
+  updated: (_, _) => false,
+  deleted: (_, _, _) => false,
+  information: (_, _, _) => false,
+  failure: (_, _, _) => false,
+);
 
 enum _UsersContentMode { loading, failure, empty, data }
 

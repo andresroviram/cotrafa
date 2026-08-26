@@ -82,8 +82,8 @@ void main() {
     build: build,
     act: (bloc) => bloc.add(const AddressEvent.listRequested(1, 2)),
     expect: () => const [
-      AddressState(status: AddressStatus.loading),
-      AddressState(status: AddressStatus.loaded, addresses: [first, second]),
+      AddressState.loading(),
+      AddressState.loaded(addresses: [first, second]),
     ],
   );
 
@@ -91,10 +91,7 @@ void main() {
     'opens a create form without querying persistence',
     build: build,
     act: (bloc) => bloc.add(const AddressEvent.formRequested(1, 2)),
-    expect: () => const [
-      AddressState(status: AddressStatus.loading),
-      AddressState(status: AddressStatus.ready),
-    ],
+    expect: () => const [AddressState.loading(), AddressState.ready()],
   );
 
   blocTest<AddressBloc, AddressState>(
@@ -106,12 +103,8 @@ void main() {
     act: (bloc) =>
         bloc.add(const AddressEvent.formRequested(1, 2, addressId: 11)),
     expect: () => const [
-      AddressState(status: AddressStatus.loading),
-      AddressState(
-        status: AddressStatus.ready,
-        addresses: [first, second],
-        selectedAddress: second,
-      ),
+      AddressState.loading(),
+      AddressState.ready(addresses: [first, second], selectedAddress: second),
     ],
   );
 
@@ -121,15 +114,11 @@ void main() {
       () => repository.create(1, 2, draft),
     ).thenAnswer((_) async => const Success(second)),
     build: build,
-    seed: () => const AddressState(status: AddressStatus.ready),
+    seed: () => const AddressState.ready(),
     act: (bloc) => bloc.add(const AddressEvent.createRequested(1, 2, draft)),
     expect: () => const [
-      AddressState(status: AddressStatus.saving),
-      AddressState(
-        status: AddressStatus.created,
-        addresses: [second],
-        selectedAddress: second,
-      ),
+      AddressState.saving(),
+      AddressState.created(addresses: [second], selectedAddress: second),
     ],
   );
 
@@ -139,15 +128,11 @@ void main() {
       () => repository.selectPrimary(1, 2, 11),
     ).thenAnswer((_) async => const Success(primarySecond)),
     build: build,
-    seed: () => const AddressState(
-      status: AddressStatus.loaded,
-      addresses: [first, second],
-    ),
+    seed: () => const AddressState.loaded(addresses: [first, second]),
     act: (bloc) => bloc.add(const AddressEvent.primaryRequested(1, 2, 11)),
     expect: () => const [
-      AddressState(status: AddressStatus.saving, addresses: [first, second]),
-      AddressState(
-        status: AddressStatus.primaryUpdated,
+      AddressState.saving(addresses: [first, second]),
+      AddressState.primaryUpdated(
         addresses: [
           UserAddress(
             id: 10,
@@ -163,6 +148,7 @@ void main() {
           ),
           primarySecond,
         ],
+        selectedAddress: primarySecond,
       ),
     ],
   );
@@ -178,14 +164,11 @@ void main() {
       ).thenAnswer((_) async => const Success([primarySecond]));
     },
     build: build,
-    seed: () => const AddressState(
-      status: AddressStatus.loaded,
-      addresses: [first, second],
-    ),
+    seed: () => const AddressState.loaded(addresses: [first, second]),
     act: (bloc) => bloc.add(const AddressEvent.deleteRequested(1, 2, 10)),
     expect: () => const [
-      AddressState(status: AddressStatus.saving, addresses: [first, second]),
-      AddressState(status: AddressStatus.deleted, addresses: [primarySecond]),
+      AddressState.saving(addresses: [first, second]),
+      AddressState.deleted(addresses: [primarySecond]),
     ],
   );
 
@@ -195,17 +178,13 @@ void main() {
       () => repository.delete(1, 2, 11),
     ).thenAnswer((_) async => const Error(StorageFailure())),
     build: build,
-    seed: () => const AddressState(
-      status: AddressStatus.loaded,
-      addresses: [first, second],
-    ),
+    seed: () => const AddressState.loaded(addresses: [first, second]),
     act: (bloc) => bloc.add(const AddressEvent.deleteRequested(1, 2, 11)),
     expect: () => const [
-      AddressState(status: AddressStatus.saving, addresses: [first, second]),
-      AddressState(
-        status: AddressStatus.actionFailure,
+      AddressState.saving(addresses: [first, second]),
+      AddressState.actionFailure(
+        message: 'Error al guardar los datos.',
         addresses: [first, second],
-        message: 'address.errors.delete',
       ),
     ],
   );

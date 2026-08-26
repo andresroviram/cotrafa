@@ -14,11 +14,12 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     this._createClient,
     this._editUserProfile,
     this._deleteUser,
-  ) : super(const UserState()) {
+  ) : super(const UserState.initial()) {
     on<UserListRequested>(_list);
     on<UserProfileRequested>(_profile);
     on<UserSearchChanged>(_search);
-    on<UserNotificationRequested>(_notification);
+    on<UserInformationRequested>(_information);
+    on<UserFailureRequested>(_requestedFailure);
     on<UserCreateRequested>(_create);
     on<UserUpdateRequested>(_update);
     on<UserDeleteRequested>(_delete);
@@ -30,37 +31,49 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   final EditUserProfile _editUserProfile;
   final DeleteUser _deleteUser;
 
-  UserState _loading() => state.copyWith(
-    status: UserStatus.loading,
-    deleteOutcome: null,
-    message: null,
-  );
+  UserState _loading() =>
+      UserState.loading(users: state.users, searchQuery: state.searchQuery);
 
-  UserState _failure(String message) => state.copyWith(
-    status: UserStatus.failure,
-    deleteOutcome: null,
+  UserState _failure(String message) => UserState.failure(
     message: message,
+    users: state.users,
+    searchQuery: state.searchQuery,
   );
 
-  void _search(UserSearchChanged event, Emitter<UserState> emit) =>
-      emit(state.copyWith(searchQuery: event.query.trim().toLowerCase()));
+  void _search(UserSearchChanged event, Emitter<UserState> emit) => emit(
+    UserState.loaded(
+      users: state.users,
+      searchQuery: event.query.trim().toLowerCase(),
+    ),
+  );
 
-  void _notification(UserNotificationRequested event, Emitter<UserState> emit) {
-    if (state.message == event.message &&
-        state.notificationType == event.type) {
-      emit(state.copyWith(message: null));
+  void _information(UserInformationRequested event, Emitter<UserState> emit) {
+    if (state case UserInformation(
+      message: final message,
+    ) when message == event.message) {
+      emit(
+        UserState.loaded(users: state.users, searchQuery: state.searchQuery),
+      );
     }
-    emit(state.copyWith(message: event.message, notificationType: event.type));
+    emit(
+      UserState.information(
+        message: event.message,
+        users: state.users,
+        searchQuery: state.searchQuery,
+      ),
+    );
   }
+
+  void _requestedFailure(UserFailureRequested event, Emitter<UserState> emit) =>
+      emit(_failure(event.message));
 
   Future<void> _list(UserListRequested event, Emitter<UserState> emit) async {
     emit(_loading());
     final result = await _listUsers(event.actorUserId);
     emit(
       result.fold(
-        onSuccess: (users) =>
-            UserState(status: UserStatus.loaded, users: users),
-        onFailure: (_) => _failure('user.errors.load_list'),
+        onSuccess: (users) => UserState.loaded(users: users),
+        onFailure: (error) => _failure(error.message),
       ),
     );
   }
@@ -73,9 +86,8 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     final result = await _getUser(event.actorUserId, event.userId);
     emit(
       result.fold(
-        onSuccess: (user) =>
-            UserState(status: UserStatus.loaded, users: <UserProfile>[user]),
-        onFailure: (_) => _failure('user.errors.load_profile'),
+        onSuccess: (user) => UserState.loaded(users: <UserProfile>[user]),
+        onFailure: (error) => _failure(error.message),
       ),
     );
   }
@@ -96,11 +108,11 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     );
     emit(
       result.fold(
-        onSuccess: (user) => state.copyWith(
-          status: UserStatus.created,
+        onSuccess: (user) => UserState.created(
           users: <UserProfile>[...state.users, user],
+          searchQuery: state.searchQuery,
         ),
-        onFailure: (_) => _failure('user.errors.create'),
+        onFailure: (error) => _failure(error.message),
       ),
     );
   }
@@ -120,13 +132,13 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     );
     emit(
       result.fold(
-        onSuccess: (updated) => state.copyWith(
-          status: UserStatus.updated,
+        onSuccess: (updated) => UserState.updated(
           users: state.users
               .map((user) => user.id == updated.id ? updated : user)
               .toList(),
+          searchQuery: state.searchQuery,
         ),
-        onFailure: (_) => _failure('user.errors.update'),
+        onFailure: (error) => _failure(error.message),
       ),
     );
   }
@@ -138,18 +150,18 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     emit(_loading());
     final deletion = await _deleteUser(event.actorUserId, event.userId);
     switch (deletion) {
-      case Error():
-        emit(_failure('user.errors.delete'));
+      case Error(error: final error):
+        emit(_failure(error.message));
       case Success(value: final outcome):
         final refreshed = await _listUsers(event.actorUserId);
         emit(
           refreshed.fold(
-            onSuccess: (users) => UserState(
-              status: UserStatus.deleted,
+            onSuccess: (users) => UserState.deleted(
               users: users,
               deleteOutcome: outcome,
+              searchQuery: state.searchQuery,
             ),
-            onFailure: (_) => _failure('user.errors.reload'),
+            onFailure: (error) => _failure(error.message),
           ),
         );
     }

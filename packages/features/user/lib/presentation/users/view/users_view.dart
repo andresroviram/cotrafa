@@ -1,4 +1,5 @@
 import 'package:core/get_it.dart';
+import 'package:core/errors/result.dart';
 import 'package:core/utils/notifications.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/domain/entities/delete_outcome.dart';
@@ -98,10 +99,7 @@ class _UsersViewState extends State<UsersView> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<UserBloc, UserState>(
-      listenWhen: (previous, current) =>
-          previous.status != current.status ||
-          previous.message != current.message ||
-          previous.deleteOutcome != current.deleteOutcome,
+      listenWhen: (previous, current) => previous != current,
       listener: _onStateChanged,
       child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
           ? UsersWeb(
@@ -119,61 +117,63 @@ class _UsersViewState extends State<UsersView> {
 
   Future<void> _onStateChanged(BuildContext context, UserState state) async {
     if (!context.mounted) return;
-    if (state.message != null) {
-      if (state.notificationType == UserNotificationType.info) {
-        AppNotification.showNotification(context, title: state.message!.tr());
-      } else {
-        AppNotification.showNotificationError(
+    await state.when<Future<void>>(
+      initial: (_, _) => Future.value(),
+      loading: (_, _) => Future.value(),
+      loaded: (_, _) => Future.value(),
+      created: (_, _) async {
+        AppNotification.showNotification(
           context,
-          title: state.message!.tr(),
+          title: 'user.notifications.created'.tr(),
         );
-      }
-      return;
-    }
-    final message = switch (state.status) {
-      UserStatus.created => 'user.notifications.created',
-      UserStatus.updated => 'user.notifications.updated',
-      UserStatus.deleted => switch (state.deleteOutcome) {
-        DeleteOutcome.deleted => 'user.notifications.deleted',
-        DeleteOutcome.deactivated => 'user.notifications.deactivated',
-        null => null,
+        await _completeCreation(context, state);
       },
-      _ => null,
-    };
-    if (message != null) {
-      AppNotification.showNotification(context, title: message.tr());
-    }
-    if (state.status == UserStatus.created) {
-      await _completeCreation(context, state);
-    } else if (state.status == UserStatus.updated) {
-      _closeRootModal(context);
-    }
+      updated: (_, _) {
+        AppNotification.showNotification(
+          context,
+          title: 'user.notifications.updated'.tr(),
+        );
+        _closeRootModal(context);
+        return Future.value();
+      },
+      deleted: (_, outcome, _) {
+        final message = switch (outcome) {
+          DeleteOutcome.deleted => 'user.notifications.deleted',
+          DeleteOutcome.deactivated => 'user.notifications.deactivated',
+        };
+        AppNotification.showNotification(context, title: message.tr());
+        return Future.value();
+      },
+      information: (message, _, _) {
+        AppNotification.showNotification(context, title: message.tr());
+        return Future.value();
+      },
+      failure: (message, _, _) {
+        AppNotification.showNotificationError(context, title: message);
+        return Future.value();
+      },
+    );
   }
 
   Future<void> _completeCreation(BuildContext context, UserState state) async {
     final issuer = widget.issueActivationCode;
     if (issuer == null || state.users.isEmpty) return;
     final bloc = context.read<UserBloc>();
-    final code = await issuer(widget.actorUserId, state.users.last.email);
+    final result = await issuer(widget.actorUserId, state.users.last.email);
     if (!context.mounted) return;
-    if (code == null) {
-      bloc.add(
-        const UserEvent.notificationRequested(
-          'user.notifications.created_code_pending',
-          type: UserNotificationType.info,
-        ),
-      );
-    } else {
-      await showActivationCodeDialog(
-        context,
-        code: code,
-        onCopied: () => bloc.add(
-          const UserEvent.notificationRequested(
-            'user.notifications.code_copied',
-            type: UserNotificationType.info,
+    switch (result) {
+      case Error(error: final error):
+        bloc.add(UserEvent.failureRequested(error.message));
+      case Success(value: final code):
+        await showActivationCodeDialog(
+          context,
+          code: code,
+          onCopied: () => bloc.add(
+            const UserEvent.informationRequested(
+              'user.notifications.code_copied',
+            ),
           ),
-        ),
-      );
+        );
     }
     if (context.mounted) _closeRootModal(context);
   }

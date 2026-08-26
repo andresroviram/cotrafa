@@ -4,18 +4,48 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'user_state.freezed.dart';
 
-enum UserStatus { initial, loading, loaded, created, updated, deleted, failure }
-
-enum UserNotificationType { info, error }
-
 @freezed
-abstract class UserState with _$UserState {
-  const factory UserState({
-    @Default(UserStatus.initial) UserStatus status,
+sealed class UserState with _$UserState {
+  const factory UserState.initial({
     @Default(<UserProfile>[]) List<UserProfile> users,
     @Default('') String searchQuery,
-    DeleteOutcome? deleteOutcome,
-    String? message,
-    @Default(UserNotificationType.error) UserNotificationType notificationType,
-  }) = _UserState;
+  }) = UserInitial;
+
+  const factory UserState.loading({
+    @Default(<UserProfile>[]) List<UserProfile> users,
+    @Default('') String searchQuery,
+  }) = UserLoading;
+
+  const factory UserState.loaded({
+    @Default(<UserProfile>[]) List<UserProfile> users,
+    @Default('') String searchQuery,
+  }) = UserLoaded;
+
+  const factory UserState.created({
+    required List<UserProfile> users,
+    @Default('') String searchQuery,
+  }) = UserCreated;
+
+  const factory UserState.updated({
+    required List<UserProfile> users,
+    @Default('') String searchQuery,
+  }) = UserUpdated;
+
+  const factory UserState.deleted({
+    required List<UserProfile> users,
+    required DeleteOutcome deleteOutcome,
+    @Default('') String searchQuery,
+  }) = UserDeleted;
+
+  const factory UserState.information({
+    required String message,
+    @Default(<UserProfile>[]) List<UserProfile> users,
+    @Default('') String searchQuery,
+  }) = UserInformation;
+
+  const factory UserState.failure({
+    required String message,
+    @Default(<UserProfile>[]) List<UserProfile> users,
+    @Default('') String searchQuery,
+  }) = UserFailure;
 }

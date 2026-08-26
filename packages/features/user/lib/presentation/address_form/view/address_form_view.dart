@@ -45,9 +45,7 @@ class AddressFormView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocListener<AddressBloc, AddressState>(
-    listenWhen: (previous, current) =>
-        previous.status != current.status ||
-        previous.message != current.message,
+    listenWhen: (previous, current) => previous != current,
     listener: _onStateChanged,
     child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
         ? AddressFormWeb(
@@ -63,20 +61,24 @@ class AddressFormView extends StatelessWidget {
   );
 
   void _onStateChanged(BuildContext context, AddressState state) {
-    if (state.status == AddressStatus.actionFailure && state.message != null) {
-      AppNotification.showNotificationError(
-        context,
-        title: state.message!.tr(),
-      );
-      return;
-    }
-    final message = switch (state.status) {
-      AddressStatus.created => 'address.notifications.created',
-      AddressStatus.updated => 'address.notifications.updated',
-      _ => null,
-    };
-    if (message == null) return;
-    AppNotification.showNotification(context, title: message.tr());
+    state.when<void>(
+      initial: (_, _) {},
+      loading: (_, _) {},
+      loaded: (_, _) {},
+      ready: (_, _) {},
+      saving: (_, _) {},
+      created: (_, _) => _complete(context, 'address.notifications.created'),
+      updated: (_, _) => _complete(context, 'address.notifications.updated'),
+      primaryUpdated: (_, _) {},
+      deleted: (_, _) {},
+      loadFailure: (_, _, _) {},
+      actionFailure: (message, _, _) =>
+          AppNotification.showNotificationError(context, title: message),
+    );
+  }
+
+  void _complete(BuildContext context, String messageKey) {
+    AppNotification.showNotification(context, title: messageKey.tr());
     final navigator = Navigator.of(context);
     if (navigator.canPop()) navigator.pop(true);
   }

@@ -40,7 +40,7 @@ void main() {
   testWidgets('loads the requested user when the full route opens', (
     tester,
   ) async {
-    when(() => bloc.state).thenReturn(const UserState());
+    when(() => bloc.state).thenReturn(const UserState.initial());
     getIt.registerFactory<UserBloc>(() => bloc);
 
     await tester.pumpWidget(
@@ -65,9 +65,7 @@ void main() {
       status: 'active',
       balanceCop: 250000,
     );
-    when(
-      () => bloc.state,
-    ).thenReturn(UserState(status: UserStatus.loaded, users: [user]));
+    when(() => bloc.state).thenReturn(UserState.loaded(users: [user]));
 
     await tester.pumpWidget(
       app(
@@ -149,9 +147,7 @@ void main() {
         status: 'active',
         balanceCop: 250000,
       );
-      when(
-        () => bloc.state,
-      ).thenReturn(const UserState(status: UserStatus.loaded, users: [user]));
+      when(() => bloc.state).thenReturn(const UserState.loaded(users: [user]));
 
       await tester.pumpWidget(
         app(

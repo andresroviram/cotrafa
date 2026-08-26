@@ -3,7 +3,6 @@ import 'package:feature_user/presentation/addresses/view/addresses_view.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
-import 'package:feature_user/presentation/users/bloc/user_state_x.dart';
 import 'package:feature_user/presentation/user_detail/widgets/user_detail_content.dart';
 import 'package:feature_user/presentation/shared/widgets/user_form_modal.dart';
 import 'package:feature_user/presentation/shared/widgets/user_load_failure.dart';
@@ -23,23 +22,30 @@ class UserDetailMobile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocBuilder<UserBloc, UserState>(
-    builder: (context, state) => state.resolve(
-      loading: _loading,
-      failure: (_) => _failure(context),
-      empty: () => _failure(context),
-      data: (resolved) {
-        final user = _findUser(resolved.users);
-        return user == null
-            ? _failure(context)
-            : UserDetailContent(
-                user: user,
-                onRefresh: () => _reload(context),
-                onEdit: () => _edit(context, user),
-                onAddresses: () => _openAddresses(context),
-              );
-      },
+    builder: (context, state) => state.when(
+      initial: (_, _) => _loading(),
+      loading: (users, _) => users.isEmpty ? _loading() : _data(context, state),
+      loaded: (_, _) => _data(context, state),
+      created: (_, _) => _data(context, state),
+      updated: (_, _) => _data(context, state),
+      deleted: (_, _, _) => _data(context, state),
+      information: (_, _, _) => _data(context, state),
+      failure: (_, users, _) =>
+          users.isEmpty ? _failure(context) : _data(context, state),
     ),
   );
+
+  Widget _data(BuildContext context, UserState state) {
+    final user = _findUser(state.users);
+    return user == null
+        ? _failure(context)
+        : UserDetailContent(
+            user: user,
+            onRefresh: () => _reload(context),
+            onEdit: () => _edit(context, user),
+            onAddresses: () => _openAddresses(context),
+          );
+  }
 
   Widget _loading() => Scaffold(
     appBar: AppBar(),

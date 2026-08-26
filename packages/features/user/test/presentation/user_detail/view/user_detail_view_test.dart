@@ -28,9 +28,7 @@ void main() {
   });
 
   Widget subject(UserProfile user) {
-    when(
-      () => bloc.state,
-    ).thenReturn(UserState(status: UserStatus.loaded, users: [user]));
+    when(() => bloc.state).thenReturn(UserState.loaded(users: [user]));
     return MaterialApp(
       locale: const Locale('es'),
       supportedLocales: const [Locale('es'), Locale('en')],
@@ -189,7 +187,7 @@ void main() {
     await tester.pumpAndSettle();
     clearInteractions(bloc);
 
-    states.add(const UserState(status: UserStatus.updated, users: [user]));
+    states.add(const UserState.updated(users: [user]));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('edit-user-submit')), findsNothing);

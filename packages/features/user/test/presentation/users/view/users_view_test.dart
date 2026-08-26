@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:bot_toast/bot_toast.dart';
+import 'package:core/errors/error.dart';
+import 'package:core/errors/result.dart';
 import 'package:core/get_it.dart';
 import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
@@ -82,7 +84,7 @@ void main() {
     int actorUserId = 1,
     Brightness brightness = Brightness.light,
     bool isAdmin = true,
-    Future<String?> Function(int, String)? issueActivationCode,
+    Future<Result<String>> Function(int, String)? issueActivationCode,
   }) {
     when(() => bloc.state).thenReturn(state);
     return app(
@@ -119,7 +121,7 @@ void main() {
   testWidgets('loads the correct scope from the authenticated actor', (
     tester,
   ) async {
-    when(() => bloc.state).thenReturn(const UserState());
+    when(() => bloc.state).thenReturn(const UserState.initial());
     getIt.registerFactory<UserBloc>(() => bloc);
 
     await tester.pumpWidget(
@@ -138,9 +140,7 @@ void main() {
   testWidgets('reloads users when the navigation shell returns to its branch', (
     tester,
   ) async {
-    when(
-      () => bloc.state,
-    ).thenReturn(const UserState(status: UserStatus.loaded));
+    when(() => bloc.state).thenReturn(const UserState.loaded());
     late StatefulNavigationShell navigationShell;
     final router = GoRouter(
       initialLocation: '/users',
@@ -213,8 +213,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       subject(
-        const UserState(
-          status: UserStatus.loaded,
+        const UserState.loaded(
           searchQuery: 'sofia',
           users: [
             UserProfile(
@@ -284,8 +283,7 @@ void main() {
     final states = StreamController<UserState>.broadcast();
     addTearDown(states.close);
     when(() => bloc.stream).thenAnswer((_) => states.stream);
-    const state = UserState(
-      status: UserStatus.loaded,
+    const state = UserState.loaded(
       users: [
         UserProfile(
           id: 2,
@@ -318,25 +316,20 @@ void main() {
     verify(() => bloc.add(const UserEvent.listRequested(1))).called(1);
 
     states
-      ..add(state.copyWith(status: UserStatus.loading))
+      ..add(
+        UserState.loading(users: state.users, searchQuery: state.searchQuery),
+      )
       ..add(state);
     await refreshCompleted;
     await tester.pumpAndSettle();
   });
 
   testWidgets('exposes empty, failure, and retry states', (tester) async {
-    await tester.pumpWidget(
-      subject(const UserState(status: UserStatus.loaded)),
-    );
+    await tester.pumpWidget(subject(const UserState.loaded()));
     expect(find.text('Aún no hay usuarios'), findsOneWidget);
 
     await tester.pumpWidget(
-      subject(
-        const UserState(
-          status: UserStatus.failure,
-          message: 'user.errors.load_list',
-        ),
-      ),
+      subject(const UserState.failure(message: 'user.errors.load_list')),
     );
     expect(find.text('No pudimos cargar los usuarios'), findsOneWidget);
     await tester.tap(find.text('Reintentar'));
@@ -344,8 +337,7 @@ void main() {
   });
 
   testWidgets('uses native dark surfaces for cards and search', (tester) async {
-    const state = UserState(
-      status: UserStatus.loaded,
+    const state = UserState.loaded(
       users: [
         UserProfile(
           id: 2,
@@ -384,8 +376,7 @@ void main() {
 
     await tester.pumpWidget(
       subject(
-        const UserState(
-          status: UserStatus.loaded,
+        const UserState.loaded(
           users: [
             UserProfile(
               id: 2,
@@ -428,11 +419,11 @@ void main() {
     var issuedForEmail = '';
     await tester.pumpWidget(
       subject(
-        const UserState(status: UserStatus.loaded),
+        const UserState.loaded(),
         issueActivationCode: (actorUserId, email) async {
           issuedForActor = actorUserId;
           issuedForEmail = email;
-          return '123456';
+          return const Success('123456');
         },
       ),
     );
@@ -473,8 +464,7 @@ void main() {
     ).called(1);
 
     states.add(
-      const UserState(
-        status: UserStatus.created,
+      const UserState.created(
         users: [
           UserProfile(
             id: 2,
@@ -505,8 +495,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       subject(
-        const UserState(status: UserStatus.loaded),
-        issueActivationCode: (_, _) async => '123456',
+        const UserState.loaded(),
+        issueActivationCode: (_, _) async => const Success('123456'),
       ),
     );
 
@@ -535,9 +525,7 @@ void main() {
       status: 'active',
       balanceCop: 250000,
     );
-    when(
-      () => bloc.state,
-    ).thenReturn(const UserState(status: UserStatus.loaded, users: [user]));
+    when(() => bloc.state).thenReturn(const UserState.loaded(users: [user]));
     final router = GoRouter(
       initialLocation: '/users',
       routes: [
@@ -593,8 +581,7 @@ void main() {
     var issuedForEmail = '';
     await tester.pumpWidget(
       subject(
-        const UserState(
-          status: UserStatus.loaded,
+        const UserState.loaded(
           users: [
             UserProfile(
               id: 2,
@@ -609,7 +596,7 @@ void main() {
         issueActivationCode: (actorUserId, email) async {
           issuedForActor = actorUserId;
           issuedForEmail = email;
-          return '654321';
+          return const Success('654321');
         },
       ),
     );
@@ -633,8 +620,7 @@ void main() {
   ) async {
     await tester.pumpWidget(
       subject(
-        const UserState(
-          status: UserStatus.loaded,
+        const UserState.loaded(
           users: [
             UserProfile(
               id: 2,
@@ -646,7 +632,9 @@ void main() {
             ),
           ],
         ),
-        issueActivationCode: (_, _) async => null,
+        issueActivationCode: (_, _) async => const Error(
+          StorageFailure(message: 'Activation code could not be generated.'),
+        ),
       ),
     );
     clearInteractions(bloc);
@@ -658,7 +646,9 @@ void main() {
 
     verify(
       () => bloc.add(
-        const UserEvent.notificationRequested('user.notifications.code_error'),
+        const UserEvent.failureRequested(
+          'Activation code could not be generated.',
+        ),
       ),
     ).called(1);
   });
@@ -677,9 +667,7 @@ void main() {
       status: 'active',
       balanceCop: 250000,
     );
-    await tester.pumpWidget(
-      subject(const UserState(status: UserStatus.loaded, users: [user])),
-    );
+    await tester.pumpWidget(subject(const UserState.loaded(users: [user])));
     clearInteractions(bloc);
 
     await tester.tap(find.byKey(const Key('user-actions-2')));
@@ -707,10 +695,10 @@ void main() {
 
     verify(() => bloc.add(const UserEvent.deleteRequested(1, 2))).called(1);
     states
-      ..add(const UserState(status: UserStatus.loading, users: [user]))
+      ..add(const UserState.loading(users: [user]))
       ..add(
-        const UserState(
-          status: UserStatus.deleted,
+        const UserState.deleted(
+          users: [],
           deleteOutcome: DeleteOutcome.deactivated,
         ),
       );
@@ -725,8 +713,7 @@ void main() {
   testWidgets('client edits only itself without admin actions', (tester) async {
     await tester.pumpWidget(
       subject(
-        const UserState(
-          status: UserStatus.loaded,
+        const UserState.loaded(
           users: [
             UserProfile(
               id: 2,

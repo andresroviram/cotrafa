@@ -3,7 +3,6 @@ import 'package:components/language_switcher.dart';
 import 'package:components/layout/scaffold_with_navigation.dart';
 import 'package:components/theme_button.dart';
 import 'package:core/enum/navigation_item.dart';
-import 'package:core/errors/result.dart';
 import 'package:core/get_it.dart';
 import 'package:feature_auth/domain/usecases/auth_usecases.dart';
 import 'package:feature_auth/domain/entities/auth_identity.dart';
@@ -106,13 +105,8 @@ GoRouter createRouter(AuthBloc authBloc) {
             parentNavigatorKey: rootKey,
             actorUserId: () => _identity(authBloc.state)?.userId ?? -1,
             isAdmin: () => _identity(authBloc.state)?.role == 'admin',
-            issueActivationCode: (actorUserId, email) async {
-              final result = await getIt<IssueActivationCode>()(
-                actorUserId,
-                email,
-              );
-              return result.valueOrNull;
-            },
+            issueActivationCode: (actorUserId, email) =>
+                getIt<IssueActivationCode>()(actorUserId, email),
           ),
           transferRoutes(
             parentNavigatorKey: rootKey,

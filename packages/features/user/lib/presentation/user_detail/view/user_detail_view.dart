@@ -33,10 +33,7 @@ class UserDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocListener<UserBloc, UserState>(
-    listenWhen: (previous, current) =>
-        previous.status != current.status ||
-        previous.message != current.message ||
-        previous.notificationType != current.notificationType,
+    listenWhen: (previous, current) => previous != current,
     listener: _onStateChanged,
     child: ResponsiveBreakpoints.of(context).largerThan(MOBILE)
         ? UserDetailWeb(actorUserId: actorUserId, userId: userId)
@@ -44,22 +41,24 @@ class UserDetailView extends StatelessWidget {
   );
 
   void _onStateChanged(BuildContext context, UserState state) {
-    final message = state.message;
-    if (message != null) {
-      if (state.notificationType == UserNotificationType.info) {
-        AppNotification.showNotification(context, title: message.tr());
-      } else {
-        AppNotification.showNotificationError(context, title: message.tr());
-      }
-      return;
-    }
-    if (state.status == UserStatus.updated) {
-      AppNotification.showNotification(
-        context,
-        title: 'user.notifications.updated'.tr(),
-      );
-      final navigator = Navigator.of(context, rootNavigator: true);
-      if (navigator.canPop()) navigator.pop(true);
-    }
+    state.when<void>(
+      initial: (_, _) {},
+      loading: (_, _) {},
+      loaded: (_, _) {},
+      created: (_, _) {},
+      updated: (_, _) {
+        AppNotification.showNotification(
+          context,
+          title: 'user.notifications.updated'.tr(),
+        );
+        final navigator = Navigator.of(context, rootNavigator: true);
+        if (navigator.canPop()) navigator.pop(true);
+      },
+      deleted: (_, _, _) {},
+      information: (message, _, _) =>
+          AppNotification.showNotification(context, title: message.tr()),
+      failure: (message, _, _) =>
+          AppNotification.showNotificationError(context, title: message),
+    );
   }
 }

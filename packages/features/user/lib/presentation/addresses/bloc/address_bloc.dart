@@ -14,7 +14,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
     this._updateAddress,
     this._selectPrimaryAddress,
     this._deleteAddress,
-  ) : super(const AddressState()) {
+  ) : super(const AddressState.initial()) {
     on<AddressListRequested>(_list);
     on<AddressFormRequested>(_openForm);
     on<AddressCreateRequested>(_create);
@@ -29,26 +29,32 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
   final SelectPrimaryAddress _selectPrimaryAddress;
   final DeleteAddress _deleteAddress;
 
-  AddressState _saving() =>
-      state.copyWith(status: AddressStatus.saving, message: null);
+  AddressState _saving() => AddressState.saving(
+    addresses: state.addresses,
+    selectedAddress: state.selectedAddress,
+  );
 
-  AddressState _actionFailure(String message) =>
-      state.copyWith(status: AddressStatus.actionFailure, message: message);
+  AddressState _actionFailure(String message) => AddressState.actionFailure(
+    message: message,
+    addresses: state.addresses,
+    selectedAddress: state.selectedAddress,
+  );
 
   Future<void> _list(
     AddressListRequested event,
     Emitter<AddressState> emit,
   ) async {
-    emit(state.copyWith(status: AddressStatus.loading, message: null));
+    emit(
+      AddressState.loading(
+        addresses: state.addresses,
+        selectedAddress: state.selectedAddress,
+      ),
+    );
     final result = await _listAddresses(event.actorUserId, event.userId);
     emit(
       result.fold(
-        onSuccess: (addresses) =>
-            AddressState(status: AddressStatus.loaded, addresses: addresses),
-        onFailure: (_) => const AddressState(
-          status: AddressStatus.loadFailure,
-          message: 'address.errors.load_list',
-        ),
+        onSuccess: (addresses) => AddressState.loaded(addresses: addresses),
+        onFailure: (error) => AddressState.loadFailure(message: error.message),
       ),
     );
   }
@@ -57,10 +63,10 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
     AddressFormRequested event,
     Emitter<AddressState> emit,
   ) async {
-    emit(const AddressState(status: AddressStatus.loading));
+    emit(const AddressState.loading());
     final addressId = event.addressId;
     if (addressId == null) {
-      emit(const AddressState(status: AddressStatus.ready));
+      emit(const AddressState.ready());
       return;
     }
     final result = await _listAddresses(event.actorUserId, event.userId);
@@ -69,20 +75,13 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
         onSuccess: (addresses) {
           final selected = _find(addresses, addressId);
           return selected == null
-              ? const AddressState(
-                  status: AddressStatus.loadFailure,
-                  message: 'address.errors.not_found',
-                )
-              : AddressState(
-                  status: AddressStatus.ready,
+              ? const AddressState.loadFailure(message: 'Address not found.')
+              : AddressState.ready(
                   addresses: addresses,
                   selectedAddress: selected,
                 );
         },
-        onFailure: (_) => const AddressState(
-          status: AddressStatus.loadFailure,
-          message: 'address.errors.load',
-        ),
+        onFailure: (error) => AddressState.loadFailure(message: error.message),
       ),
     );
   }
@@ -99,13 +98,11 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
     );
     emit(
       result.fold(
-        onSuccess: (address) => state.copyWith(
-          status: AddressStatus.created,
+        onSuccess: (address) => AddressState.created(
           addresses: [...state.addresses, address],
           selectedAddress: address,
-          message: null,
         ),
-        onFailure: (_) => _actionFailure('address.errors.create'),
+        onFailure: (error) => _actionFailure(error.message),
       ),
     );
   }
@@ -123,15 +120,13 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
     );
     emit(
       result.fold(
-        onSuccess: (updated) => state.copyWith(
-          status: AddressStatus.updated,
+        onSuccess: (updated) => AddressState.updated(
           addresses: state.addresses
               .map((address) => address.id == updated.id ? updated : address)
               .toList(),
           selectedAddress: updated,
-          message: null,
         ),
-        onFailure: (_) => _actionFailure('address.errors.update'),
+        onFailure: (error) => _actionFailure(error.message),
       ),
     );
   }
@@ -148,8 +143,7 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
     );
     emit(
       result.fold(
-        onSuccess: (selected) => state.copyWith(
-          status: AddressStatus.primaryUpdated,
+        onSuccess: (selected) => AddressState.primaryUpdated(
           addresses: state.addresses
               .map(
                 (address) => address.id == selected.id
@@ -157,9 +151,9 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
                     : address.copyWith(isPrimary: false),
               )
               .toList(),
-          message: null,
+          selectedAddress: selected,
         ),
-        onFailure: (_) => _actionFailure('address.errors.set_primary'),
+        onFailure: (error) => _actionFailure(error.message),
       ),
     );
   }
@@ -174,16 +168,15 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
       event.userId,
       event.addressId,
     );
-    if (deletion case Error()) {
-      emit(_actionFailure('address.errors.delete'));
+    if (deletion case Error(error: final error)) {
+      emit(_actionFailure(error.message));
       return;
     }
     final refreshed = await _listAddresses(event.actorUserId, event.userId);
     emit(
       refreshed.fold(
-        onSuccess: (addresses) =>
-            AddressState(status: AddressStatus.deleted, addresses: addresses),
-        onFailure: (_) => _actionFailure('address.errors.reload_after_delete'),
+        onSuccess: (addresses) => AddressState.deleted(addresses: addresses),
+        onFailure: (error) => _actionFailure(error.message),
       ),
     );
   }

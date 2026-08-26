@@ -80,8 +80,21 @@ void main() {
       ),
     );
     expect(
-      const UserState(users: [client]).copyWith(status: UserStatus.loading),
-      const UserState(status: UserStatus.loading, users: [client]),
+      const UserState.loaded(users: [client]).copyWith(searchQuery: 'client'),
+      const UserState.loaded(users: [client], searchQuery: 'client'),
+    );
+    expect(
+      const UserState.loaded(users: [client]).when(
+        initial: (_, _) => false,
+        loading: (_, _) => false,
+        loaded: (_, _) => true,
+        created: (_, _) => false,
+        updated: (_, _) => false,
+        deleted: (_, _, _) => false,
+        information: (_, _, _) => false,
+        failure: (_, _, _) => false,
+      ),
+      isTrue,
     );
   });
 
@@ -93,8 +106,8 @@ void main() {
     build: build,
     act: (bloc) => bloc.add(const UserEvent.listRequested(1)),
     expect: () => const <UserState>[
-      UserState(status: UserStatus.loading),
-      UserState(status: UserStatus.loaded, users: [admin, client]),
+      UserState.loading(),
+      UserState.loaded(users: [admin, client]),
     ],
   );
 
@@ -106,8 +119,8 @@ void main() {
     build: build,
     act: (bloc) => bloc.add(const UserEvent.profileRequested(2, 2)),
     expect: () => const <UserState>[
-      UserState(status: UserStatus.loading),
-      UserState(status: UserStatus.loaded, users: [client]),
+      UserState.loading(),
+      UserState.loaded(users: [client]),
     ],
   );
 
@@ -115,35 +128,24 @@ void main() {
     'stores the normalized presentation search query',
     build: build,
     act: (bloc) => bloc.add(const UserEvent.searchChanged('  Sofia  ')),
-    expect: () => const <UserState>[UserState(searchQuery: 'sofia')],
+    expect: () => const <UserState>[UserState.loaded(searchQuery: 'sofia')],
   );
 
   blocTest<UserBloc, UserState>(
     'publishes repeated presentation notifications through state',
     build: build,
-    seed: () => const UserState(
-      status: UserStatus.loaded,
-      users: [admin, client],
+    seed: () => const UserState.information(
       message: 'user.notifications.code_error',
-      notificationType: UserNotificationType.info,
+      users: [admin, client],
     ),
     act: (bloc) => bloc.add(
-      const UserEvent.notificationRequested(
-        'user.notifications.code_error',
-        type: UserNotificationType.info,
-      ),
+      const UserEvent.informationRequested('user.notifications.code_error'),
     ),
     expect: () => const <UserState>[
-      UserState(
-        status: UserStatus.loaded,
-        users: [admin, client],
-        notificationType: UserNotificationType.info,
-      ),
-      UserState(
-        status: UserStatus.loaded,
-        users: [admin, client],
+      UserState.loaded(users: [admin, client]),
+      UserState.information(
         message: 'user.notifications.code_error',
-        notificationType: UserNotificationType.info,
+        users: [admin, client],
       ),
     ],
   );
@@ -174,7 +176,7 @@ void main() {
       ).thenAnswer((_) async => const Success(updatedClient));
     },
     build: build,
-    seed: () => const UserState(status: UserStatus.loaded, users: [admin]),
+    seed: () => const UserState.loaded(users: [admin]),
     act: (bloc) async {
       bloc.add(
         const UserEvent.createRequested(
@@ -200,10 +202,10 @@ void main() {
       );
     },
     expect: () => const <UserState>[
-      UserState(status: UserStatus.loading, users: [admin]),
-      UserState(status: UserStatus.created, users: [admin, client]),
-      UserState(status: UserStatus.loading, users: [admin, client]),
-      UserState(status: UserStatus.updated, users: [admin, updatedClient]),
+      UserState.loading(users: [admin]),
+      UserState.created(users: [admin, client]),
+      UserState.loading(users: [admin, client]),
+      UserState.updated(users: [admin, updatedClient]),
     ],
   );
 
@@ -218,13 +220,11 @@ void main() {
       ).thenAnswer((_) async => const Success([admin]));
     },
     build: build,
-    seed: () =>
-        const UserState(status: UserStatus.loaded, users: [admin, client]),
+    seed: () => const UserState.loaded(users: [admin, client]),
     act: (bloc) => bloc.add(const UserEvent.deleteRequested(1, 2)),
     expect: () => const <UserState>[
-      UserState(status: UserStatus.loading, users: [admin, client]),
-      UserState(
-        status: UserStatus.deleted,
+      UserState.loading(users: [admin, client]),
+      UserState.deleted(
         users: [admin],
         deleteOutcome: DeleteOutcome.deactivated,
       ),
@@ -232,15 +232,15 @@ void main() {
   );
 
   blocTest<UserBloc, UserState>(
-    'exposes a safe failure without persistence details',
+    'exposes the Result error message',
     setUp: () => when(() => repository.listUsers(1)).thenAnswer(
       (_) async => const Error(StorageFailure(message: 'SELECT users failed')),
     ),
     build: build,
     act: (bloc) => bloc.add(const UserEvent.listRequested(1)),
     expect: () => const <UserState>[
-      UserState(status: UserStatus.loading),
-      UserState(status: UserStatus.failure, message: 'user.errors.load_list'),
+      UserState.loading(),
+      UserState.failure(message: 'SELECT users failed'),
     ],
   );
 }

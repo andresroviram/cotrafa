@@ -54,9 +54,7 @@ void main() {
   }
 
   testWidgets('validates and dispatches a new address', (tester) async {
-    await tester.pumpWidget(
-      subject(const AddressState(status: AddressStatus.ready)),
-    );
+    await tester.pumpWidget(subject(const AddressState.ready()));
 
     expect(find.text('Nueva dirección'), findsOneWidget);
     final line1 = find.byKey(const Key('address-line-1'));
@@ -103,8 +101,7 @@ void main() {
   testWidgets('preloads and dispatches address edits', (tester) async {
     await tester.pumpWidget(
       subject(
-        const AddressState(
-          status: AddressStatus.ready,
+        const AddressState.ready(
           addresses: [address],
           selectedAddress: address,
         ),
@@ -153,9 +150,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(
-      subject(const AddressState(status: AddressStatus.ready)),
-    );
+    await tester.pumpWidget(subject(const AddressState.ready()));
     final line1 = find.byKey(const Key('address-line-1'));
     await tester.showKeyboard(line1);
     expect(tester.testTextInput.isVisible, isTrue);

@@ -1,3 +1,4 @@
+import 'package:core/errors/result.dart';
 import 'package:feature_user/presentation/address_form/view/address_form_view.dart';
 import 'package:feature_user/presentation/addresses/view/addresses_view.dart';
 import 'package:feature_user/presentation/user_detail/view/user_detail_view.dart';
@@ -16,7 +17,7 @@ void main() {
               parentNavigatorKey: rootNavigatorKey,
               actorUserId: () => 1,
               isAdmin: () => true,
-              issueActivationCode: (_, _) async => null,
+              issueActivationCode: (_, _) async => const Success('123456'),
             ).routes.single
             as GoRoute;
 
