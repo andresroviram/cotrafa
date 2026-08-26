@@ -138,6 +138,7 @@ void main() {
       'final feature security|finalFeatureHasInfrastructure|src/security/credential_hasher.dart|',
       'missing Freezed event|invalidFreezedEvent|src/user/presentation/users/bloc/user_event.dart|sealed class UserEvent {}',
       'missing Freezed state|invalidFreezedState|src/transfer/presentation/bloc/transfer_state.dart|class TransferState {}',
+      "non-sealed Freezed state|invalidFreezedState|src/transfer/presentation/bloc/transfer_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'transfer_state.freezed.dart';\n@freezed abstract class TransferState with _\$TransferState { const factory TransferState() = _TransferState; }",
       "dual runtime database composition|dualRuntimeDatabaseAuthority|app/lib/config/injectable/database_module.dart|import '../database/cotrafa_database.dart';\nimport 'package:feature_auth/database/cotrafa_database.dart';",
       'feature reverse manifest dependency|featureManifestDependsOnApp|features/auth/pubspec.yaml|dependencies:\n  cotrafa_app:\n    path: ../../app',
       'forbidden database abstraction|forbiddenDatabaseAbstraction|src/auth/domain/i_cotrafa_database.dart|abstract class ICotrafaDatabase {}',
@@ -605,7 +606,7 @@ BoundaryRule? _freezedFailure(ArchitectureSource source) {
         content.contains('package:freezed_annotation/') &&
         content.contains("part '$stem.freezed.dart';") &&
         content.contains('@freezed') &&
-        RegExp(r'abstract class \w+ with _\$\w+').hasMatch(content) &&
+        RegExp(r'sealed class \w+ with _\$\w+').hasMatch(content) &&
         content.contains('factory');
     return valid ? null : BoundaryRule.invalidFreezedState;
   }
@@ -760,7 +761,7 @@ Directory _temporaryFeatureTree({
 
 List<ArchitectureSource> _finalArchitectureSources() => <ArchitectureSource>[
   ..._sources(
-    "injectable.dart|void configureDependencies() {}|data/datasources/auth_local_datasource.dart|import 'package:drift/drift.dart'; abstract interface class IAuthLocalDatasource {}|presentation/auth/bloc/auth_event.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_event.freezed.dart';\n@freezed sealed class AuthEvent with _\$AuthEvent { const factory AuthEvent.restore() = Restore; }|presentation/auth/bloc/auth_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_state.freezed.dart';\n@freezed abstract class AuthState with _\$AuthState { const factory AuthState() = _AuthState; }|presentation/auth/bloc/auth_state.freezed.dart|class GeneratedAuthState {}",
+    "injectable.dart|void configureDependencies() {}|data/datasources/auth_local_datasource.dart|import 'package:drift/drift.dart'; abstract interface class IAuthLocalDatasource {}|presentation/auth/bloc/auth_event.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_event.freezed.dart';\n@freezed sealed class AuthEvent with _\$AuthEvent { const factory AuthEvent.restore() = Restore; }|presentation/auth/bloc/auth_state.dart|import 'package:freezed_annotation/freezed_annotation.dart';\npart 'auth_state.freezed.dart';\n@freezed sealed class AuthState with _\$AuthState { const factory AuthState.initial() = AuthInitial; }|presentation/auth/bloc/auth_state.freezed.dart|class GeneratedAuthState {}",
   ),
   for (final String path in _requiredAppPersistence.split(','))
     ArchitectureSource(
