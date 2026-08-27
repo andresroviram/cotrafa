@@ -4,8 +4,8 @@ import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
-import 'package:feature_user/domain/entities/delete_outcome.dart';
-import 'package:feature_user/domain/entities/user_profile.dart';
+import 'package:feature_user/data/models/delete_outcome_model.dart';
+import 'package:feature_user/data/models/user_profile_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -33,7 +33,7 @@ void main() {
     expect(admin.lastName, _demoSeed.lastName);
     expect(admin.fullName, _demoSeed.fullName);
     expect(admin.username, _demoSeed.username);
-    expect(admin.displayName, _demoSeed.fullName);
+    expect(admin.toEntity().displayName, _demoSeed.fullName);
   });
 
   test('admin CRUD persists normalized use-case input', () async {
@@ -143,7 +143,7 @@ void main() {
       "INSERT INTO addresses (user_id,line1,city,label,is_primary) VALUES (${client.id},'One','Medellin','Home',1)",
     );
     await database.setSessionUserId(client.id);
-    expect(await users.deleteUser(1, client.id), DeleteOutcome.deleted);
+    expect(await users.deleteUser(1, client.id), DeleteOutcomeModel.deleted);
     expect(await _count(database, 'users', 'id=${client.id}'), 0);
     expect(
       await _count(database, 'login_identifiers', 'user_id=${client.id}'),
@@ -171,7 +171,10 @@ void main() {
     );
     await database.setSessionUserId(origin.id);
     await database.customStatement(_transferSql(origin.id, destination.id));
-    expect(await users.deleteUser(1, origin.id), DeleteOutcome.deactivated);
+    expect(
+      await users.deleteUser(1, origin.id),
+      DeleteOutcomeModel.deactivated,
+    );
     final retained = await _user(database, origin.id);
     expect(retained.read<String>('status'), 'inactive');
     expect(retained.read<int>('balance_cop'), 100);
@@ -200,7 +203,7 @@ void main() {
   });
 }
 
-Future<UserProfile> _activeClient(
+Future<UserProfileModel> _activeClient(
   UserLocalDatasource users,
   CotrafaDatabase database,
   String email,
@@ -213,7 +216,7 @@ Future<UserProfile> _activeClient(
   return user;
 }
 
-Future<UserProfile> _create(
+Future<UserProfileModel> _create(
   UserLocalDatasource users,
   String email,
   int balance,

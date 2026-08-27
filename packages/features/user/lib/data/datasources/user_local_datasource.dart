@@ -1,14 +1,14 @@
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
-import 'package:feature_user/domain/entities/delete_outcome.dart';
-import 'package:feature_user/domain/entities/user_profile.dart';
+import 'package:feature_user/data/models/delete_outcome_model.dart';
+import 'package:feature_user/data/models/user_profile_model.dart';
 import 'package:injectable/injectable.dart';
 
 abstract interface class IUserLocalDatasource {
-  Future<List<UserProfile>> listUsers(int actorUserId);
-  Future<UserProfile> getUser(int actorUserId, int userId);
-  Future<UserProfile> createClient(
+  Future<List<UserProfileModel>> listUsers(int actorUserId);
+  Future<UserProfileModel> getUser(int actorUserId, int userId);
+  Future<UserProfileModel> createClient(
     int actorUserId, {
     required String email,
     required String firstName,
@@ -17,7 +17,7 @@ abstract interface class IUserLocalDatasource {
     required String? phone,
     required int initialBalanceCop,
   });
-  Future<UserProfile> editProfile(
+  Future<UserProfileModel> editProfile(
     int actorUserId,
     int userId, {
     required String firstName,
@@ -25,7 +25,7 @@ abstract interface class IUserLocalDatasource {
     required DateTime? birthDate,
     required String? phone,
   });
-  Future<DeleteOutcome> deleteUser(int actorUserId, int userId);
+  Future<DeleteOutcomeModel> deleteUser(int actorUserId, int userId);
 }
 
 @LazySingleton(as: IUserLocalDatasource)
@@ -36,7 +36,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
   final int protectedAdminUserId;
 
   @override
-  Future<List<UserProfile>> listUsers(int actorUserId) async {
+  Future<List<UserProfileModel>> listUsers(int actorUserId) async {
     if (!await _isActiveAdmin(actorUserId)) {
       throw const UnauthorizedException();
     }
@@ -45,7 +45,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
   }
 
   @override
-  Future<UserProfile> getUser(int actorUserId, int userId) async {
+  Future<UserProfileModel> getUser(int actorUserId, int userId) async {
     final actor = await _user(actorUserId);
     if (!_canAccess(actor, userId)) {
       throw const UnauthorizedException();
@@ -56,7 +56,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
   }
 
   @override
-  Future<UserProfile> createClient(
+  Future<UserProfileModel> createClient(
     int actorUserId, {
     required String email,
     required String firstName,
@@ -102,7 +102,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
   });
 
   @override
-  Future<UserProfile> editProfile(
+  Future<UserProfileModel> editProfile(
     int actorUserId,
     int userId, {
     required String firstName,
@@ -134,7 +134,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
   });
 
   @override
-  Future<DeleteOutcome> deleteUser(int actorUserId, int userId) =>
+  Future<DeleteOutcomeModel> deleteUser(int actorUserId, int userId) =>
       _database.transaction(() async {
         if (!await _isActiveAdmin(actorUserId)) {
           throw const UnauthorizedException();
@@ -171,12 +171,12 @@ final class UserLocalDatasource implements IUserLocalDatasource {
               updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
             ),
           );
-          return DeleteOutcome.deactivated;
+          return DeleteOutcomeModel.deactivated;
         }
         await (_database.delete(
           _database.users,
         )..where((table) => table.id.equals(userId))).go();
-        return DeleteOutcome.deleted;
+        return DeleteOutcomeModel.deleted;
       });
 
   Future<User?> _user(int id) => (_database.select(
@@ -215,17 +215,17 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     return query.get();
   }
 
-  Future<UserProfile?> _profileById(int userId) async {
+  Future<UserProfileModel?> _profileById(int userId) async {
     final rows = await _profileRows(userId: userId);
     return rows.isEmpty ? null : _profile(rows.single);
   }
 
-  UserProfile _profile(TypedResult row) {
+  UserProfileModel _profile(TypedResult row) {
     final user = row.readTable(_database.users);
     final username = row
         .readTableOrNull(_database.loginIdentifiers)
         ?.normalized;
-    return UserProfile(
+    return UserProfileModel(
       id: user.id,
       email: user.email,
       fullName: user.fullName,

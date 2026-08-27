@@ -1,6 +1,7 @@
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_user/data/datasources/address_local_datasource.dart';
+import 'package:feature_user/data/models/user_address_model.dart';
 import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:feature_user/domain/repository/i_address_repository.dart';
 import 'package:injectable/injectable.dart';
@@ -15,6 +16,10 @@ final class AddressRepositoryImpl implements IAddressRepository {
   Future<Result<List<UserAddress>>> list(int actorUserId, int userId) =>
       _datasource
           .list(actorUserId, userId)
+          .then(
+            (models) =>
+                models.map((model) => model.toEntity()).toList(growable: false),
+          )
           .toResult(fallback: const StorageFailure());
 
   @override
@@ -24,6 +29,7 @@ final class AddressRepositoryImpl implements IAddressRepository {
     AddressDraft draft,
   ) => _datasource
       .create(actorUserId, userId, draft)
+      .then((model) => model.toEntity())
       .toResult(fallback: const StorageFailure());
 
   @override
@@ -34,6 +40,7 @@ final class AddressRepositoryImpl implements IAddressRepository {
     AddressDraft draft,
   ) => _datasource
       .update(actorUserId, userId, addressId, draft)
+      .then((model) => model.toEntity())
       .toResult(fallback: const StorageFailure());
 
   @override
@@ -43,6 +50,7 @@ final class AddressRepositoryImpl implements IAddressRepository {
     int addressId,
   ) => _datasource
       .selectPrimary(actorUserId, userId, addressId)
+      .then((model) => model.toEntity())
       .toResult(fallback: const StorageFailure());
 
   @override

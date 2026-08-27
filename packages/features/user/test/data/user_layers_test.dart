@@ -99,6 +99,14 @@ void main() {
     ).readAsStringSync();
 
     expect(repositorySource, isNot(contains('cotrafa_database.dart')));
+    expect(repositorySource, contains('model.toEntity()'));
+    final datasourceSource = File(
+      '${root.path}/data/datasources/user_local_datasource.dart',
+    ).readAsStringSync();
+    expect(
+      datasourceSource,
+      isNot(contains('domain/entities/user_profile.dart')),
+    );
     expect(useCaseSource, isNot(contains('/data/')));
   });
 }

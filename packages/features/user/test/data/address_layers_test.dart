@@ -1,6 +1,7 @@
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_user/data/datasources/address_local_datasource.dart';
+import 'package:feature_user/data/models/user_address_model.dart';
 import 'package:feature_user/data/repository/address_repository_impl.dart';
 import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:feature_user/domain/repository/i_address_repository.dart';
@@ -13,6 +14,18 @@ class _Datasource extends Mock implements IAddressLocalDatasource {}
 class _Repository extends Mock implements IAddressRepository {}
 
 void main() {
+  const addressModel = UserAddressModel(
+    id: 1,
+    userId: 2,
+    line1: 'Calle 10 # 20-30',
+    line2: 'El Poblado',
+    city: 'Medellín',
+    state: 'Antioquia',
+    postalCode: '050021',
+    country: 'Colombia',
+    label: 'Casa',
+    isPrimary: true,
+  );
   const address = UserAddress(
     id: 1,
     userId: 2,
@@ -31,11 +44,14 @@ void main() {
   setUp(() => datasource = _Datasource());
 
   test('repository exposes datasource values through Core Result', () async {
-    when(() => datasource.list(1, 2)).thenAnswer((_) async => [address]);
+    when(
+      () => datasource.list(1, 2),
+    ).thenAnswer((_) async => const [addressModel]);
     final repository = AddressRepositoryImpl(datasource);
 
     final result = await repository.list(1, 2);
     expect(result.valueOrNull, const [address]);
+    expect(addressModel.toEntity(), address);
   });
 
   test(
