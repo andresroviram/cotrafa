@@ -2,7 +2,6 @@ import 'package:feature_user/presentation/address_form/widgets/address_form.dart
 import 'package:feature_user/presentation/addresses/bloc/address_bloc.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_event.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_state.dart';
-import 'package:feature_user/presentation/addresses/bloc/address_state_x.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:feature_user/presentation/shared/widgets/user_load_failure.dart';
 import 'package:flutter/material.dart';
@@ -26,20 +25,29 @@ class AddressFormMobile extends StatelessWidget {
       title: Text((addressId == null ? 'address.new' : 'address.edit').tr()),
     ),
     body: BlocBuilder<AddressBloc, AddressState>(
-      builder: (context, state) => state.resolve(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        failure: (_) => _failure(context),
-        empty: () => _form(state),
-        data: _form,
+      builder: (context, state) => state.when(
+        initial: (_, _) => _loading(),
+        loading: (_, _) => _loading(),
+        loaded: (_, _) => _form(state),
+        ready: (_, _) => _form(state),
+        saving: (_, _) => _form(state, isSaving: true),
+        created: (_, _) => _form(state),
+        updated: (_, _) => _form(state),
+        primaryUpdated: (_, _) => _form(state),
+        deleted: (_, _) => _form(state),
+        loadFailure: (_, _, _) => _failure(context),
+        actionFailure: (_, _, _) => _form(state),
       ),
     ),
   );
 
-  Widget _form(AddressState state) => AddressForm(
+  Widget _loading() => const Center(child: CircularProgressIndicator());
+
+  Widget _form(AddressState state, {bool isSaving = false}) => AddressForm(
     actorUserId: actorUserId,
     userId: userId,
     address: state.selectedAddress,
-    isSaving: state.status == AddressStatus.saving,
+    isSaving: isSaving,
   );
 
   Widget _failure(BuildContext context) => UserLoadFailure(

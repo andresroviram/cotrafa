@@ -1,7 +1,7 @@
+import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_bloc.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_state.dart';
-import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_state_x.dart';
 import 'package:feature_transfer/presentation/transfer_create/view/transfer_create_view.dart';
 import 'package:feature_transfer/presentation/transfer/widgets/transfer_history_content.dart';
 import 'package:feature_transfer/presentation/shared/widgets/transfer_load_failure.dart';
@@ -18,21 +18,21 @@ class TransferMobile extends StatelessWidget {
   @override
   Widget build(BuildContext context) =>
       BlocBuilder<TransferHistoryBloc, TransferHistoryState>(
-        builder: (context, state) => state.resolve(
+        builder: (context, state) => state.when(
+          initial: () => const _Loading(),
           loading: () => const _Loading(),
+          loaded: (transfers) => _content(context, transfers),
           failure: (message) => TransferLoadFailure(
             message: message,
             onRetry: () => _reload(context),
           ),
-          empty: () => _content(context, state),
-          data: (resolved) => _content(context, resolved),
         ),
       );
 
-  Widget _content(BuildContext context, TransferHistoryState state) =>
+  Widget _content(BuildContext context, List<TransferReceipt> transfers) =>
       TransferHistoryContent(
         actorUserId: actorUserId,
-        transfers: state.transfers,
+        transfers: transfers,
         maxWidth: 600,
         onReload: () async => _reload(context),
         onCreate: () => _create(context),

@@ -1,4 +1,9 @@
+import 'dart:async';
+
+import 'package:feature_auth/domain/entities/auth_identity.dart';
+import 'package:feature_auth/presentation/activation/view/activation_mobile.dart';
 import 'package:feature_auth/presentation/activation/view/activation_view.dart';
+import 'package:feature_auth/presentation/activation/view/activation_web.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
@@ -17,9 +22,7 @@ void main() {
 
   setUp(() {
     bloc = _MockAuthBloc();
-    when(
-      () => bloc.state,
-    ).thenReturn(const AuthState(status: AuthStatus.unauthenticated));
+    when(() => bloc.state).thenReturn(const AuthState.unauthenticated());
     when(() => bloc.stream).thenAnswer((_) => const Stream<AuthState>.empty());
     when(() => bloc.add(any())).thenReturn(null);
   });
@@ -50,6 +53,88 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  Widget directSubject(AuthState state, Widget child, Object key) {
+    when(() => bloc.state).thenReturn(state);
+    return MaterialApp(
+      key: ValueKey(key),
+      home: BlocProvider<AuthBloc>.value(value: bloc, child: child),
+    );
+  }
+
+  testWidgets('renders every activation state on mobile and web', (
+    tester,
+  ) async {
+    const identity = AuthIdentity(userId: 1, role: 'admin');
+    const states = <AuthState>[
+      AuthState.initial(),
+      AuthState.loading(),
+      AuthState.unauthenticated(),
+      AuthState.authenticated(identity),
+      AuthState.activationSuccess(identity),
+      AuthState.failure('failure'),
+    ];
+
+    for (final isWeb in [false, true]) {
+      for (var index = 0; index < states.length; index++) {
+        final child = isWeb
+            ? const ActivationWeb(
+                logoAssetPath: 'assets/img/logo.png',
+                logoDarkAssetPath: 'assets/img/logo_dark.png',
+              )
+            : const ActivationMobile(
+                logoAssetPath: 'assets/img/logo.png',
+                logoDarkAssetPath: 'assets/img/logo_dark.png',
+              );
+        await tester.pumpWidget(
+          directSubject(states[index], child, '$isWeb-$index'),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byKey(const Key('activation-content')), findsOneWidget);
+      }
+    }
+  });
+
+  testWidgets('listener accepts non-notifying activation states', (
+    tester,
+  ) async {
+    final states = StreamController<AuthState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => ResponsiveBreakpoints.builder(
+          child: child!,
+          breakpoints: const [
+            Breakpoint(start: 0, end: 450, name: MOBILE),
+            Breakpoint(start: 451, end: double.infinity, name: DESKTOP),
+          ],
+        ),
+        home: BlocProvider<AuthBloc>.value(
+          value: bloc,
+          child: const ActivationView(
+            authenticatedLocation: '/users',
+            logoAssetPath: 'assets/img/logo.png',
+            logoDarkAssetPath: 'assets/img/logo_dark.png',
+          ),
+        ),
+      ),
+    );
+
+    const safeStates = <AuthState>[
+      AuthState.initial(),
+      AuthState.loading(),
+      AuthState.unauthenticated(),
+      AuthState.authenticated(AuthIdentity(userId: 1, role: 'admin')),
+    ];
+    for (final state in safeStates) {
+      states.add(state);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    }
+  });
 
   testWidgets('renders separate first-access credentials', (tester) async {
     await pumpSubject(tester);

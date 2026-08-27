@@ -3,13 +3,16 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'transfer_history_state.freezed.dart';
 
-enum TransferHistoryStatus { initial, loading, loaded, failure }
-
 @freezed
-abstract class TransferHistoryState with _$TransferHistoryState {
-  const factory TransferHistoryState({
-    @Default(TransferHistoryStatus.initial) TransferHistoryStatus status,
-    @Default(<TransferReceipt>[]) List<TransferReceipt> transfers,
-    String? message,
-  }) = _TransferHistoryState;
+sealed class TransferHistoryState with _$TransferHistoryState {
+  const factory TransferHistoryState.initial() = TransferHistoryInitial;
+
+  const factory TransferHistoryState.loading() = TransferHistoryLoading;
+
+  const factory TransferHistoryState.loaded({
+    required List<TransferReceipt> transfers,
+  }) = TransferHistoryLoaded;
+
+  const factory TransferHistoryState.failure({required String message}) =
+      TransferHistoryFailure;
 }

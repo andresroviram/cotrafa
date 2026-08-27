@@ -1,18 +1,17 @@
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
-import 'package:feature_transfer/domain/entities/receipt_action.dart';
+import 'package:feature_transfer/data/datasources/mappers/transfer_database_mapper.dart';
+import 'package:feature_transfer/data/models/transfer_party_model.dart';
+import 'package:feature_transfer/data/models/transfer_receipt_model.dart';
 import 'package:feature_transfer/domain/entities/transfer_command.dart';
-import 'package:feature_transfer/domain/entities/transfer_party.dart';
-import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
 import 'package:injectable/injectable.dart';
 
 abstract interface class ITransferLocalDatasource {
-  Future<List<TransferParty>> listParties(int actorUserId);
-  Future<List<TransferReceipt>> listTransfers(int actorUserId);
-  Future<TransferReceipt> createTransfer(TransferCommand command);
-  Future<TransferReceipt> getReceipt(String id);
-  Future<void> requestReceiptAction(String id, ReceiptAction action);
+  Future<List<TransferPartyModel>> listParties(int actorUserId);
+  Future<List<TransferReceiptModel>> listTransfers(int actorUserId);
+  Future<TransferReceiptModel> createTransfer(TransferCommand command);
+  Future<TransferReceiptModel> getReceipt(String id);
 }
 
 @LazySingleton(as: ITransferLocalDatasource)
@@ -38,24 +37,22 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
       DateTime.now().microsecondsSinceEpoch.toRadixString(36);
 
   @override
-  Future<List<TransferParty>> listParties(int actorUserId) async {
+  Future<List<TransferPartyModel>> listParties(int actorUserId) async {
     final actor = await _user(actorUserId);
     if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
     }
-    final rows =
-        await (_database.select(_database.users)
-              ..where((table) => table.status.equals('active'))
-              ..orderBy([
-                (table) => OrderingTerm.asc(table.fullName),
-                (table) => OrderingTerm.asc(table.email),
-              ]))
-            .get();
-    return rows.map(_party).toList();
+    final query = _database.select(_database.users)
+      ..where((table) => table.status.equals('active'))
+      ..orderBy([
+        (table) => OrderingTerm.asc(table.fullName),
+        (table) => OrderingTerm.asc(table.email),
+      ]);
+    return query.map((user) => user.toTransferPartyModel()).get();
   }
 
   @override
-  Future<List<TransferReceipt>> listTransfers(int actorUserId) async {
+  Future<List<TransferReceiptModel>> listTransfers(int actorUserId) async {
     final actor = await _user(actorUserId);
     if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
@@ -72,15 +69,13 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
       (table) => OrderingTerm.desc(table.createdAt),
       (table) => OrderingTerm.desc(table.id),
     ]);
-    final rows = await query.get();
-    return rows.map(_receipt).toList();
+    return query.map((transfer) => transfer.toTransferReceiptModel()).get();
   }
 
   @override
-  Future<TransferReceipt> createTransfer(
+  Future<TransferReceiptModel> createTransfer(
     TransferCommand command,
   ) => _database.transaction(() async {
-    _validateCommand(command);
     final actor = await _user(command.actorId);
     if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
@@ -145,79 +140,39 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
             destinationUserId: command.destinationId,
             amountCop: command.amountCop,
             status: 'completed',
-            description: Value(_optional(command.description)),
+            description: Value(command.description),
             createdAt: createdAt,
             originSnapshot: _snapshot(origin),
             destinationSnapshot: _snapshot(destination),
           ),
         );
-    final row = await _receiptRow(id);
-    if (row == null) {
+    final receipt = await _receiptQuery(
+      id,
+    ).map((transfer) => transfer.toTransferReceiptModel()).getSingleOrNull();
+    if (receipt == null) {
       throw const StorageException(
         message: 'Inserted transfer receipt is unreadable.',
       );
     }
-    return _receipt(row);
+    return receipt;
   });
 
   @override
-  Future<TransferReceipt> getReceipt(String id) async {
-    final row = await _receiptRow(id);
-    if (row == null) throw const NotFoundException();
-    return _receipt(row);
-  }
-
-  @override
-  Future<void> requestReceiptAction(String id, ReceiptAction action) async {
-    throw const ValidationException(
-      message: 'Transfer receipts are read-only.',
-    );
-  }
-
-  void _validateCommand(TransferCommand command) {
-    if (command.amountCop <= 0) {
-      throw const ValidationException(
-        message: 'Transfer amount must be greater than zero.',
-      );
-    }
-    if (command.originId == command.destinationId) {
-      throw const ValidationException(
-        message: 'Origin and destination must be different.',
-      );
-    }
+  Future<TransferReceiptModel> getReceipt(String id) async {
+    final receipt = await _receiptQuery(
+      id,
+    ).map((transfer) => transfer.toTransferReceiptModel()).getSingleOrNull();
+    if (receipt == null) throw const NotFoundException();
+    return receipt;
   }
 
   Future<User?> _user(int id) => (_database.select(
     _database.users,
   )..where((table) => table.id.equals(id))).getSingleOrNull();
 
-  Future<Transfer?> _receiptRow(String id) => (_database.select(
-    _database.transfers,
-  )..where((table) => table.id.equals(id))).getSingleOrNull();
-
-  TransferParty _party(User user) => TransferParty(
-    id: user.id,
-    fullName: user.fullName,
-    email: user.email,
-    balanceCop: user.balanceCop,
-  );
+  Selectable<Transfer> _receiptQuery(String id) =>
+      _database.select(_database.transfers)
+        ..where((table) => table.id.equals(id));
 
   String _snapshot(User user) => '${user.fullName} <${user.email}>';
-
-  TransferReceipt _receipt(Transfer transfer) => TransferReceipt(
-    id: transfer.id,
-    originUserId: transfer.originUserId,
-    destinationUserId: transfer.destinationUserId,
-    amountCop: transfer.amountCop,
-    status: transfer.status,
-    description: transfer.description,
-    createdAt: transfer.createdAt,
-    originSnapshot: transfer.originSnapshot,
-    destinationSnapshot: transfer.destinationSnapshot,
-  );
-
-  String? _optional(String? value) {
-    final normalized = value?.trim();
-    return normalized == null || normalized.isEmpty ? null : normalized;
-  }
 }

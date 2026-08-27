@@ -1,19 +1,29 @@
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_user/data/datasources/mappers/user_database_mapper.dart';
+import 'package:feature_user/data/models/user_address_model.dart';
 import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:injectable/injectable.dart';
 
 abstract interface class IAddressLocalDatasource {
-  Future<List<UserAddress>> list(int actorUserId, int userId);
-  Future<UserAddress> create(int actorUserId, int userId, AddressDraft draft);
-  Future<UserAddress> update(
+  Future<List<UserAddressModel>> list(int actorUserId, int userId);
+  Future<UserAddressModel> create(
+    int actorUserId,
+    int userId,
+    AddressDraft draft,
+  );
+  Future<UserAddressModel> update(
     int actorUserId,
     int userId,
     int addressId,
     AddressDraft draft,
   );
-  Future<UserAddress> selectPrimary(int actorUserId, int userId, int addressId);
+  Future<UserAddressModel> selectPrimary(
+    int actorUserId,
+    int userId,
+    int addressId,
+  );
   Future<void> delete(int actorUserId, int userId, int addressId);
 }
 
@@ -24,44 +34,49 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
   final CotrafaDatabase _database;
 
   @override
-  Future<List<UserAddress>> list(int actorUserId, int userId) async {
+  Future<List<UserAddressModel>> list(int actorUserId, int userId) async {
     await _authorize(actorUserId, userId);
     final query = _database.select(_database.addresses)
       ..where((table) => table.userId.equals(userId))
       ..orderBy([(table) => OrderingTerm.asc(table.id)]);
-    return (await query.get()).map(_toEntity).toList();
+    return query.map((row) => row.toUserAddressModel()).get();
   }
 
   @override
-  Future<UserAddress> create(int actorUserId, int userId, AddressDraft draft) =>
-      _database.transaction(() async {
-        await _authorize(actorUserId, userId);
-        final normalized = _normalize(draft);
-        final existing =
-            await (_database.select(_database.addresses)
-                  ..where((table) => table.userId.equals(userId))
-                  ..limit(1))
-                .getSingleOrNull();
-        final id = await _database
-            .into(_database.addresses)
-            .insert(
-              AddressesCompanion.insert(
-                userId: userId,
-                line1: normalized.line1,
-                line2: Value(normalized.line2),
-                city: normalized.city,
-                state: Value(normalized.state),
-                postalCode: Value(normalized.postalCode),
-                country: Value(normalized.country),
-                label: normalized.label,
-                isPrimary: Value(existing == null),
-              ),
-            );
-        return _toEntity((await _find(id, userId))!);
-      });
+  Future<UserAddressModel> create(
+    int actorUserId,
+    int userId,
+    AddressDraft draft,
+  ) => _database.transaction(() async {
+    await _authorize(actorUserId, userId);
+    final existing =
+        await (_database.select(_database.addresses)
+              ..where((table) => table.userId.equals(userId))
+              ..limit(1))
+            .getSingleOrNull();
+    final id = await _database
+        .into(_database.addresses)
+        .insert(
+          AddressesCompanion.insert(
+            userId: userId,
+            line1: draft.line1,
+            line2: Value(draft.line2),
+            city: draft.city,
+            state: Value(draft.state),
+            postalCode: Value(draft.postalCode),
+            country: Value(draft.country),
+            label: draft.label,
+            isPrimary: Value(existing == null),
+          ),
+        );
+    return (await _addressQuery(
+      id,
+      userId,
+    ).map((row) => row.toUserAddressModel()).getSingleOrNull())!;
+  });
 
   @override
-  Future<UserAddress> update(
+  Future<UserAddressModel> update(
     int actorUserId,
     int userId,
     int addressId,
@@ -69,7 +84,6 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
   ) => _database.transaction(() async {
     await _authorize(actorUserId, userId);
     await _requireAddress(addressId, userId);
-    final normalized = _normalize(draft);
     final affected =
         await (_database.update(_database.addresses)..where(
               (table) =>
@@ -77,21 +91,24 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
             ))
             .write(
               AddressesCompanion(
-                line1: Value(normalized.line1),
-                line2: Value(normalized.line2),
-                city: Value(normalized.city),
-                state: Value(normalized.state),
-                postalCode: Value(normalized.postalCode),
-                country: Value(normalized.country),
-                label: Value(normalized.label),
+                line1: Value(draft.line1),
+                line2: Value(draft.line2),
+                city: Value(draft.city),
+                state: Value(draft.state),
+                postalCode: Value(draft.postalCode),
+                country: Value(draft.country),
+                label: Value(draft.label),
               ),
             );
     if (affected != 1) throw const StorageException();
-    return _toEntity((await _find(addressId, userId))!);
+    return (await _addressQuery(
+      addressId,
+      userId,
+    ).map((row) => row.toUserAddressModel()).getSingleOrNull())!;
   });
 
   @override
-  Future<UserAddress> selectPrimary(
+  Future<UserAddressModel> selectPrimary(
     int actorUserId,
     int userId,
     int addressId,
@@ -108,7 +125,10 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
             ))
             .write(const AddressesCompanion(isPrimary: Value(true)));
     if (affected != 1) throw const StorageException();
-    return _toEntity((await _find(addressId, userId))!);
+    return (await _addressQuery(
+      addressId,
+      userId,
+    ).map((row) => row.toUserAddressModel()).getSingleOrNull())!;
   });
 
   @override
@@ -164,51 +184,13 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
     _database.users,
   )..where((table) => table.id.equals(id))).getSingleOrNull();
 
-  Future<AddressesData?> _find(int id, int userId) =>
-      (_database.select(_database.addresses)..where(
-            (table) => table.id.equals(id) & table.userId.equals(userId),
-          ))
-          .getSingleOrNull();
+  Selectable<AddressesData> _addressQuery(int id, int userId) =>
+      _database.select(_database.addresses)
+        ..where((table) => table.id.equals(id) & table.userId.equals(userId));
 
   Future<AddressesData> _requireAddress(int id, int userId) async {
-    final address = await _find(id, userId);
+    final address = await _addressQuery(id, userId).getSingleOrNull();
     if (address == null) throw const NotFoundException();
     return address;
   }
-
-  AddressDraft _normalize(AddressDraft draft) => AddressDraft(
-    line1: _required(draft.line1, 'Address'),
-    line2: _optional(draft.line2),
-    city: _required(draft.city, 'City'),
-    state: _optional(draft.state),
-    postalCode: _optional(draft.postalCode),
-    country: _required(draft.country, 'Country'),
-    label: _required(draft.label, 'Label'),
-  );
-
-  String _required(String value, String field) {
-    final normalized = value.trim();
-    if (normalized.isEmpty) {
-      throw ValidationException(message: '$field is required.');
-    }
-    return normalized;
-  }
-
-  String? _optional(String? value) {
-    final normalized = value?.trim();
-    return normalized == null || normalized.isEmpty ? null : normalized;
-  }
-
-  UserAddress _toEntity(AddressesData row) => UserAddress(
-    id: row.id,
-    userId: row.userId,
-    line1: row.line1,
-    line2: row.line2,
-    city: row.city,
-    state: row.state,
-    postalCode: row.postalCode,
-    country: row.country ?? 'Colombia',
-    label: row.label,
-    isPrimary: row.isPrimary,
-  );
 }

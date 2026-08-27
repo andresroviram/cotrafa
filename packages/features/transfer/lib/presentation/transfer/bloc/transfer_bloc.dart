@@ -9,7 +9,7 @@ import 'package:injectable/injectable.dart';
 @injectable
 class TransferBloc extends Bloc<TransferEvent, TransferState> {
   TransferBloc(this._listParties, this._createTransfer)
-    : super(const TransferState()) {
+    : super(const TransferState.initial()) {
     on<TransferLoadRequested>(_load);
     on<TransferCreateRequested>(_create);
   }
@@ -21,15 +21,14 @@ class TransferBloc extends Bloc<TransferEvent, TransferState> {
     TransferLoadRequested event,
     Emitter<TransferState> emit,
   ) async {
-    emit(const TransferState(status: TransferStatus.loading));
+    emit(TransferState.loading(parties: state.parties));
     final result = await _listParties(event.actorUserId);
     emit(
       result.fold(
-        onSuccess: (parties) =>
-            TransferState(status: TransferStatus.loaded, parties: parties),
-        onFailure: (_) => const TransferState(
-          status: TransferStatus.failure,
-          message: 'transfer.errors.load_parties',
+        onSuccess: (parties) => TransferState.loaded(parties: parties),
+        onFailure: (error) => TransferState.failure(
+          message: error.message,
+          parties: state.parties,
         ),
       ),
     );
@@ -39,45 +38,26 @@ class TransferBloc extends Bloc<TransferEvent, TransferState> {
     TransferCreateRequested event,
     Emitter<TransferState> emit,
   ) async {
-    emit(
-      state.copyWith(
-        status: TransferStatus.submitting,
-        receipt: null,
-        message: null,
-      ),
-    );
-    final description = event.description?.trim();
+    emit(TransferState.submitting(parties: state.parties));
     final result = await _createTransfer(
       TransferCommand(
         actorId: event.actorUserId,
         originId: event.originUserId,
         destinationId: event.destinationUserId,
         amountCop: event.amountCop,
-        description: description == null || description.isEmpty
-            ? null
-            : description,
+        description: event.description,
       ),
     );
     switch (result) {
-      case Error():
+      case Error(error: final error):
         emit(
-          state.copyWith(
-            status: TransferStatus.failure,
-            message: 'transfer.errors.create',
-          ),
+          TransferState.failure(message: error.message, parties: state.parties),
         );
       case Success(value: final receipt):
         var parties = state.parties;
         final refreshed = await _listParties(event.actorUserId);
         if (refreshed case Success(value: final updated)) parties = updated;
-        emit(
-          state.copyWith(
-            status: TransferStatus.completed,
-            parties: parties,
-            receipt: receipt,
-            message: null,
-          ),
-        );
+        emit(TransferState.completed(parties: parties, receipt: receipt));
     }
   }
 }

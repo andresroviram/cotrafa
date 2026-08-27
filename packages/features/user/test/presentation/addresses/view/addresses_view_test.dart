@@ -4,7 +4,9 @@ import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_bloc.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_event.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_state.dart';
+import 'package:feature_user/presentation/addresses/view/addresses_mobile.dart';
 import 'package:feature_user/presentation/addresses/view/addresses_view.dart';
+import 'package:feature_user/presentation/addresses/view/addresses_web.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -67,10 +69,80 @@ void main() {
     );
   }
 
-  testWidgets('renders the empty state and create action', (tester) async {
-    await tester.pumpWidget(
-      subject(const AddressState(status: AddressStatus.loaded)),
+  Widget directSubject(AddressState state, Widget child, Object key) {
+    when(() => bloc.state).thenReturn(state);
+    return MaterialApp(
+      key: ValueKey(key),
+      home: BlocProvider<AddressBloc>.value(value: bloc, child: child),
     );
+  }
+
+  testWidgets('renders every sealed state on mobile and web', (tester) async {
+    const states = <AddressState>[
+      AddressState.initial(),
+      AddressState.loading(),
+      AddressState.loading(addresses: [address]),
+      AddressState.loaded(addresses: []),
+      AddressState.loaded(addresses: [address]),
+      AddressState.ready(),
+      AddressState.ready(addresses: [address]),
+      AddressState.saving(),
+      AddressState.saving(addresses: [address]),
+      AddressState.created(addresses: [address]),
+      AddressState.updated(addresses: [address]),
+      AddressState.primaryUpdated(addresses: [address]),
+      AddressState.deleted(addresses: []),
+      AddressState.deleted(addresses: [address]),
+      AddressState.loadFailure(message: 'load failed'),
+      AddressState.actionFailure(message: 'save failed'),
+      AddressState.actionFailure(message: 'save failed', addresses: [address]),
+    ];
+
+    for (final isWeb in [false, true]) {
+      for (var index = 0; index < states.length; index++) {
+        final child = isWeb
+            ? const AddressesWeb(actorUserId: 1, userId: 2)
+            : const AddressesMobile(actorUserId: 1, userId: 2);
+        await tester.pumpWidget(
+          directSubject(states[index], child, '$isWeb-$index'),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(Scaffold), findsOneWidget);
+      }
+    }
+  });
+
+  testWidgets('listener accepts every non-notifying address state', (
+    tester,
+  ) async {
+    final states = StreamController<AddressState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    await tester.pumpWidget(
+      subject(const AddressState.loaded(addresses: [address])),
+    );
+
+    const safeStates = <AddressState>[
+      AddressState.initial(),
+      AddressState.loading(),
+      AddressState.loaded(addresses: [address]),
+      AddressState.ready(addresses: [address]),
+      AddressState.saving(addresses: [address]),
+      AddressState.created(addresses: [address]),
+      AddressState.updated(addresses: [address]),
+      AddressState.loadFailure(message: 'load failed'),
+    ];
+    for (final state in safeStates) {
+      states.add(state);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('renders the empty state and create action', (tester) async {
+    await tester.pumpWidget(subject(const AddressState.loaded(addresses: [])));
 
     expect(find.text('Direcciones'), findsOneWidget);
     expect(find.text('No hay direcciones registradas'), findsOneWidget);
@@ -79,9 +151,7 @@ void main() {
 
   testWidgets('renders the reference address card hierarchy', (tester) async {
     await tester.pumpWidget(
-      subject(
-        const AddressState(status: AddressStatus.loaded, addresses: [address]),
-      ),
+      subject(const AddressState.loaded(addresses: [address])),
     );
 
     expect(find.byKey(const Key('address-card-10')), findsOneWidget);
@@ -100,12 +170,7 @@ void main() {
       addTearDown(states.close);
       when(() => bloc.stream).thenAnswer((_) => states.stream);
       await tester.pumpWidget(
-        subject(
-          const AddressState(
-            status: AddressStatus.loaded,
-            addresses: [address],
-          ),
-        ),
+        subject(const AddressState.loaded(addresses: [address])),
       );
 
       final refresh = tester
@@ -114,13 +179,8 @@ void main() {
 
       verify(() => bloc.add(const AddressEvent.listRequested(1, 2))).called(1);
       states
-        ..add(const AddressState(status: AddressStatus.loading))
-        ..add(
-          const AddressState(
-            status: AddressStatus.loaded,
-            addresses: [address],
-          ),
-        );
+        ..add(const AddressState.loading())
+        ..add(const AddressState.loaded(addresses: [address]));
       await refresh;
       await tester.pumpAndSettle();
     },
@@ -130,12 +190,7 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      subject(
-        const AddressState(
-          status: AddressStatus.loaded,
-          addresses: [address, secondary],
-        ),
-      ),
+      subject(const AddressState.loaded(addresses: [address, secondary])),
     );
 
     await tester.tap(find.byKey(const Key('address-actions-11')));

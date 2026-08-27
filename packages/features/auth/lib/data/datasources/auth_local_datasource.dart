@@ -3,22 +3,23 @@ import 'package:core/errors/error.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
-import 'package:feature_auth/domain/entities/auth_identity.dart';
+import 'package:feature_auth/data/datasources/mappers/auth_database_mapper.dart';
+import 'package:feature_auth/data/models/auth_identity_model.dart';
 import 'package:injectable/injectable.dart';
 
 abstract interface class IAuthLocalDatasource {
   Future<String> issueActivationCode(int actorUserId, String email);
 
-  Future<AuthIdentity> activate(
+  Future<AuthIdentityModel> activate(
     String email,
     String code,
     String username,
     String password,
   );
 
-  Future<AuthIdentity> login(String identifier, String password);
-  Future<AuthIdentity> loginDemoAdmin();
-  Future<AuthIdentity?> restore();
+  Future<AuthIdentityModel> login(String identifier, String password);
+  Future<AuthIdentityModel> loginDemoAdmin();
+  Future<AuthIdentityModel?> restore();
   Future<void> logout();
 }
 
@@ -45,10 +46,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
             actor.status != 'active') {
           throw const UnauthorizedException();
         }
-        final client = await _userByIdentifier(
-          _normalize(clientEmail),
-          kind: 'email',
-        );
+        final client = await _userByIdentifier(clientEmail, kind: 'email');
         if (client == null ||
             client.role != 'client' ||
             client.status != 'pendingActivation') {
@@ -70,13 +68,13 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
       });
 
   @override
-  Future<AuthIdentity> activate(
+  Future<AuthIdentityModel> activate(
     String email,
     String code,
     String username,
     String password,
   ) => _database.transaction(() async {
-    final client = await _userByIdentifier(_normalize(email), kind: 'email');
+    final client = await _userByIdentifier(email, kind: 'email');
     final codeHash = client?.activationCodeHash;
     if (client == null ||
         client.role != 'client' ||
@@ -85,8 +83,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
         !await _credentialHasher.verify(code, codeHash)) {
       throw const AuthException();
     }
-    final normalizedUsername = _normalize(username);
-    if (await _userByIdentifier(normalizedUsername) != null) {
+    if (await _userByIdentifier(username) != null) {
       throw const DuplicateException();
     }
     final userId = client.id;
@@ -95,7 +92,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
         .into(_database.loginIdentifiers)
         .insert(
           LoginIdentifiersCompanion.insert(
-            normalized: normalizedUsername,
+            normalized: username,
             userId: userId,
             kind: 'username',
           ),
@@ -111,13 +108,13 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
       ),
     );
     await _database.setSessionUserId(userId);
-    return AuthIdentity(userId: userId, role: 'client');
+    return AuthIdentityModel(userId: userId, role: 'client');
   });
 
   @override
-  Future<AuthIdentity> login(String identifier, String password) =>
+  Future<AuthIdentityModel> login(String identifier, String password) =>
       _database.transaction(() async {
-        final user = await _userByIdentifier(_normalize(identifier));
+        final user = await _userByIdentifier(identifier);
         final passwordHash = user?.passwordHash;
         if (user == null ||
             user.status != 'active' ||
@@ -125,24 +122,24 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
             !await _credentialHasher.verify(password, passwordHash)) {
           throw const AuthException();
         }
-        final identity = _identity(user);
+        final identity = user.toAuthIdentityModel();
         await _database.setSessionUserId(identity.userId);
         return identity;
       });
 
   @override
-  Future<AuthIdentity> loginDemoAdmin() =>
+  Future<AuthIdentityModel> loginDemoAdmin() =>
       login(_databaseSeed.email, _databaseSeed.password);
 
   @override
-  Future<AuthIdentity?> restore() async {
+  Future<AuthIdentityModel?> restore() async {
     final userId = await _database.currentSessionUserId();
     final user = userId == null ? null : await _userById(userId);
     if (user == null || user.status != 'active') {
       await _database.delete(_database.localSession).go();
       return null;
     }
-    return _identity(user);
+    return user.toAuthIdentityModel();
   }
 
   @override
@@ -166,9 +163,4 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
     ])..where(predicate);
     return (await query.getSingleOrNull())?.readTable(users);
   }
-
-  AuthIdentity _identity(User user) =>
-      AuthIdentity(userId: user.id, role: user.role);
-
-  String _normalize(String value) => value.trim().toLowerCase();
 }

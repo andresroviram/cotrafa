@@ -193,23 +193,34 @@ class _UserFormState extends State<UserForm> {
             ],
             const SizedBox(height: 24),
             BlocBuilder<UserBloc, UserState>(
-              buildWhen: (previous, current) =>
-                  previous.status != current.status,
-              builder: (context, state) => FilledButton(
-                key: Key('$_keyPrefix-submit'),
-                onPressed: state.status == UserStatus.loading ? null : _submit,
-                child: state.status == UserStatus.loading
-                    ? const SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        (widget.isEditing
-                                ? 'user.form.save'
-                                : 'user.form.create')
-                            .tr(),
-                      ),
-              ),
+              buildWhen: (previous, current) => previous != current,
+              builder: (context, state) {
+                final isLoading = state.when(
+                  initial: (_, _) => false,
+                  loading: (_, _) => true,
+                  loaded: (_, _) => false,
+                  created: (_, _) => false,
+                  updated: (_, _) => false,
+                  deleted: (_, _, _) => false,
+                  information: (_, _, _) => false,
+                  failure: (_, _, _) => false,
+                );
+                return FilledButton(
+                  key: Key('$_keyPrefix-submit'),
+                  onPressed: isLoading ? null : _submit,
+                  child: isLoading
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          (widget.isEditing
+                                  ? 'user.form.save'
+                                  : 'user.form.create')
+                              .tr(),
+                        ),
+                );
+              },
             ),
           ],
         ),

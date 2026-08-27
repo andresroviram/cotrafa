@@ -73,14 +73,19 @@ void main() {
       const TransferEvent.loadRequested(2),
     );
     expect(
-      const TransferState(
-        status: TransferStatus.loaded,
-        parties: [origin, destination],
+      const TransferState.loaded(parties: [origin, destination]),
+      const TransferState.loaded(parties: [origin, destination]),
+    );
+    expect(
+      const TransferState.submitting(parties: [origin]).when(
+        initial: (_) => 'initial',
+        loading: (_) => 'loading',
+        loaded: (_) => 'loaded',
+        submitting: (_) => 'submitting',
+        completed: (_, _) => 'completed',
+        failure: (_, _) => 'failure',
       ),
-      const TransferState(
-        status: TransferStatus.loaded,
-        parties: [origin, destination],
-      ),
+      'submitting',
     );
   });
 
@@ -94,20 +99,14 @@ void main() {
     build: buildBloc,
     act: (bloc) => bloc.add(const TransferEvent.loadRequested(2)),
     expect: () => const [
-      TransferState(status: TransferStatus.loading),
-      TransferState(
-        status: TransferStatus.loaded,
-        parties: [origin, destination],
-      ),
+      TransferState.loading(),
+      TransferState.loaded(parties: [origin, destination]),
     ],
   );
 
   blocTest<TransferBloc, TransferState>(
     'creates a transfer and refreshes balances',
-    seed: () => const TransferState(
-      status: TransferStatus.loaded,
-      parties: [origin, destination],
-    ),
+    seed: () => const TransferState.loaded(parties: [origin, destination]),
     setUp: () {
       when(
         () => repository.createTransfer(command),
@@ -127,12 +126,8 @@ void main() {
       ),
     ),
     expect: () => const [
-      TransferState(
-        status: TransferStatus.submitting,
-        parties: [origin, destination],
-      ),
-      TransferState(
-        status: TransferStatus.completed,
+      TransferState.submitting(parties: [origin, destination]),
+      TransferState.completed(
         parties: [updatedDestination, updatedOrigin],
         receipt: receipt,
       ),
@@ -141,10 +136,7 @@ void main() {
 
   blocTest<TransferBloc, TransferState>(
     'keeps the form data available when creation fails',
-    seed: () => const TransferState(
-      status: TransferStatus.loaded,
-      parties: [origin, destination],
-    ),
+    seed: () => const TransferState.loaded(parties: [origin, destination]),
     setUp: () {
       when(() => repository.createTransfer(command)).thenAnswer(
         (_) async =>
@@ -162,14 +154,10 @@ void main() {
       ),
     ),
     expect: () => const [
-      TransferState(
-        status: TransferStatus.submitting,
+      TransferState.submitting(parties: [origin, destination]),
+      TransferState.failure(
         parties: [origin, destination],
-      ),
-      TransferState(
-        status: TransferStatus.failure,
-        parties: [origin, destination],
-        message: 'transfer.errors.create',
+        message: 'Insufficient balance.',
       ),
     ],
   );

@@ -41,9 +41,7 @@ void main() {
 
   Future<void> pumpApp(WidgetTester tester, Locale locale) async {
     final authBloc = MockAuthBloc();
-    when(
-      () => authBloc.state,
-    ).thenReturn(const AuthState(status: AuthStatus.unauthenticated));
+    when(() => authBloc.state).thenReturn(const AuthState.unauthenticated());
     when(
       () => authBloc.stream,
     ).thenAnswer((_) => const Stream<AuthState>.empty());

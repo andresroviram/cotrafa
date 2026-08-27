@@ -21,7 +21,7 @@ void main() {
 
     for (final responsiveView in [mobile, web]) {
       expect(responsiveView, contains('BlocBuilder<UserBloc, UserState>'));
-      expect(responsiveView, contains('state.resolve('));
+      expect(responsiveView, contains('state.when('));
       expect(responsiveView, isNot(contains('AppNotification')));
       expect(responsiveView, isNot(contains('ScaffoldMessenger')));
     }
@@ -54,7 +54,7 @@ void main() {
 
       for (final responsiveView in [mobile, web]) {
         expect(responsiveView, contains('BlocBuilder<$blocContract>'));
-        expect(responsiveView, contains('state.resolve('));
+        expect(responsiveView, contains('state.when('));
         expect(responsiveView, isNot(contains('AppNotification')));
         expect(responsiveView, isNot(contains('ScaffoldMessenger')));
       }

@@ -1,3 +1,4 @@
+import 'package:core/errors/result.dart';
 import 'package:feature_auth/presentation/login/view/login_view.dart';
 import 'package:feature_auth/routes.dart';
 import 'package:feature_transfer/presentation/transfer/view/transfer_view.dart';
@@ -29,7 +30,7 @@ void main() {
                 parentNavigatorKey: GlobalKey<NavigatorState>(),
                 actorUserId: () => 1,
                 isAdmin: () => true,
-                issueActivationCode: (_, _) async => null,
+                issueActivationCode: (_, _) async => const Success('123456'),
               ).routes.single
               as GoRoute)
           .path,

@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:core/get_it.dart';
+import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
+import 'package:feature_user/presentation/user_edit/view/user_edit_mobile.dart';
 import 'package:feature_user/presentation/user_edit/view/user_edit_view.dart';
+import 'package:feature_user/presentation/user_edit/view/user_edit_web.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,7 +31,8 @@ void main() {
 
   tearDown(() async => getIt.reset());
 
-  Widget app(Widget home) => MaterialApp(
+  Widget app(Widget home, {Key? key}) => MaterialApp(
+    key: key,
     builder: (context, child) => ResponsiveBreakpoints.builder(
       child: child!,
       breakpoints: const [
@@ -37,10 +43,97 @@ void main() {
     home: home,
   );
 
+  Widget directSubject(UserState state, Widget child, Object key) {
+    when(() => bloc.state).thenReturn(state);
+    return app(
+      BlocProvider<UserBloc>.value(value: bloc, child: child),
+      key: ValueKey(key),
+    );
+  }
+
+  testWidgets('renders every edit state on mobile and web', (tester) async {
+    const user = UserProfile(
+      id: 2,
+      email: 'sofia@cotrafa.local',
+      fullName: 'Sofia Rovira',
+      firstName: 'Sofia',
+      lastName: 'Rovira',
+      role: 'client',
+      status: 'active',
+      balanceCop: 250000,
+    );
+    const states = <UserState>[
+      UserState.initial(),
+      UserState.loading(),
+      UserState.loading(users: [user]),
+      UserState.loaded(),
+      UserState.loaded(users: [user]),
+      UserState.created(users: [user]),
+      UserState.updated(users: [user]),
+      UserState.deleted(users: [user], deleteOutcome: DeleteOutcome.deleted),
+      UserState.information(message: 'information', users: [user]),
+      UserState.failure(message: 'failure'),
+      UserState.failure(message: 'failure', users: [user]),
+    ];
+
+    for (final isWeb in [false, true]) {
+      for (var index = 0; index < states.length; index++) {
+        final child = isWeb
+            ? const UserEditWeb(actorUserId: 1, userId: 2)
+            : const UserEditMobile(actorUserId: 1, userId: 2);
+        await tester.pumpWidget(
+          directSubject(states[index], child, '$isWeb-$index'),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(Scaffold), findsOneWidget);
+      }
+    }
+  });
+
+  testWidgets('listener accepts every non-notifying edit state', (
+    tester,
+  ) async {
+    final states = StreamController<UserState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    const user = UserProfile(
+      id: 2,
+      email: 'sofia@cotrafa.local',
+      fullName: 'Sofia Rovira',
+      role: 'client',
+      status: 'active',
+      balanceCop: 250000,
+    );
+    when(() => bloc.state).thenReturn(const UserState.loaded(users: [user]));
+    await tester.pumpWidget(
+      app(
+        BlocProvider<UserBloc>.value(
+          value: bloc,
+          child: const UserEditView(actorUserId: 1, userId: 2),
+        ),
+      ),
+    );
+
+    const safeStates = <UserState>[
+      UserState.initial(),
+      UserState.loading(users: [user]),
+      UserState.loaded(users: [user]),
+      UserState.created(users: [user]),
+      UserState.deleted(users: [user], deleteOutcome: DeleteOutcome.deleted),
+    ];
+    for (final state in safeStates) {
+      states.add(state);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('loads the requested user when the full route opens', (
     tester,
   ) async {
-    when(() => bloc.state).thenReturn(const UserState());
+    when(() => bloc.state).thenReturn(const UserState.initial());
     getIt.registerFactory<UserBloc>(() => bloc);
 
     await tester.pumpWidget(
@@ -65,9 +158,7 @@ void main() {
       status: 'active',
       balanceCop: 250000,
     );
-    when(
-      () => bloc.state,
-    ).thenReturn(UserState(status: UserStatus.loaded, users: [user]));
+    when(() => bloc.state).thenReturn(UserState.loaded(users: [user]));
 
     await tester.pumpWidget(
       app(
@@ -149,9 +240,7 @@ void main() {
         status: 'active',
         balanceCop: 250000,
       );
-      when(
-        () => bloc.state,
-      ).thenReturn(const UserState(status: UserStatus.loaded, users: [user]));
+      when(() => bloc.state).thenReturn(const UserState.loaded(users: [user]));
 
       await tester.pumpWidget(
         app(

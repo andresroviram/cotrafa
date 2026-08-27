@@ -1,7 +1,8 @@
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_transfer/data/datasources/transfer_local_datasource.dart';
-import 'package:feature_transfer/domain/entities/receipt_action.dart';
+import 'package:feature_transfer/data/models/transfer_party_model.dart';
+import 'package:feature_transfer/data/models/transfer_receipt_model.dart';
 import 'package:feature_transfer/domain/entities/transfer_command.dart';
 import 'package:feature_transfer/domain/entities/transfer_party.dart';
 import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
@@ -16,31 +17,31 @@ final class TransferRepositoryImpl implements ITransferRepository {
 
   @override
   Future<Result<List<TransferParty>>> listParties(int actorUserId) =>
-      Future<List<TransferParty>>.sync(
-        () => _datasource.listParties(actorUserId),
-      ).toResult(fallback: const StorageFailure());
+      Future<List<TransferPartyModel>>.sync(
+            () => _datasource.listParties(actorUserId),
+          )
+          .then((models) => models.map((model) => model.toEntity()).toList())
+          .toResult(fallback: const StorageFailure());
 
   @override
   Future<Result<List<TransferReceipt>>> listTransfers(int actorUserId) =>
-      Future<List<TransferReceipt>>.sync(
-        () => _datasource.listTransfers(actorUserId),
-      ).toResult(fallback: const StorageReadFailure());
+      Future<List<TransferReceiptModel>>.sync(
+            () => _datasource.listTransfers(actorUserId),
+          )
+          .then((models) => models.map((model) => model.toEntity()).toList())
+          .toResult(fallback: const StorageReadFailure());
 
   @override
   Future<Result<TransferReceipt>> createTransfer(TransferCommand command) =>
-      Future<TransferReceipt>.sync(
-        () => _datasource.createTransfer(command),
-      ).toResult(fallback: const StorageFailure());
+      Future<TransferReceiptModel>.sync(
+            () => _datasource.createTransfer(command),
+          )
+          .then((model) => model.toEntity())
+          .toResult(fallback: const StorageFailure());
 
   @override
   Future<Result<TransferReceipt>> getReceipt(String id) =>
-      Future<TransferReceipt>.sync(
-        () => _datasource.getReceipt(id),
-      ).toResult(fallback: const StorageReadFailure());
-
-  @override
-  Future<Result<void>> requestReceiptAction(String id, ReceiptAction action) =>
-      Future<void>.sync(
-        () => _datasource.requestReceiptAction(id, action),
-      ).toResult(fallback: const StorageFailure());
+      Future<TransferReceiptModel>.sync(() => _datasource.getReceipt(id))
+          .then((model) => model.toEntity())
+          .toResult(fallback: const StorageReadFailure());
 }

@@ -1,3 +1,4 @@
+import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_transfer/domain/entities/receipt_action.dart';
 import 'package:feature_transfer/domain/entities/transfer_command.dart';
@@ -32,21 +33,63 @@ final class ListTransfers extends _TransferUseCase {
 final class CreateTransfer extends _TransferUseCase {
   const CreateTransfer(super.repository);
 
-  Future<Result<TransferReceipt>> call(TransferCommand command) =>
-      repository.createTransfer(command);
+  Future<Result<TransferReceipt>> call(TransferCommand command) {
+    if (command.amountCop <= 0) {
+      return Future.value(
+        const Error<TransferReceipt>(
+          ValidationFailure(
+            message: 'Transfer amount must be greater than zero.',
+          ),
+        ),
+      );
+    }
+    if (command.originId == command.destinationId) {
+      return Future.value(
+        const Error<TransferReceipt>(
+          ValidationFailure(
+            message: 'Origin and destination must be different.',
+          ),
+        ),
+      );
+    }
+    final description = command.description?.trim();
+    return repository.createTransfer(
+      TransferCommand(
+        actorId: command.actorId,
+        originId: command.originId,
+        destinationId: command.destinationId,
+        amountCop: command.amountCop,
+        description: description == null || description.isEmpty
+            ? null
+            : description,
+      ),
+    );
+  }
 }
 
 @injectable
 final class GetTransferReceipt extends _TransferUseCase {
   const GetTransferReceipt(super.repository);
 
-  Future<Result<TransferReceipt>> call(String id) => repository.getReceipt(id);
+  Future<Result<TransferReceipt>> call(String id) {
+    final normalizedId = id.trim();
+    return normalizedId.isEmpty
+        ? Future.value(
+            const Error<TransferReceipt>(
+              ValidationFailure(message: 'Receipt id is required.'),
+            ),
+          )
+        : repository.getReceipt(normalizedId);
+  }
 }
 
 @injectable
-final class RequestReceiptAction extends _TransferUseCase {
-  const RequestReceiptAction(super.repository);
+final class RequestReceiptAction {
+  const RequestReceiptAction();
 
-  Future<Result<void>> call(String id, ReceiptAction action) =>
-      repository.requestReceiptAction(id, action);
+  Future<Result<void>> call(String id, ReceiptAction action) => Future.value(
+    const Error<void>(
+      ValidationFailure(message: 'Transfer receipts are read-only.'),
+    ),
+  );
 }

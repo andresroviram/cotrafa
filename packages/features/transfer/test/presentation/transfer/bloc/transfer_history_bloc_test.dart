@@ -38,14 +38,17 @@ void main() {
       const TransferHistoryEvent.loadRequested(2),
     );
     expect(
-      const TransferHistoryState(
-        status: TransferHistoryStatus.loaded,
-        transfers: [transfer],
+      const TransferHistoryState.loaded(transfers: [transfer]),
+      const TransferHistoryState.loaded(transfers: [transfer]),
+    );
+    expect(
+      const TransferHistoryState.failure(message: 'failure').when(
+        initial: () => 'initial',
+        loading: () => 'loading',
+        loaded: (_) => 'loaded',
+        failure: (message) => message,
       ),
-      const TransferHistoryState(
-        status: TransferHistoryStatus.loaded,
-        transfers: [transfer],
-      ),
+      'failure',
     );
   });
 
@@ -59,11 +62,8 @@ void main() {
     build: buildBloc,
     act: (bloc) => bloc.add(const TransferHistoryEvent.loadRequested(2)),
     expect: () => const [
-      TransferHistoryState(status: TransferHistoryStatus.loading),
-      TransferHistoryState(
-        status: TransferHistoryStatus.loaded,
-        transfers: [transfer],
-      ),
+      TransferHistoryState.loading(),
+      TransferHistoryState.loaded(transfers: [transfer]),
     ],
   );
 
@@ -77,10 +77,9 @@ void main() {
     build: buildBloc,
     act: (bloc) => bloc.add(const TransferHistoryEvent.loadRequested(2)),
     expect: () => const [
-      TransferHistoryState(status: TransferHistoryStatus.loading),
-      TransferHistoryState(
-        status: TransferHistoryStatus.failure,
-        message: 'transfer.errors.load_history',
+      TransferHistoryState.loading(),
+      TransferHistoryState.failure(
+        message: 'Error al leer los datos almacenados.',
       ),
     ],
   );

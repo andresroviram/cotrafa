@@ -43,15 +43,13 @@ void main() {
 
   testWidgets('shows the failed transfer widget', (tester) async {
     await tester.pumpWidget(
-      subject(
-        const TransferOutcome.failure('transfer.form.insufficient_balance'),
-      ),
+      subject(const TransferOutcome.failure('Insufficient balance.')),
     );
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('transfer-result-failure')), findsOneWidget);
     expect(find.text('Transferencia fallida'), findsOneWidget);
-    expect(find.text('Saldo insuficiente.'), findsOneWidget);
+    expect(find.text('Insufficient balance.'), findsOneWidget);
     expect(find.text('Intentar nuevamente'), findsOneWidget);
     expect(find.text('Volver al historial'), findsOneWidget);
     expect(find.byKey(const Key('transfer-result-success')), findsNothing);

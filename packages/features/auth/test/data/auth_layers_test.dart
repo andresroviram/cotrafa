@@ -105,6 +105,14 @@ void main() {
       '${root.path}/domain/usecases/auth_usecases.dart',
     ).readAsStringSync();
     expect(repositorySource, isNot(contains('cotrafa_database.dart')));
+    expect(repositorySource, contains('model.toEntity()'));
+    final datasourceSource = File(
+      '${root.path}/data/datasources/auth_local_datasource.dart',
+    ).readAsStringSync();
+    expect(
+      datasourceSource,
+      isNot(contains('domain/entities/auth_identity.dart')),
+    );
     expect(useCaseSource, isNot(contains('/data/')));
   });
 }

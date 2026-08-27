@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:bot_toast/bot_toast.dart';
+import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
+import 'package:feature_user/presentation/user_detail/view/user_detail_mobile.dart';
 import 'package:feature_user/presentation/user_detail/view/user_detail_view.dart';
+import 'package:feature_user/presentation/user_detail/view/user_detail_web.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -28,9 +31,7 @@ void main() {
   });
 
   Widget subject(UserProfile user) {
-    when(
-      () => bloc.state,
-    ).thenReturn(UserState(status: UserStatus.loaded, users: [user]));
+    when(() => bloc.state).thenReturn(UserState.loaded(users: [user]));
     return MaterialApp(
       locale: const Locale('es'),
       supportedLocales: const [Locale('es'), Locale('en')],
@@ -58,6 +59,85 @@ void main() {
       ),
     );
   }
+
+  Widget directSubject(UserState state, Widget child, Object key) {
+    when(() => bloc.state).thenReturn(state);
+    return MaterialApp(
+      key: ValueKey(key),
+      home: BlocProvider<UserBloc>.value(value: bloc, child: child),
+    );
+  }
+
+  testWidgets('renders every detail state on mobile and web', (tester) async {
+    const user = UserProfile(
+      id: 2,
+      email: 'sofia@cotrafa.local',
+      fullName: 'Sofia Rovira',
+      firstName: 'Sofia',
+      lastName: 'Rovira',
+      role: 'client',
+      status: 'active',
+      balanceCop: 250000,
+    );
+    const states = <UserState>[
+      UserState.initial(),
+      UserState.loading(),
+      UserState.loading(users: [user]),
+      UserState.loaded(),
+      UserState.loaded(users: [user]),
+      UserState.created(users: [user]),
+      UserState.updated(users: [user]),
+      UserState.deleted(users: [user], deleteOutcome: DeleteOutcome.deleted),
+      UserState.information(message: 'information', users: [user]),
+      UserState.failure(message: 'failure'),
+      UserState.failure(message: 'failure', users: [user]),
+    ];
+
+    for (final isWeb in [false, true]) {
+      for (var index = 0; index < states.length; index++) {
+        final child = isWeb
+            ? const UserDetailWeb(actorUserId: 1, userId: 2)
+            : const UserDetailMobile(actorUserId: 1, userId: 2);
+        await tester.pumpWidget(
+          directSubject(states[index], child, '$isWeb-$index'),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(Scaffold), findsOneWidget);
+      }
+    }
+  });
+
+  testWidgets('listener accepts every non-notifying detail state', (
+    tester,
+  ) async {
+    final states = StreamController<UserState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    const user = UserProfile(
+      id: 2,
+      email: 'sofia@cotrafa.local',
+      fullName: 'Sofia Rovira',
+      role: 'client',
+      status: 'active',
+      balanceCop: 250000,
+    );
+    await tester.pumpWidget(subject(user));
+
+    const safeStates = <UserState>[
+      UserState.initial(),
+      UserState.loading(users: [user]),
+      UserState.loaded(users: [user]),
+      UserState.created(users: [user]),
+      UserState.deleted(users: [user], deleteOutcome: DeleteOutcome.deleted),
+    ];
+    for (final state in safeStates) {
+      states.add(state);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    }
+  });
 
   testWidgets('copies the reference detail hierarchy with optional data', (
     tester,
@@ -189,7 +269,7 @@ void main() {
     await tester.pumpAndSettle();
     clearInteractions(bloc);
 
-    states.add(const UserState(status: UserStatus.updated, users: [user]));
+    states.add(const UserState.updated(users: [user]));
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('edit-user-submit')), findsNothing);

@@ -1,9 +1,9 @@
+import 'package:core/errors/result.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/presentation/users/activation_code_issuer.dart';
 import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
-import 'package:feature_user/presentation/users/bloc/user_state_x.dart';
 import 'package:feature_user/presentation/user_detail/view/user_detail_view.dart';
 import 'package:feature_user/presentation/user_edit/view/user_edit_view.dart';
 import 'package:feature_user/presentation/users/widgets/activation_code_dialog.dart';
@@ -36,33 +36,29 @@ class UsersMobile extends StatelessWidget {
       appBar: AppBar(centerTitle: false, title: Text('user.list.title'.tr())),
       body: BlocBuilder<UserBloc, UserState>(
         buildWhen: _buildWhen,
-        builder: (context, state) => state.resolve(
-          loading: () => UsersContent.loading(
+        builder: (context, state) => state.when(
+          initial: (_, _) => UsersContent.loading(
             actorUserId: actorUserId,
             isAdmin: isAdmin,
             issueActivationCode: issueActivationCode,
           ),
-          failure: (_) => UsersContent.failure(
-            actorUserId: actorUserId,
-            isAdmin: isAdmin,
-            issueActivationCode: issueActivationCode,
-          ),
-          empty: () => UsersContent.empty(
-            actorUserId: actorUserId,
-            isAdmin: isAdmin,
-            issueActivationCode: issueActivationCode,
-          ),
-          data: (resolved) => UsersContent.data(
-            state: resolved,
-            actorUserId: actorUserId,
-            isAdmin: isAdmin,
-            issueActivationCode: issueActivationCode,
-            onOpenDetail: (user) => _openDetail(router, bloc, user),
-            onOpenEdit: (user) => _openEdit(router, bloc, user),
-            onGenerateActivationCode: (user) =>
-                _generateActivationCode(navigatorContext, bloc, user),
-            onDelete: (user) => _deleteUser(navigatorContext, bloc, user),
-          ),
+          loading: (users, _) => users.isEmpty
+              ? _loading()
+              : _data(state, router, bloc, navigatorContext),
+          loaded: (users, _) => users.isEmpty
+              ? _empty()
+              : _data(state, router, bloc, navigatorContext),
+          created: (_, _) => _data(state, router, bloc, navigatorContext),
+          updated: (_, _) => _data(state, router, bloc, navigatorContext),
+          deleted: (users, _, _) => users.isEmpty
+              ? _empty()
+              : _data(state, router, bloc, navigatorContext),
+          information: (_, users, _) => users.isEmpty
+              ? _empty()
+              : _data(state, router, bloc, navigatorContext),
+          failure: (_, users, _) => users.isEmpty
+              ? _failure()
+              : _data(state, router, bloc, navigatorContext),
         ),
       ),
       floatingActionButton: _canCreate
@@ -77,6 +73,41 @@ class UsersMobile extends StatelessWidget {
   }
 
   bool get _canCreate => isAdmin && issueActivationCode != null;
+
+  UsersContent _loading() => UsersContent.loading(
+    actorUserId: actorUserId,
+    isAdmin: isAdmin,
+    issueActivationCode: issueActivationCode,
+  );
+
+  UsersContent _failure() => UsersContent.failure(
+    actorUserId: actorUserId,
+    isAdmin: isAdmin,
+    issueActivationCode: issueActivationCode,
+  );
+
+  UsersContent _empty() => UsersContent.empty(
+    actorUserId: actorUserId,
+    isAdmin: isAdmin,
+    issueActivationCode: issueActivationCode,
+  );
+
+  UsersContent _data(
+    UserState state,
+    GoRouter? router,
+    UserBloc bloc,
+    BuildContext navigatorContext,
+  ) => UsersContent.data(
+    state: state,
+    actorUserId: actorUserId,
+    isAdmin: isAdmin,
+    issueActivationCode: issueActivationCode,
+    onOpenDetail: (user) => _openDetail(router, bloc, user),
+    onOpenEdit: (user) => _openEdit(router, bloc, user),
+    onGenerateActivationCode: (user) =>
+        _generateActivationCode(navigatorContext, bloc, user),
+    onDelete: (user) => _deleteUser(navigatorContext, bloc, user),
+  );
 
   Future<void> _openCreate(BuildContext context) async {
     if (issueActivationCode == null) return;
@@ -124,24 +155,22 @@ class UsersMobile extends StatelessWidget {
   ) async {
     final issuer = issueActivationCode;
     if (issuer == null) return;
-    final code = await issuer(actorUserId, user.email);
+    final result = await issuer(actorUserId, user.email);
     if (!context.mounted) return;
-    if (code == null) {
-      bloc.add(
-        const UserEvent.notificationRequested('user.notifications.code_error'),
-      );
-      return;
+    switch (result) {
+      case Error(error: final error):
+        bloc.add(UserEvent.failureRequested(error.message));
+      case Success(value: final code):
+        await showActivationCodeDialog(
+          context,
+          code: code,
+          onCopied: () => bloc.add(
+            const UserEvent.informationRequested(
+              'user.notifications.code_copied',
+            ),
+          ),
+        );
     }
-    await showActivationCodeDialog(
-      context,
-      code: code,
-      onCopied: () => bloc.add(
-        const UserEvent.notificationRequested(
-          'user.notifications.code_copied',
-          type: UserNotificationType.info,
-        ),
-      ),
-    );
   }
 
   Future<void> _deleteUser(
@@ -156,7 +185,4 @@ class UsersMobile extends StatelessWidget {
   }
 }
 
-bool _buildWhen(UserState previous, UserState current) =>
-    previous.status != current.status ||
-    previous.users != current.users ||
-    previous.searchQuery != current.searchQuery;
+bool _buildWhen(UserState previous, UserState current) => previous != current;

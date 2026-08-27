@@ -4,8 +4,8 @@ import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
-import 'package:feature_user/domain/entities/delete_outcome.dart';
-import 'package:feature_user/domain/entities/user_profile.dart';
+import 'package:feature_user/data/models/delete_outcome_model.dart';
+import 'package:feature_user/data/models/user_profile_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -33,11 +33,11 @@ void main() {
     expect(admin.lastName, _demoSeed.lastName);
     expect(admin.fullName, _demoSeed.fullName);
     expect(admin.username, _demoSeed.username);
-    expect(admin.displayName, _demoSeed.fullName);
+    expect(admin.toEntity().displayName, _demoSeed.fullName);
   });
 
-  test('admin CRUD rejects invalid identifiers or balance', () async {
-    final created = await _create(users, ' CLIENT@EXAMPLE.COM ', 250);
+  test('admin CRUD persists normalized use-case input', () async {
+    final created = await _create(users, 'client@example.com', 250);
     expect(created.email, 'client@example.com');
     expect(created.firstName, 'Client');
     expect(created.lastName, 'User');
@@ -63,7 +63,7 @@ void main() {
     expect(updated.birthDate, DateTime.utc(2000, 6, 15));
     expect(updated.phone, '3001234567');
     await expectLater(
-      _create(users, CotrafaDatabaseSeed.test.email.toUpperCase(), 0),
+      _create(users, CotrafaDatabaseSeed.test.email, 0),
       throwsA(isA<DuplicateException>()),
     );
     await database.customStatement(
@@ -71,30 +71,8 @@ void main() {
     );
     expect((await users.getUser(1, created.id)).username, 'reserved');
     await expectLater(
-      _create(users, 'RESERVED', 0),
+      _create(users, 'reserved', 0),
       throwsA(isA<DuplicateException>()),
-    );
-    await expectLater(
-      _create(users, 'negative@example.com', -1),
-      throwsA(
-        isA<ValidationException>().having(
-          (error) => error.message,
-          'message',
-          'Initial balance cannot be negative.',
-        ),
-      ),
-    );
-    await expectLater(
-      users.createClient(
-        1,
-        email: 'missing-name@example.com',
-        firstName: ' ',
-        lastName: 'User',
-        birthDate: null,
-        phone: null,
-        initialBalanceCop: 0,
-      ),
-      throwsA(isA<ValidationException>()),
     );
     expect((await users.listUsers(1)).length, 2);
   });
@@ -165,7 +143,7 @@ void main() {
       "INSERT INTO addresses (user_id,line1,city,label,is_primary) VALUES (${client.id},'One','Medellin','Home',1)",
     );
     await database.setSessionUserId(client.id);
-    expect(await users.deleteUser(1, client.id), DeleteOutcome.deleted);
+    expect(await users.deleteUser(1, client.id), DeleteOutcomeModel.deleted);
     expect(await _count(database, 'users', 'id=${client.id}'), 0);
     expect(
       await _count(database, 'login_identifiers', 'user_id=${client.id}'),
@@ -193,7 +171,10 @@ void main() {
     );
     await database.setSessionUserId(origin.id);
     await database.customStatement(_transferSql(origin.id, destination.id));
-    expect(await users.deleteUser(1, origin.id), DeleteOutcome.deactivated);
+    expect(
+      await users.deleteUser(1, origin.id),
+      DeleteOutcomeModel.deactivated,
+    );
     final retained = await _user(database, origin.id);
     expect(retained.read<String>('status'), 'inactive');
     expect(retained.read<int>('balance_cop'), 100);
@@ -222,7 +203,7 @@ void main() {
   });
 }
 
-Future<UserProfile> _activeClient(
+Future<UserProfileModel> _activeClient(
   UserLocalDatasource users,
   CotrafaDatabase database,
   String email,
@@ -235,7 +216,7 @@ Future<UserProfile> _activeClient(
   return user;
 }
 
-Future<UserProfile> _create(
+Future<UserProfileModel> _create(
   UserLocalDatasource users,
   String email,
   int balance,

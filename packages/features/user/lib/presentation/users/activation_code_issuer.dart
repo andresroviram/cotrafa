@@ -1,2 +1,4 @@
+import 'package:core/errors/result.dart';
+
 typedef ActivationCodeIssuer =
-    Future<String?> Function(int actorUserId, String email);
+    Future<Result<String>> Function(int actorUserId, String email);

@@ -41,7 +41,7 @@ class TransferFailureContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    message.tr(),
+                    message,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge,
                   ),

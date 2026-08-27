@@ -22,12 +22,12 @@ class _Logout extends Mock implements Logout {}
 void main() {
   const identity = AuthIdentity(userId: 7, role: 'client');
   const authenticatedStates = <AuthState>[
-    AuthState(status: AuthStatus.loading),
-    AuthState(status: AuthStatus.authenticated, identity: identity),
+    AuthState.loading(),
+    AuthState.authenticated(identity),
   ];
   const signInFailureStates = <AuthState>[
-    AuthState(status: AuthStatus.loading),
-    AuthState(status: AuthStatus.failure, message: 'auth.errors.sign_in'),
+    AuthState.loading(),
+    AuthState.failure('users.password_hash'),
   ];
   late _Restore restore;
   late _Login login;
@@ -62,12 +62,19 @@ void main() {
     );
   });
 
-  test('Freezed state has value equality and generated copyWith', () {
-    const authenticated = AuthState(identity: identity);
-    expect(authenticated, const AuthState(identity: identity));
+  test('Freezed state has value equality and generated union dispatch', () {
+    const authenticated = AuthState.authenticated(identity);
+    expect(authenticated, const AuthState.authenticated(identity));
     expect(
-      authenticated.copyWith(status: AuthStatus.loading, identity: null),
-      const AuthState(status: AuthStatus.loading),
+      authenticated.when(
+        initial: () => null,
+        loading: () => null,
+        unauthenticated: () => null,
+        authenticated: (value) => value,
+        activationSuccess: (value) => value,
+        failure: (_) => null,
+      ),
+      identity,
     );
   });
 
@@ -89,13 +96,13 @@ void main() {
     build: build,
     act: (bloc) => bloc.add(const AuthEvent.restoreRequested()),
     expect: () => const <AuthState>[
-      AuthState(status: AuthStatus.loading),
-      AuthState(status: AuthStatus.unauthenticated),
+      AuthState.loading(),
+      AuthState.unauthenticated(),
     ],
   );
 
   blocTest<AuthBloc, AuthState>(
-    'restore failure exposes a safe message',
+    'restore failure exposes the Result error message',
     setUp: () => when(restore.call).thenAnswer(
       (_) async => const Error<AuthIdentity?>(
         StorageReadFailure(message: 'local_session storage details'),
@@ -104,8 +111,8 @@ void main() {
     build: build,
     act: (bloc) => bloc.add(const AuthEvent.restoreRequested()),
     expect: () => const <AuthState>[
-      AuthState(status: AuthStatus.loading),
-      AuthState(status: AuthStatus.failure, message: 'auth.errors.restore'),
+      AuthState.loading(),
+      AuthState.failure('local_session storage details'),
     ],
   );
 
@@ -121,7 +128,7 @@ void main() {
   );
 
   blocTest<AuthBloc, AuthState>(
-    'demo failure does not leak infrastructure details',
+    'demo failure exposes the Result error message',
     setUp: () => when(loginDemoAdmin.call).thenAnswer(
       (_) async => const Error<AuthIdentity>(
         StorageFailure(message: 'users.password_hash'),
@@ -145,7 +152,7 @@ void main() {
   }
 
   blocTest<AuthBloc, AuthState>(
-    'login failure does not leak infrastructure details',
+    'login failure exposes the Result error message',
     setUp: () => when(() => login(any(), any())).thenAnswer(
       (_) async => const Error<AuthIdentity>(
         StorageFailure(message: 'users.password_hash'),
@@ -171,13 +178,13 @@ void main() {
       ),
     ),
     expect: () => const <AuthState>[
-      AuthState(status: AuthStatus.loading),
-      AuthState(status: AuthStatus.activationSuccess, identity: identity),
+      AuthState.loading(),
+      AuthState.activationSuccess(identity),
     ],
   );
 
   blocTest<AuthBloc, AuthState>(
-    'activation failure exposes a safe message',
+    'activation failure exposes the Result error message',
     setUp: () => when(() => activate(any(), any(), any(), any())).thenAnswer(
       (_) async => const Error<AuthIdentity>(
         AuthFailure(message: 'activation_code_hash mismatch'),
@@ -193,8 +200,8 @@ void main() {
       ),
     ),
     expect: () => const <AuthState>[
-      AuthState(status: AuthStatus.loading),
-      AuthState(status: AuthStatus.failure, message: 'auth.errors.activate'),
+      AuthState.loading(),
+      AuthState.failure('activation_code_hash mismatch'),
     ],
   );
 
@@ -203,17 +210,16 @@ void main() {
     setUp: () =>
         when(logout.call).thenAnswer((_) async => const Success<void>(null)),
     build: build,
-    seed: () =>
-        const AuthState(status: AuthStatus.authenticated, identity: identity),
+    seed: () => const AuthState.authenticated(identity),
     act: (bloc) => bloc.add(const AuthEvent.logoutRequested()),
     expect: () => const <AuthState>[
-      AuthState(status: AuthStatus.loading),
-      AuthState(status: AuthStatus.unauthenticated),
+      AuthState.loading(),
+      AuthState.unauthenticated(),
     ],
   );
 
   blocTest<AuthBloc, AuthState>(
-    'logout failure exposes a safe message',
+    'logout failure exposes the Result error message',
     setUp: () => when(logout.call).thenAnswer(
       (_) async => const Error<void>(
         StorageFailure(message: 'local_session delete failed'),
@@ -222,8 +228,8 @@ void main() {
     build: build,
     act: (bloc) => bloc.add(const AuthEvent.logoutRequested()),
     expect: () => const <AuthState>[
-      AuthState(status: AuthStatus.loading),
-      AuthState(status: AuthStatus.failure, message: 'auth.errors.sign_out'),
+      AuthState.loading(),
+      AuthState.failure('local_session delete failed'),
     ],
   );
 }

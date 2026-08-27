@@ -1,6 +1,8 @@
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
+import 'package:feature_user/data/models/delete_outcome_model.dart';
+import 'package:feature_user/data/models/user_profile_model.dart';
 import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/entities/user_profile.dart';
 import 'package:feature_user/domain/repository/i_user_repository.dart';
@@ -15,12 +17,14 @@ final class UserRepositoryImpl implements IUserRepository {
   @override
   Future<Result<List<UserProfile>>> listUsers(int actorUserId) => _datasource
       .listUsers(actorUserId)
+      .then((models) => models.map((model) => model.toEntity()).toList())
       .toResult(fallback: const StorageFailure());
 
   @override
   Future<Result<UserProfile>> getUser(int actorUserId, int userId) =>
       _datasource
           .getUser(actorUserId, userId)
+          .then((model) => model.toEntity())
           .toResult(fallback: const StorageFailure());
 
   @override
@@ -42,6 +46,7 @@ final class UserRepositoryImpl implements IUserRepository {
         phone: phone,
         initialBalanceCop: initialBalanceCop,
       )
+      .then((model) => model.toEntity())
       .toResult(fallback: const StorageFailure());
 
   @override
@@ -61,11 +66,13 @@ final class UserRepositoryImpl implements IUserRepository {
         birthDate: birthDate,
         phone: phone,
       )
+      .then((model) => model.toEntity())
       .toResult(fallback: const StorageFailure());
 
   @override
   Future<Result<DeleteOutcome>> deleteUser(int actorUserId, int userId) =>
       _datasource
           .deleteUser(actorUserId, userId)
+          .then((model) => model.toEntity())
           .toResult(fallback: const StorageFailure());
 }

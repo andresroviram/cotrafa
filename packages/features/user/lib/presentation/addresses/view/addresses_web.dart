@@ -3,7 +3,6 @@ import 'package:feature_user/presentation/address_form/view/address_form_view.da
 import 'package:feature_user/presentation/addresses/bloc/address_bloc.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_event.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_state.dart';
-import 'package:feature_user/presentation/addresses/bloc/address_state_x.dart';
 import 'package:feature_user/presentation/addresses/widgets/address_delete_dialog.dart';
 import 'package:feature_user/presentation/addresses/widgets/address_list_content.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -32,22 +31,31 @@ class AddressesWeb extends StatelessWidget {
         child: SizedBox(
           width: 760,
           child: BlocBuilder<AddressBloc, AddressState>(
-            builder: (context, state) => state.resolve(
-              loading: () =>
-                  AddressListContent.loading(onRefresh: () => _refresh(bloc)),
-              failure: (_) => AddressListContent.failure(
-                onRefresh: () => _refresh(bloc),
-                onRetry: () => _reload(bloc),
-              ),
-              empty: () =>
-                  AddressListContent.empty(onRefresh: () => _refresh(bloc)),
-              data: (resolved) => AddressListContent.data(
-                addresses: resolved.addresses,
-                onRefresh: () => _refresh(bloc),
-                onEdit: (address) => _edit(router, bloc, address),
-                onSetPrimary: (address) => _setPrimary(bloc, address),
-                onDelete: (address) => _delete(navigatorContext, bloc, address),
-              ),
+            builder: (context, state) => state.when(
+              initial: (_, _) => _loading(bloc),
+              loading: (addresses, _) => addresses.isEmpty
+                  ? _loading(bloc)
+                  : _data(state, router, bloc, navigatorContext),
+              loaded: (addresses, _) => addresses.isEmpty
+                  ? _empty(bloc)
+                  : _data(state, router, bloc, navigatorContext),
+              ready: (addresses, _) => addresses.isEmpty
+                  ? _empty(bloc)
+                  : _data(state, router, bloc, navigatorContext),
+              saving: (addresses, _) => addresses.isEmpty
+                  ? _empty(bloc)
+                  : _data(state, router, bloc, navigatorContext),
+              created: (_, _) => _data(state, router, bloc, navigatorContext),
+              updated: (_, _) => _data(state, router, bloc, navigatorContext),
+              primaryUpdated: (_, _) =>
+                  _data(state, router, bloc, navigatorContext),
+              deleted: (addresses, _) => addresses.isEmpty
+                  ? _empty(bloc)
+                  : _data(state, router, bloc, navigatorContext),
+              loadFailure: (_, _, _) => _failure(bloc),
+              actionFailure: (_, addresses, _) => addresses.isEmpty
+                  ? _empty(bloc)
+                  : _data(state, router, bloc, navigatorContext),
             ),
           ),
         ),
@@ -60,6 +68,30 @@ class AddressesWeb extends StatelessWidget {
       ),
     );
   }
+
+  AddressListContent _loading(AddressBloc bloc) =>
+      AddressListContent.loading(onRefresh: () => _refresh(bloc));
+
+  AddressListContent _failure(AddressBloc bloc) => AddressListContent.failure(
+    onRefresh: () => _refresh(bloc),
+    onRetry: () => _reload(bloc),
+  );
+
+  AddressListContent _empty(AddressBloc bloc) =>
+      AddressListContent.empty(onRefresh: () => _refresh(bloc));
+
+  AddressListContent _data(
+    AddressState state,
+    GoRouter? router,
+    AddressBloc bloc,
+    BuildContext navigatorContext,
+  ) => AddressListContent.data(
+    addresses: state.addresses,
+    onRefresh: () => _refresh(bloc),
+    onEdit: (address) => _edit(router, bloc, address),
+    onSetPrimary: (address) => _setPrimary(bloc, address),
+    onDelete: (address) => _delete(navigatorContext, bloc, address),
+  );
 
   Future<void> _create(BuildContext context) async {
     final created = await context.pushNamed<bool>(
@@ -102,9 +134,23 @@ class AddressesWeb extends StatelessWidget {
 
   Future<void> _refresh(AddressBloc bloc) async {
     final completed = bloc.stream
-        .skipWhile((state) => state.status != AddressStatus.loading)
-        .firstWhere((state) => state.status != AddressStatus.loading);
+        .skipWhile((state) => !_isLoading(state))
+        .firstWhere((state) => !_isLoading(state));
     _reload(bloc);
     await completed;
   }
 }
+
+bool _isLoading(AddressState state) => state.when(
+  initial: (_, _) => false,
+  loading: (_, _) => true,
+  loaded: (_, _) => false,
+  ready: (_, _) => false,
+  saving: (_, _) => false,
+  created: (_, _) => false,
+  updated: (_, _) => false,
+  primaryUpdated: (_, _) => false,
+  deleted: (_, _) => false,
+  loadFailure: (_, _, _) => false,
+  actionFailure: (_, _, _) => false,
+);
