@@ -1,6 +1,7 @@
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_user/data/datasources/mappers/user_database_mapper.dart';
 import 'package:feature_user/data/models/delete_outcome_model.dart';
 import 'package:feature_user/data/models/user_profile_model.dart';
 import 'package:injectable/injectable.dart';
@@ -40,8 +41,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     if (!await _isActiveAdmin(actorUserId)) {
       throw const UnauthorizedException();
     }
-    final rows = await _profileRows();
-    return rows.map(_profile).toList();
+    return _profiles().get();
   }
 
   @override
@@ -199,7 +199,7 @@ final class UserLocalDatasource implements IUserLocalDatasource {
           .getSingleOrNull()
           .then((identifier) => identifier != null);
 
-  Future<List<TypedResult>> _profileRows({int? userId}) {
+  Selectable<UserProfileModel> _profiles({int? userId}) {
     final query = _database.select(_database.users).join([
       leftOuterJoin(
         _database.loginIdentifiers,
@@ -212,39 +212,17 @@ final class UserLocalDatasource implements IUserLocalDatasource {
     } else {
       query.where(_database.users.id.equals(userId));
     }
-    return query.get();
+    return query.map((row) {
+      final user = row.readTable(_database.users);
+      final username = row
+          .readTableOrNull(_database.loginIdentifiers)
+          ?.normalized;
+      return user.toUserProfileModel(username: username);
+    });
   }
 
-  Future<UserProfileModel?> _profileById(int userId) async {
-    final rows = await _profileRows(userId: userId);
-    return rows.isEmpty ? null : _profile(rows.single);
-  }
-
-  UserProfileModel _profile(TypedResult row) {
-    final user = row.readTable(_database.users);
-    final username = row
-        .readTableOrNull(_database.loginIdentifiers)
-        ?.normalized;
-    return UserProfileModel(
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      username: username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      birthDate: switch (user.birthDate) {
-        final milliseconds? => DateTime.fromMillisecondsSinceEpoch(
-          milliseconds,
-          isUtc: true,
-        ),
-        null => null,
-      },
-      phone: user.phone,
-      role: user.role,
-      status: user.status,
-      balanceCop: user.balanceCop,
-    );
-  }
+  Future<UserProfileModel?> _profileById(int userId) =>
+      _profiles(userId: userId).getSingleOrNull();
 
   int? _date(DateTime? value) => value == null
       ? null

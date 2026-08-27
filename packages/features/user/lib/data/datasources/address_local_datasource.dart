@@ -1,6 +1,7 @@
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_user/data/datasources/mappers/user_database_mapper.dart';
 import 'package:feature_user/data/models/user_address_model.dart';
 import 'package:feature_user/domain/entities/user_address.dart';
 import 'package:injectable/injectable.dart';
@@ -38,7 +39,7 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
     final query = _database.select(_database.addresses)
       ..where((table) => table.userId.equals(userId))
       ..orderBy([(table) => OrderingTerm.asc(table.id)]);
-    return (await query.get()).map(_toModel).toList();
+    return query.map((row) => row.toUserAddressModel()).get();
   }
 
   @override
@@ -68,7 +69,10 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
             isPrimary: Value(existing == null),
           ),
         );
-    return _toModel((await _find(id, userId))!);
+    return (await _addressQuery(
+      id,
+      userId,
+    ).map((row) => row.toUserAddressModel()).getSingleOrNull())!;
   });
 
   @override
@@ -97,7 +101,10 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
               ),
             );
     if (affected != 1) throw const StorageException();
-    return _toModel((await _find(addressId, userId))!);
+    return (await _addressQuery(
+      addressId,
+      userId,
+    ).map((row) => row.toUserAddressModel()).getSingleOrNull())!;
   });
 
   @override
@@ -118,7 +125,10 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
             ))
             .write(const AddressesCompanion(isPrimary: Value(true)));
     if (affected != 1) throw const StorageException();
-    return _toModel((await _find(addressId, userId))!);
+    return (await _addressQuery(
+      addressId,
+      userId,
+    ).map((row) => row.toUserAddressModel()).getSingleOrNull())!;
   });
 
   @override
@@ -174,28 +184,13 @@ final class AddressLocalDatasource implements IAddressLocalDatasource {
     _database.users,
   )..where((table) => table.id.equals(id))).getSingleOrNull();
 
-  Future<AddressesData?> _find(int id, int userId) =>
-      (_database.select(_database.addresses)..where(
-            (table) => table.id.equals(id) & table.userId.equals(userId),
-          ))
-          .getSingleOrNull();
+  Selectable<AddressesData> _addressQuery(int id, int userId) =>
+      _database.select(_database.addresses)
+        ..where((table) => table.id.equals(id) & table.userId.equals(userId));
 
   Future<AddressesData> _requireAddress(int id, int userId) async {
-    final address = await _find(id, userId);
+    final address = await _addressQuery(id, userId).getSingleOrNull();
     if (address == null) throw const NotFoundException();
     return address;
   }
-
-  UserAddressModel _toModel(AddressesData row) => UserAddressModel(
-    id: row.id,
-    userId: row.userId,
-    line1: row.line1,
-    line2: row.line2,
-    city: row.city,
-    state: row.state,
-    postalCode: row.postalCode,
-    country: row.country ?? 'Colombia',
-    label: row.label,
-    isPrimary: row.isPrimary,
-  );
 }

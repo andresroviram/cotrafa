@@ -20,6 +20,21 @@ void main() {
       expect(report.activeExceptions, isEmpty);
     });
 
+    test('allows persistence imports in a datasource database mapper', () {
+      final BoundaryScanReport report =
+          scanArchitectureSources(<ArchitectureSource>[
+            const ArchitectureSource(
+              path: 'data/datasources/mappers/user_database_mapper.dart',
+              content:
+                  "import 'package:cotrafa_database/"
+                  "cotrafa_database.dart';",
+            ),
+          ]);
+
+      expect(report.violations, isEmpty);
+      expect(report.activeExceptions, isEmpty);
+    });
+
     test('rejects reverse application and presentation data imports', () {
       final BoundaryScanReport report =
           scanArchitectureSources(<ArchitectureSource>[
@@ -663,7 +678,10 @@ bool _isPersistenceOwner(String path) =>
     path.startsWith('src/database/') ||
     ((path.startsWith('data/datasources/') ||
             path.contains('/data/datasources/')) &&
-        path.endsWith('_local_datasource.dart'));
+        path.endsWith('_local_datasource.dart')) ||
+    ((path.startsWith('data/datasources/mappers/') ||
+            path.contains('/data/datasources/mappers/')) &&
+        path.endsWith('_database_mapper.dart'));
 
 bool _isInvalidFinalFeaturePath(String path) {
   if (path.startsWith('features/')) {

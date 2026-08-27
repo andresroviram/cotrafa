@@ -3,6 +3,7 @@ import 'package:core/errors/error.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_auth/data/datasources/mappers/auth_database_mapper.dart';
 import 'package:feature_auth/data/models/auth_identity_model.dart';
 import 'package:injectable/injectable.dart';
 
@@ -121,7 +122,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
             !await _credentialHasher.verify(password, passwordHash)) {
           throw const AuthException();
         }
-        final identity = _identity(user);
+        final identity = user.toAuthIdentityModel();
         await _database.setSessionUserId(identity.userId);
         return identity;
       });
@@ -138,7 +139,7 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
       await _database.delete(_database.localSession).go();
       return null;
     }
-    return _identity(user);
+    return user.toAuthIdentityModel();
   }
 
   @override
@@ -162,7 +163,4 @@ final class AuthLocalDatasource implements IAuthLocalDatasource {
     ])..where(predicate);
     return (await query.getSingleOrNull())?.readTable(users);
   }
-
-  AuthIdentityModel _identity(User user) =>
-      AuthIdentityModel(userId: user.id, role: user.role);
 }

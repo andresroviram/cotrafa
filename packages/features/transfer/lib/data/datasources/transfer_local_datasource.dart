@@ -1,6 +1,7 @@
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_transfer/data/datasources/mappers/transfer_database_mapper.dart';
 import 'package:feature_transfer/data/models/transfer_party_model.dart';
 import 'package:feature_transfer/data/models/transfer_receipt_model.dart';
 import 'package:feature_transfer/domain/entities/transfer_command.dart';
@@ -41,15 +42,13 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
     if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
     }
-    final rows =
-        await (_database.select(_database.users)
-              ..where((table) => table.status.equals('active'))
-              ..orderBy([
-                (table) => OrderingTerm.asc(table.fullName),
-                (table) => OrderingTerm.asc(table.email),
-              ]))
-            .get();
-    return rows.map(_party).toList();
+    final query = _database.select(_database.users)
+      ..where((table) => table.status.equals('active'))
+      ..orderBy([
+        (table) => OrderingTerm.asc(table.fullName),
+        (table) => OrderingTerm.asc(table.email),
+      ]);
+    return query.map((user) => user.toTransferPartyModel()).get();
   }
 
   @override
@@ -70,8 +69,7 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
       (table) => OrderingTerm.desc(table.createdAt),
       (table) => OrderingTerm.desc(table.id),
     ]);
-    final rows = await query.get();
-    return rows.map(_receipt).toList();
+    return query.map((transfer) => transfer.toTransferReceiptModel()).get();
   }
 
   @override
@@ -148,48 +146,33 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
             destinationSnapshot: _snapshot(destination),
           ),
         );
-    final row = await _receiptRow(id);
-    if (row == null) {
+    final receipt = await _receiptQuery(
+      id,
+    ).map((transfer) => transfer.toTransferReceiptModel()).getSingleOrNull();
+    if (receipt == null) {
       throw const StorageException(
         message: 'Inserted transfer receipt is unreadable.',
       );
     }
-    return _receipt(row);
+    return receipt;
   });
 
   @override
   Future<TransferReceiptModel> getReceipt(String id) async {
-    final row = await _receiptRow(id);
-    if (row == null) throw const NotFoundException();
-    return _receipt(row);
+    final receipt = await _receiptQuery(
+      id,
+    ).map((transfer) => transfer.toTransferReceiptModel()).getSingleOrNull();
+    if (receipt == null) throw const NotFoundException();
+    return receipt;
   }
 
   Future<User?> _user(int id) => (_database.select(
     _database.users,
   )..where((table) => table.id.equals(id))).getSingleOrNull();
 
-  Future<Transfer?> _receiptRow(String id) => (_database.select(
-    _database.transfers,
-  )..where((table) => table.id.equals(id))).getSingleOrNull();
-
-  TransferPartyModel _party(User user) => TransferPartyModel(
-    id: user.id,
-    fullName: user.fullName,
-    email: user.email,
-    balanceCop: user.balanceCop,
-  );
+  Selectable<Transfer> _receiptQuery(String id) =>
+      _database.select(_database.transfers)
+        ..where((table) => table.id.equals(id));
 
   String _snapshot(User user) => '${user.fullName} <${user.email}>';
-
-  TransferReceiptModel _receipt(Transfer transfer) => TransferReceiptModel(
-    id: transfer.id,
-    originUserId: transfer.originUserId,
-    destinationUserId: transfer.destinationUserId,
-    amountCop: transfer.amountCop,
-    status: transfer.status,
-    description: transfer.description,
-    createdAt: transfer.createdAt,
-    originSnapshot: transfer.originSnapshot,
-    destinationSnapshot: transfer.destinationSnapshot,
-  );
 }
