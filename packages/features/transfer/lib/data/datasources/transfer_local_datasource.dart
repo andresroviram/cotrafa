@@ -1,16 +1,16 @@
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart';
+import 'package:feature_transfer/data/models/transfer_party_model.dart';
+import 'package:feature_transfer/data/models/transfer_receipt_model.dart';
 import 'package:feature_transfer/domain/entities/transfer_command.dart';
-import 'package:feature_transfer/domain/entities/transfer_party.dart';
-import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
 import 'package:injectable/injectable.dart';
 
 abstract interface class ITransferLocalDatasource {
-  Future<List<TransferParty>> listParties(int actorUserId);
-  Future<List<TransferReceipt>> listTransfers(int actorUserId);
-  Future<TransferReceipt> createTransfer(TransferCommand command);
-  Future<TransferReceipt> getReceipt(String id);
+  Future<List<TransferPartyModel>> listParties(int actorUserId);
+  Future<List<TransferReceiptModel>> listTransfers(int actorUserId);
+  Future<TransferReceiptModel> createTransfer(TransferCommand command);
+  Future<TransferReceiptModel> getReceipt(String id);
 }
 
 @LazySingleton(as: ITransferLocalDatasource)
@@ -36,7 +36,7 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
       DateTime.now().microsecondsSinceEpoch.toRadixString(36);
 
   @override
-  Future<List<TransferParty>> listParties(int actorUserId) async {
+  Future<List<TransferPartyModel>> listParties(int actorUserId) async {
     final actor = await _user(actorUserId);
     if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
@@ -53,7 +53,7 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
   }
 
   @override
-  Future<List<TransferReceipt>> listTransfers(int actorUserId) async {
+  Future<List<TransferReceiptModel>> listTransfers(int actorUserId) async {
     final actor = await _user(actorUserId);
     if (actor == null || actor.status != 'active') {
       throw const UnauthorizedException();
@@ -75,7 +75,7 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
   }
 
   @override
-  Future<TransferReceipt> createTransfer(
+  Future<TransferReceiptModel> createTransfer(
     TransferCommand command,
   ) => _database.transaction(() async {
     final actor = await _user(command.actorId);
@@ -158,7 +158,7 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
   });
 
   @override
-  Future<TransferReceipt> getReceipt(String id) async {
+  Future<TransferReceiptModel> getReceipt(String id) async {
     final row = await _receiptRow(id);
     if (row == null) throw const NotFoundException();
     return _receipt(row);
@@ -172,7 +172,7 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
     _database.transfers,
   )..where((table) => table.id.equals(id))).getSingleOrNull();
 
-  TransferParty _party(User user) => TransferParty(
+  TransferPartyModel _party(User user) => TransferPartyModel(
     id: user.id,
     fullName: user.fullName,
     email: user.email,
@@ -181,7 +181,7 @@ final class TransferLocalDatasource implements ITransferLocalDatasource {
 
   String _snapshot(User user) => '${user.fullName} <${user.email}>';
 
-  TransferReceipt _receipt(Transfer transfer) => TransferReceipt(
+  TransferReceiptModel _receipt(Transfer transfer) => TransferReceiptModel(
     id: transfer.id,
     originUserId: transfer.originUserId,
     destinationUserId: transfer.destinationUserId,

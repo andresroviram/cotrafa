@@ -1,6 +1,8 @@
 import 'package:core/errors/error.dart';
 import 'package:core/errors/result.dart';
 import 'package:feature_transfer/data/datasources/transfer_local_datasource.dart';
+import 'package:feature_transfer/data/models/transfer_party_model.dart';
+import 'package:feature_transfer/data/models/transfer_receipt_model.dart';
 import 'package:feature_transfer/data/repository/transfer_repository_impl.dart';
 import 'package:feature_transfer/domain/entities/receipt_action.dart';
 import 'package:feature_transfer/domain/entities/transfer_command.dart';
@@ -30,8 +32,27 @@ void main() {
     originSnapshot: 'Origin <origin@test.co>',
     destinationSnapshot: 'Destination <destination@test.co>',
   );
+  const receiptModel = TransferReceiptModel(
+    id: 'receipt-1',
+    originUserId: 2,
+    destinationUserId: 3,
+    amountCop: 100,
+    status: 'completed',
+    description: null,
+    createdAt: 1,
+    originSnapshot: 'Origin <origin@test.co>',
+    destinationSnapshot: 'Destination <destination@test.co>',
+  );
   const parties = [
     TransferParty(
+      id: 2,
+      fullName: 'Origin',
+      email: 'origin@test.co',
+      balanceCop: 500,
+    ),
+  ];
+  const partyModels = [
+    TransferPartyModel(
       id: 2,
       fullName: 'Origin',
       email: 'origin@test.co',
@@ -52,24 +73,28 @@ void main() {
   test(
     'repository and use cases expose transfers through Core Result',
     () async {
-      when(() => datasource.listParties(2)).thenAnswer((_) async => parties);
+      when(
+        () => datasource.listParties(2),
+      ).thenAnswer((_) async => partyModels);
       when(
         () => datasource.listTransfers(2),
-      ).thenAnswer((_) async => [receipt]);
+      ).thenAnswer((_) async => [receiptModel]);
       when(
         () => datasource.createTransfer(command),
-      ).thenAnswer((_) async => receipt);
+      ).thenAnswer((_) async => receiptModel);
       when(
         () => datasource.getReceipt('receipt-1'),
-      ).thenAnswer((_) async => receipt);
+      ).thenAnswer((_) async => receiptModel);
 
-      expect(await ListTransferParties(repository)(2), const Success(parties));
+      expect((await ListTransferParties(repository)(2)).valueOrNull, parties);
       expect((await ListTransfers(repository)(2)).valueOrNull, [receipt]);
       expect(await CreateTransfer(repository)(command), const Success(receipt));
       expect(
         await GetTransferReceipt(repository)('receipt-1'),
         const Success(receipt),
       );
+      expect(receiptModel.toEntity(), receipt);
+      expect(partyModels.single.toEntity(), parties.single);
     },
   );
 
@@ -112,7 +137,7 @@ void main() {
     );
     when(
       () => datasource.createTransfer(normalized),
-    ).thenAnswer((_) async => receipt);
+    ).thenAnswer((_) async => receiptModel);
 
     expect(
       await CreateTransfer(repository)(
