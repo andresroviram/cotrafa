@@ -2,9 +2,9 @@ import 'package:core/errors/error.dart';
 import 'package:drift/drift.dart' show QueryRow;
 import 'package:drift/native.dart';
 import 'package:feature_auth/data/datasources/auth_local_datasource.dart';
+import 'package:feature_auth/data/models/auth_identity_model.dart';
 import 'package:core/security/activation_code_generator.dart';
 import 'package:core/security/credential_hasher.dart';
-import 'package:feature_auth/domain/entities/auth_identity.dart';
 import 'package:cotrafa_database/cotrafa_database.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -113,7 +113,7 @@ void main() {
         'alice',
         'secret',
       );
-      expect(activated, const AuthIdentity(userId: 2, role: 'client'));
+      expect(activated, const AuthIdentityModel(userId: 2, role: 'client'));
       expect(await database.currentSessionUserId(), 2);
       row = await _client(database);
       expect(row.read<String>('status'), 'active');
@@ -152,7 +152,7 @@ void main() {
       );
       expect(
         await auth.loginDemoAdmin(),
-        AuthIdentity(userId: _demoSeed.userId, role: 'admin'),
+        AuthIdentityModel(userId: _demoSeed.userId, role: 'admin'),
       );
 
       await database.customStatement(
