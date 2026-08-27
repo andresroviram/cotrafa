@@ -259,24 +259,24 @@ El proyecto mantiene un umbral mínimo de cobertura del **60%** en el CI/CD. Los
 ### Estado actual
 
 ```text
-Total:                    80.34% ✅ (2677/3332 líneas)
-├─ features/              83.00% ✅ (2451/2953 líneas)
-├─ components/            85.71% ✅ (24/28 líneas)
-├─ apps/cotrafa-app/      78.36% ✅ (105/134 líneas)
-├─ core/                  45.45% ⚠️ (40/88 líneas)
-└─ database/              44.19% ⚠️ (57/129 líneas)
+Total:                    84.40% ✅ (3361/3982 líneas)
+├─ features/              87.18% ✅ (3101/3557 líneas)
+├─ components/            83.78% ✅ (31/37 líneas)
+├─ apps/cotrafa-app/      73.83% ✅ (110/149 líneas)
+├─ core/                  55.14% ⚠️ (59/107 líneas)
+└─ database/              45.45% ⚠️ (60/132 líneas)
 ```
 
 El umbral se aplica al **total consolidado del workspace**. Core y Database quedan identificados como las áreas prioritarias para elevar la cobertura por package.
 
 ### Resumen de tests
 
-- **189 tests** ejecutándose exitosamente.
+- **216 tests** ejecutándose exitosamente.
 - **1 prueba de integración móvil** para el recorrido crítico completo en Android.
-- **50 tests de widgets** para vistas, formularios, navegación y componentes.
+- **71 tests de widgets** para vistas, formularios, navegación y componentes.
 - **36 tests de BLoC** para eventos, estados y transiciones.
-- **103 tests adicionales** de dominio, datasources, repositorios, persistencia, DI y arquitectura.
-- **80.34% de cobertura total**, 20.34 puntos por encima del umbral del 60%.
+- **109 tests adicionales** de dominio, datasources, repositorios, persistencia, DI y arquitectura.
+- **84.40% de cobertura total**, 24.40 puntos por encima del umbral del 60%.
 
 ### Scripts de cobertura
 
