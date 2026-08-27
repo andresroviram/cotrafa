@@ -16,10 +16,7 @@ final class AddressRepositoryImpl implements IAddressRepository {
   Future<Result<List<UserAddress>>> list(int actorUserId, int userId) =>
       _datasource
           .list(actorUserId, userId)
-          .then(
-            (models) =>
-                models.map((model) => model.toEntity()).toList(growable: false),
-          )
+          .then((models) => models.map((model) => model.toEntity()).toList())
           .toResult(fallback: const StorageFailure());
 
   @override

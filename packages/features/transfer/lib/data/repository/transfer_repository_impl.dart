@@ -20,10 +20,7 @@ final class TransferRepositoryImpl implements ITransferRepository {
       Future<List<TransferPartyModel>>.sync(
             () => _datasource.listParties(actorUserId),
           )
-          .then(
-            (models) =>
-                models.map((model) => model.toEntity()).toList(growable: false),
-          )
+          .then((models) => models.map((model) => model.toEntity()).toList())
           .toResult(fallback: const StorageFailure());
 
   @override
@@ -31,10 +28,7 @@ final class TransferRepositoryImpl implements ITransferRepository {
       Future<List<TransferReceiptModel>>.sync(
             () => _datasource.listTransfers(actorUserId),
           )
-          .then(
-            (models) =>
-                models.map((model) => model.toEntity()).toList(growable: false),
-          )
+          .then((models) => models.map((model) => model.toEntity()).toList())
           .toResult(fallback: const StorageReadFailure());
 
   @override

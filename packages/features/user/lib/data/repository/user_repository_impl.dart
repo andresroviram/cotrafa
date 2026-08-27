@@ -17,10 +17,7 @@ final class UserRepositoryImpl implements IUserRepository {
   @override
   Future<Result<List<UserProfile>>> listUsers(int actorUserId) => _datasource
       .listUsers(actorUserId)
-      .then(
-        (models) =>
-            models.map((model) => model.toEntity()).toList(growable: false),
-      )
+      .then((models) => models.map((model) => model.toEntity()).toList())
       .toResult(fallback: const StorageFailure());
 
   @override
