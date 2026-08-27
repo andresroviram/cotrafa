@@ -52,6 +52,18 @@ void main() {
     final result = await repository.list(1, 2);
     expect(result.valueOrNull, const [address]);
     expect(addressModel.toEntity(), address);
+    expect(addressModel.props, [
+      1,
+      2,
+      'Calle 10 # 20-30',
+      'El Poblado',
+      'Medellín',
+      'Antioquia',
+      '050021',
+      'Colombia',
+      'Casa',
+      true,
+    ]);
   });
 
   test(

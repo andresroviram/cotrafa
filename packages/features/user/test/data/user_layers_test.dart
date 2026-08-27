@@ -6,6 +6,7 @@ import 'package:core/errors/result.dart';
 import 'package:core/security/credential_hasher.dart';
 import 'package:drift/native.dart';
 import 'package:feature_user/data/datasources/user_local_datasource.dart';
+import 'package:feature_user/data/models/user_profile_model.dart';
 import 'package:feature_user/data/repository/user_repository_impl.dart';
 import 'package:feature_user/domain/entities/delete_outcome.dart';
 import 'package:feature_user/domain/usecases/user_usecases.dart';
@@ -32,6 +33,49 @@ void main() {
   });
 
   tearDown(() => database.close());
+
+  test('profile model exposes value equality and maps to the domain', () {
+    final birthDate = DateTime.utc(2000, 1, 1);
+    final model = UserProfileModel(
+      id: 2,
+      email: 'client@example.com',
+      fullName: 'Client User',
+      username: 'client.user',
+      firstName: 'Client',
+      lastName: 'User',
+      birthDate: birthDate,
+      phone: '3001234567',
+      role: 'client',
+      status: 'active',
+      balanceCop: 150000,
+    );
+
+    expect(model.props, [
+      2,
+      'client@example.com',
+      'Client User',
+      'client.user',
+      'Client',
+      'User',
+      birthDate,
+      '3001234567',
+      'client',
+      'active',
+      150000,
+    ]);
+    final entity = model.toEntity();
+    expect(entity.id, 2);
+    expect(entity.email, 'client@example.com');
+    expect(entity.fullName, 'Client User');
+    expect(entity.username, 'client.user');
+    expect(entity.firstName, 'Client');
+    expect(entity.lastName, 'User');
+    expect(entity.birthDate, birthDate);
+    expect(entity.phone, '3001234567');
+    expect(entity.role, 'client');
+    expect(entity.status, 'active');
+    expect(entity.balanceCop, 150000);
+  });
 
   test('layered user flow exposes CRUD through Core Result', () async {
     final created = await CreateClient(repository)(

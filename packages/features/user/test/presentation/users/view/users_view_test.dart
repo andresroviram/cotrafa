@@ -10,7 +10,9 @@ import 'package:feature_user/presentation/users/bloc/user_bloc.dart';
 import 'package:feature_user/presentation/users/bloc/user_event.dart';
 import 'package:feature_user/presentation/users/bloc/user_state.dart';
 import 'package:feature_user/presentation/user_detail/view/user_detail_view.dart';
+import 'package:feature_user/presentation/users/view/users_mobile.dart';
 import 'package:feature_user/presentation/users/view/users_view.dart';
+import 'package:feature_user/presentation/users/view/users_web.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -101,6 +103,14 @@ void main() {
     );
   }
 
+  Widget directSubject(UserState state, Widget child, Object key) {
+    when(() => bloc.state).thenReturn(state);
+    return app(
+      BlocProvider<UserBloc>.value(value: bloc, child: child),
+      key: ValueKey(key),
+    );
+  }
+
   Widget routedApp(GoRouter router) => MaterialApp.router(
     locale: const Locale('es'),
     supportedLocales: const [Locale('es'), Locale('en')],
@@ -117,6 +127,76 @@ void main() {
       ),
     ),
   );
+
+  testWidgets('renders every sealed state on mobile and web', (tester) async {
+    const user = UserProfile(
+      id: 2,
+      email: 'client@cotrafa.test',
+      fullName: 'Sofia Rovira',
+      role: 'client',
+      status: 'active',
+      balanceCop: 250000,
+    );
+    const states = <UserState>[
+      UserState.initial(),
+      UserState.loading(),
+      UserState.loading(users: [user]),
+      UserState.loaded(),
+      UserState.loaded(users: [user]),
+      UserState.created(users: [user]),
+      UserState.updated(users: [user]),
+      UserState.deleted(users: [], deleteOutcome: DeleteOutcome.deleted),
+      UserState.deleted(
+        users: [user],
+        deleteOutcome: DeleteOutcome.deactivated,
+      ),
+      UserState.information(message: 'information'),
+      UserState.information(message: 'information', users: [user]),
+      UserState.failure(message: 'failure'),
+      UserState.failure(message: 'failure', users: [user]),
+    ];
+
+    for (final isWeb in [false, true]) {
+      for (var index = 0; index < states.length; index++) {
+        final child = isWeb
+            ? UsersWeb(
+                actorUserId: 1,
+                isAdmin: true,
+                issueActivationCode: (_, _) async => const Success('1234'),
+              )
+            : UsersMobile(
+                actorUserId: 1,
+                isAdmin: true,
+                issueActivationCode: (_, _) async => const Success('1234'),
+              );
+        await tester.pumpWidget(
+          directSubject(states[index], child, '$isWeb-$index'),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(Scaffold), findsOneWidget);
+      }
+    }
+  });
+
+  testWidgets('listener accepts non-notifying list states', (tester) async {
+    final states = StreamController<UserState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    await tester.pumpWidget(subject(const UserState.loaded()));
+
+    const safeStates = <UserState>[
+      UserState.initial(),
+      UserState.loading(),
+      UserState.loaded(),
+    ];
+    for (final state in safeStates) {
+      states.add(state);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    }
+  });
 
   testWidgets('loads the correct scope from the authenticated actor', (
     tester,

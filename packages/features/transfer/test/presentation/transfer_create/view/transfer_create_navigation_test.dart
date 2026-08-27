@@ -126,4 +126,30 @@ void main() {
     expect(find.text('Insufficient balance.'), findsOneWidget);
     expect(find.byKey(const Key('transfer-create-content')), findsNothing);
   });
+
+  testWidgets('ignores transitions that are not submission results', (
+    tester,
+  ) async {
+    await tester.pumpWidget(subject());
+    await tester.pumpAndSettle();
+
+    const ignoredStates = <TransferState>[
+      TransferState.initial(),
+      TransferState.loading(),
+      TransferState.loaded(parties: [party]),
+      TransferState.completed(parties: [party], receipt: receipt),
+      TransferState.failure(parties: [party], message: 'Ignored failure'),
+      TransferState.submitting(parties: [party]),
+      TransferState.initial(parties: [party]),
+      TransferState.submitting(parties: [party]),
+      TransferState.loading(parties: [party]),
+      TransferState.submitting(parties: [party]),
+      TransferState.loaded(parties: [party]),
+    ];
+    for (final state in ignoredStates) {
+      await emit(tester, state);
+      expect(find.byType(TransferResultView), findsNothing);
+      expect(router.routeInformationProvider.value.uri.path, '/create');
+    }
+  });
 }

@@ -4,7 +4,9 @@ import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_bloc.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_history_state.dart';
+import 'package:feature_transfer/presentation/transfer/view/transfer_mobile.dart';
 import 'package:feature_transfer/presentation/transfer/view/transfer_view.dart';
+import 'package:feature_transfer/presentation/transfer/view/transfer_web.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -70,6 +72,60 @@ void main() {
       ),
     );
   }
+
+  Widget directSubject(TransferHistoryState state, Widget child, Object key) {
+    when(() => bloc.state).thenReturn(state);
+    return MaterialApp(
+      key: ValueKey(key),
+      locale: const Locale('es'),
+      supportedLocales: const [Locale('es'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      home: BlocProvider<TransferHistoryBloc>.value(value: bloc, child: child),
+    );
+  }
+
+  testWidgets('renders every history state on mobile and web', (tester) async {
+    const states = <TransferHistoryState>[
+      TransferHistoryState.initial(),
+      TransferHistoryState.loading(),
+      TransferHistoryState.loaded(transfers: []),
+      TransferHistoryState.loaded(transfers: [outgoing, incoming]),
+      TransferHistoryState.failure(message: 'failure'),
+    ];
+
+    for (final isWeb in [false, true]) {
+      for (var index = 0; index < states.length; index++) {
+        final child = isWeb
+            ? const TransferWeb(actorUserId: 2)
+            : const TransferMobile(actorUserId: 2);
+        await tester.pumpWidget(
+          directSubject(states[index], child, '$isWeb-$index'),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(Scaffold), findsOneWidget);
+      }
+    }
+  });
+
+  testWidgets('listener accepts non-notifying history states', (tester) async {
+    final states = StreamController<TransferHistoryState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    await tester.pumpWidget(subject(const TransferHistoryState.initial()));
+
+    const safeStates = <TransferHistoryState>[
+      TransferHistoryState.loading(),
+      TransferHistoryState.loaded(transfers: []),
+      TransferHistoryState.initial(),
+    ];
+    for (final state in safeStates) {
+      states.add(state);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    }
+  });
 
   testWidgets('renders the empty history and transfer action', (tester) async {
     await tester.pumpWidget(

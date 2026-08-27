@@ -1,8 +1,11 @@
 import 'package:feature_transfer/domain/entities/transfer_party.dart';
+import 'package:feature_transfer/domain/entities/transfer_receipt.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_bloc.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_event.dart';
 import 'package:feature_transfer/presentation/transfer/bloc/transfer_state.dart';
+import 'package:feature_transfer/presentation/transfer_create/view/transfer_create_mobile.dart';
 import 'package:feature_transfer/presentation/transfer_create/view/transfer_create_view.dart';
+import 'package:feature_transfer/presentation/transfer_create/view/transfer_create_web.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,6 +26,17 @@ void main() {
     fullName: 'Destination User',
     email: 'destination@test.co',
     balanceCop: 100000,
+  );
+  const receipt = TransferReceipt(
+    id: 'receipt-1',
+    originUserId: 2,
+    destinationUserId: 3,
+    amountCop: 250000,
+    status: 'completed',
+    description: 'Payment',
+    createdAt: 1,
+    originSnapshot: 'Origin User',
+    destinationSnapshot: 'Destination User',
   );
 
   late _MockTransferBloc bloc;
@@ -53,6 +67,44 @@ void main() {
       ),
     );
   }
+
+  Widget directSubject(TransferState state, Widget child, Object key) {
+    when(() => bloc.state).thenReturn(state);
+    return MaterialApp(
+      key: ValueKey(key),
+      home: BlocProvider<TransferBloc>.value(value: bloc, child: child),
+    );
+  }
+
+  testWidgets('renders every sealed state on mobile and web', (tester) async {
+    const parties = [origin, destination];
+    const states = <TransferState>[
+      TransferState.initial(),
+      TransferState.initial(parties: parties),
+      TransferState.loading(),
+      TransferState.loading(parties: parties),
+      TransferState.loaded(parties: []),
+      TransferState.loaded(parties: parties),
+      TransferState.submitting(parties: parties),
+      TransferState.completed(parties: parties, receipt: receipt),
+      TransferState.failure(message: 'load failed'),
+      TransferState.failure(message: 'submit failed', parties: parties),
+    ];
+
+    for (final isWeb in [false, true]) {
+      for (var index = 0; index < states.length; index++) {
+        final child = isWeb
+            ? const TransferCreateWeb(actorUserId: 2, isAdmin: false)
+            : const TransferCreateMobile(actorUserId: 2, isAdmin: false);
+        await tester.pumpWidget(
+          directSubject(states[index], child, '$isWeb-$index'),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+      }
+    }
+  });
 
   Future<void> pumpLoaded(WidgetTester tester, {bool isAdmin = false}) async {
     await tester.pumpWidget(

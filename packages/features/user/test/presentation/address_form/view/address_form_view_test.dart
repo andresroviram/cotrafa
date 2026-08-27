@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:feature_user/domain/entities/user_address.dart';
+import 'package:feature_user/presentation/address_form/view/address_form_mobile.dart';
 import 'package:feature_user/presentation/address_form/view/address_form_view.dart';
+import 'package:feature_user/presentation/address_form/view/address_form_web.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_bloc.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_event.dart';
 import 'package:feature_user/presentation/addresses/bloc/address_state.dart';
@@ -52,6 +56,79 @@ void main() {
       ),
     );
   }
+
+  Widget directSubject(AddressState state, Widget child, Object key) {
+    when(() => bloc.state).thenReturn(state);
+    return MaterialApp(
+      key: ValueKey(key),
+      home: BlocProvider<AddressBloc>.value(value: bloc, child: child),
+    );
+  }
+
+  testWidgets('renders every form state on mobile and web', (tester) async {
+    const states = <AddressState>[
+      AddressState.initial(),
+      AddressState.loading(),
+      AddressState.loaded(addresses: [address], selectedAddress: address),
+      AddressState.ready(addresses: [address], selectedAddress: address),
+      AddressState.saving(addresses: [address], selectedAddress: address),
+      AddressState.created(addresses: [address], selectedAddress: address),
+      AddressState.updated(addresses: [address], selectedAddress: address),
+      AddressState.primaryUpdated(
+        addresses: [address],
+        selectedAddress: address,
+      ),
+      AddressState.deleted(addresses: [address], selectedAddress: address),
+      AddressState.loadFailure(message: 'load failed'),
+      AddressState.actionFailure(
+        message: 'save failed',
+        addresses: [address],
+        selectedAddress: address,
+      ),
+    ];
+
+    for (final isWeb in [false, true]) {
+      for (var index = 0; index < states.length; index++) {
+        final child = isWeb
+            ? const AddressFormWeb(actorUserId: 1, userId: 2, addressId: 10)
+            : const AddressFormMobile(actorUserId: 1, userId: 2, addressId: 10);
+        await tester.pumpWidget(
+          directSubject(states[index], child, '$isWeb-$index'),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(Scaffold), findsOneWidget);
+      }
+    }
+  });
+
+  testWidgets('listener accepts every non-notifying form state', (
+    tester,
+  ) async {
+    final states = StreamController<AddressState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    await tester.pumpWidget(subject(const AddressState.initial()));
+
+    const safeStates = <AddressState>[
+      AddressState.loading(),
+      AddressState.loaded(addresses: [address], selectedAddress: address),
+      AddressState.ready(addresses: [address], selectedAddress: address),
+      AddressState.saving(addresses: [address], selectedAddress: address),
+      AddressState.primaryUpdated(
+        addresses: [address],
+        selectedAddress: address,
+      ),
+      AddressState.deleted(addresses: [address], selectedAddress: address),
+      AddressState.loadFailure(message: 'load failed'),
+    ];
+    for (final state in safeStates) {
+      states.add(state);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    }
+  });
 
   testWidgets('validates and dispatches a new address', (tester) async {
     await tester.pumpWidget(subject(const AddressState.ready()));

@@ -1,7 +1,12 @@
+import 'dart:async';
+
+import 'package:feature_auth/domain/entities/auth_identity.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_bloc.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_event.dart';
 import 'package:feature_auth/presentation/auth/bloc/auth_state.dart';
+import 'package:feature_auth/presentation/login/view/login_mobile.dart';
 import 'package:feature_auth/presentation/login/view/login_view.dart';
+import 'package:feature_auth/presentation/login/view/login_web.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -51,6 +56,66 @@ void main() {
     await tester.pumpWidget(subject());
     await tester.pumpAndSettle();
   }
+
+  Widget directSubject(AuthState state, Widget child, Object key) {
+    when(() => bloc.state).thenReturn(state);
+    return MaterialApp(
+      key: ValueKey(key),
+      home: BlocProvider<AuthBloc>.value(value: bloc, child: child),
+    );
+  }
+
+  testWidgets('renders every login state on mobile and web', (tester) async {
+    const identity = AuthIdentity(userId: 1, role: 'admin');
+    const states = <AuthState>[
+      AuthState.initial(),
+      AuthState.loading(),
+      AuthState.unauthenticated(),
+      AuthState.authenticated(identity),
+      AuthState.activationSuccess(identity),
+      AuthState.failure('failure'),
+    ];
+
+    for (final isWeb in [false, true]) {
+      for (var index = 0; index < states.length; index++) {
+        final child = isWeb
+            ? const LoginWeb(
+                logoAssetPath: 'assets/img/logo.png',
+                logoDarkAssetPath: 'assets/img/logo_dark.png',
+              )
+            : const LoginMobile(
+                logoAssetPath: 'assets/img/logo.png',
+                logoDarkAssetPath: 'assets/img/logo_dark.png',
+              );
+        await tester.pumpWidget(
+          directSubject(states[index], child, '$isWeb-$index'),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byKey(const Key('login-content')), findsOneWidget);
+      }
+    }
+  });
+
+  testWidgets('listener accepts non-notifying login states', (tester) async {
+    final states = StreamController<AuthState>.broadcast();
+    addTearDown(states.close);
+    when(() => bloc.stream).thenAnswer((_) => states.stream);
+    await tester.pumpWidget(subject());
+
+    const safeStates = <AuthState>[
+      AuthState.initial(),
+      AuthState.loading(),
+      AuthState.unauthenticated(),
+      AuthState.activationSuccess(AuthIdentity(userId: 1, role: 'admin')),
+    ];
+    for (final state in safeStates) {
+      states.add(state);
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    }
+  });
 
   testWidgets('renders a minimal client login with a separate admin action', (
     tester,
